@@ -1,0 +1,4 @@
+# Keep maintenance files consistent on Windows while preserving locked plugin bytes.
+* text=auto eol=lf
+plugins/** -text
+*.png -text

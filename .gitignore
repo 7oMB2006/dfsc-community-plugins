@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+test-results/
+dist/
+.env
+.env.*
+.community-sync.lock
+.community-stage-*/

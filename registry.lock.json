@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "plugins": [
+    {
+      "id": "hermes-engineering-bridge",
+      "source": {
+        "repository": "7oMB2006/hermes-engineering-bridge",
+        "commit": "6b1dc36030c77b5c03d5454ce1a2c2583c704bf4",
+        "path": "plugins/hermes-engineering-bridge"
+      },
+      "files": [
+        {
+          "path": "README.md",
+          "gitBlobSha": "d2c0708e1c2beee44a4fd0c71120f9a28702b19d",
+          "sha256": "321eef6333c75ff35686991f51248dfa87f3cf3d07125942e2e5a7e8cd6ed258",
+          "size": 2215
+        },
+        {
+          "path": "commands/hermes-bridge-help.md",
+          "gitBlobSha": "683769be91c2da160450ba083e6708584786f615",
+          "sha256": "17eb219e53d3caa54fa6b6912b9b1a5cafcf35af1b6b3e99665cc2b71acfc374",
+          "size": 1078
+        },
+        {
+          "path": "icon.png",
+          "gitBlobSha": "ae15596df5655f4f188c9723fd24f4ed41df1f0e",
+          "sha256": "bac78108f0961cd347a8c8e131e9f2d1832031e6f344c9f966710973d655e0a3",
+          "size": 6873
+        },
+        {
+          "path": "skills/engineering-evidence/SKILL.md",
+          "gitBlobSha": "5b38a583fa16e0befd0e4b877ded72f95262274b",
+          "sha256": "970a8f9b103b28030881364babf46b6663f4102982b236324b3b5f340bdad6e0",
+          "size": 1107
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "c5006cf5042a71a1c2c570d2d6eb2447206163b7",
+          "sha256": "0ed181c550f8a23583de69b064c6644e377a4b064120bd4e05bc6b4b08a0cacc",
+          "size": 358
+        }
+      ]
+    }
+  ]
+}

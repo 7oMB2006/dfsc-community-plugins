@@ -1,0 +1,10 @@
+{
+  "name": "dfsc-community",
+  "plugins": [
+    {
+      "name": "hermes-engineering-bridge",
+      "source": "./plugins/hermes-engineering-bridge",
+      "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。"
+    }
+  ]
+}

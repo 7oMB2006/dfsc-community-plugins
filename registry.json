@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "marketplaceName": "dfsc-community",
+  "plugins": [
+    {
+      "id": "hermes-engineering-bridge",
+      "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。",
+      "source": {
+        "repository": "7oMB2006/hermes-engineering-bridge",
+        "commit": "6b1dc36030c77b5c03d5454ce1a2c2583c704bf4",
+        "path": "plugins/hermes-engineering-bridge"
+      },
+      "license": "MIT",
+      "readme": "docs/plugins/hermes-engineering-bridge.md"
+    }
+  ]
+}
