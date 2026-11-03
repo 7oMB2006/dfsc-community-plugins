@@ -23,7 +23,7 @@ const manifest = JSON.parse(await readFile(join(root, 'plugins', selected.id, 's
 const requestedSource = process.argv[2] ?? root;
 // A local Git working copy is tested through file:// so the native git clone/pull
 // path is exercised without copying ignored files or requiring private-network credentials.
-const localGit = !/^[a-z]+:|^git@/i.test(requestedSource)
+const localGit = !/^(?:[a-z][a-z0-9+.-]*:\/\/|git@)/i.test(requestedSource)
   && await access(join(resolve(requestedSource), '.git')).then(() => true, () => false);
 const source = localGit ? pathToFileURL(resolve(requestedSource)).href : requestedSource;
 const remote = /^(https?:\/\/|git@|ssh:\/\/)/.test(source);
