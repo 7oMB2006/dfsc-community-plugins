@@ -17,7 +17,7 @@ https://github.com/7oMB2006/dfsc-community-plugins.git
 
 Git 来源需要本机可用的 Git。公开 Git 源可直接访问；私有 Git 源需要 DFSC 所调用的 Git 已有有效认证。仓库的实际可见性以 GitHub 页面为准。也可以将仓库下载或克隆到本机，在「添加市场」中填写包含 `.step-plugin/marketplace.json` 的本地目录绝对路径。
 
-当前仓库先以**私有仓库联调**。浏览器或 Codex 的 GitHub 登录与 DFSC 调用的 Git 认证分别管理；未配置 Git 读取权限的机器可先用本地目录联调。
+当前仓库为公开市场源。浏览器或 Codex 的 GitHub 登录与 DFSC 调用的 Git 认证分别管理；无法联网的机器可先用本地目录联调。
 
 本地来源文件夹请保留 `dfsc-community-plugins` 这样的名称，不要添加空格。当前 DFSC 0.6 会根据文件夹名派生市场来源标识，包含空格的名称会被拒绝。
 
@@ -28,8 +28,14 @@ Git 来源需要本机可用的 Git。公开 Git 源可直接访问；私有 Git
 | 插件 | 资源版本 | 提供内容 | 配套要求 |
 | --- | --- | --- | --- |
 | [Hermes 工程桥协作资源](docs/plugins/hermes-engineering-bridge.md) | 0.1.0 | 工程证据技能、帮助命令与图标 | 完整派工另需 DFSC Hermes 0.6.0 宿主及 Hermes companion 0.2.0 |
+| [BVR 视频研究](docs/plugins/bilibili-video-research.md) | 0.1.0 | 视频研究 MCP、技能与 `/bvr` | 单独安装 BVR 本体与 Node.js 24+；跟随账户及图形配置另需 BVR 新宿主 |
 
 工程桥的独立项目继续在 [7oMB2006/hermes-engineering-bridge](https://github.com/7oMB2006/hermes-engineering-bridge) 维护。本市场收录其中的 DFSC 资源目录；市场安装不会自动安装 Hermes companion、创建飞书机器人或授予工程权限。宿主安装器和 companion 按各自指南单独取得与安装。
+
+BVR 继续在 [7oMB2006/Bilibili-Video-Research](https://github.com/7oMB2006/Bilibili-Video-Research) 维护。
+市场只分发配套资源，不安装 BVR 本体、npm 依赖或任意插件前端。
+跟随 DFSC 账户与图形化配置依赖单独的宿主集成，不能仅凭 `0.6.0` 版本号判断支持。
+本次收录草稿需等待来源 PR 审核及宿主可用后再合入；草稿 PR 不代表默认市场已能发现。
 
 ## 更新与卸载
 

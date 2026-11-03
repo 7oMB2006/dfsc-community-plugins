@@ -2,6 +2,76 @@
   "schemaVersion": 1,
   "plugins": [
     {
+      "id": "bilibili-video-research",
+      "source": {
+        "repository": "7oMB2006/Bilibili-Video-Research",
+        "commit": "047cb9adc4f0227c29ece23449d5e651c3ad16ec",
+        "path": "plugins/bilibili-video-research"
+      },
+      "files": [
+        {
+          "path": "LICENSE",
+          "gitBlobSha": "ab870b6c28b5342c1cd4ebfdfe8c773f3110b990",
+          "sha256": "12f9d6feebe5f7751401903424874f16f9fa2f33c63f46a898e0e93f09bb7c20",
+          "size": 1065
+        },
+        {
+          "path": "README.md",
+          "gitBlobSha": "5ecc4f9f12f1aa2af2b95d4675bb0c9a0fbf24c4",
+          "sha256": "f2ade2b2973a9f251baab7b66642b6f9c651943ae13d16ad4e2e5a4de78eb75a",
+          "size": 9501
+        },
+        {
+          "path": "commands/bvr.md",
+          "gitBlobSha": "f58ee5bfeaa0d39e8a3752936394e601fd05db23",
+          "sha256": "f11571dd06e7b8671d4fdd76da95100a10dc39d9720db8f506410b34d371f62b",
+          "size": 654
+        },
+        {
+          "path": "icon.png",
+          "gitBlobSha": "9f50b409170977fa64eff5fb9edb92f2784573b1",
+          "sha256": "8d8b5a750b8b0b43a2febaf92f238a7b19efb65b0a1c6a8382971a8be96557d5",
+          "size": 77281
+        },
+        {
+          "path": "provider.example",
+          "gitBlobSha": "8375fdbbc681236a30e3598fa50fcca36b498486",
+          "sha256": "3516a778476f1ef9c4cc01468cb7d665cbee0a62e3dcb9c62657d9e4f8d88762",
+          "size": 747
+        },
+        {
+          "path": "server/config.mjs",
+          "gitBlobSha": "c0ba4679606072392698a70689a8086ee8fed123",
+          "sha256": "c25cc83fa5619ae2be5d5b75c88effd8fd4018729af85ea8ebfed357c8a4b97f",
+          "size": 9058
+        },
+        {
+          "path": "server/configure.mjs",
+          "gitBlobSha": "170b577d2b9d437eba8558185c13593907c127e5",
+          "sha256": "7ee01ac16645e051ce6322d7d849dbfcb88fff88b25c880643ed885fdcc0c082",
+          "size": 2309
+        },
+        {
+          "path": "server/start.mjs",
+          "gitBlobSha": "55039d159a62e60931ac3824dcfcbb9562cf0a81",
+          "sha256": "a3205a2591f4337749fb50adfef1b7bb33a43fe72ccc791f06defca0bd7308fc",
+          "size": 1926
+        },
+        {
+          "path": "skills/bilibili-video-research/SKILL.md",
+          "gitBlobSha": "3afabfb4eb8787838362afc318b87ee4e9d6435a",
+          "sha256": "0da568fa7549a205c89ec7eed6820f3db0f3a48d5ef40565f39eeb5d98df858a",
+          "size": 3158
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "635247a66eaeda3693d824af567058bfb3b852e7",
+          "sha256": "53315edaa264c921cc65470a5a0671af6b94920ba41f516961a23c008202060f",
+          "size": 670
+        }
+      ]
+    },
+    {
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
