@@ -303,6 +303,90 @@ class MarketplaceTests(unittest.TestCase):
             m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
         self.assertEqual(self.active(), before)
 
+    def test_classification_is_optional_and_all_reviewed_categories_are_accepted(self):
+        m.plugin_manifest(self.raw['alpha-plugin'], 'alpha-plugin')
+        for category in ('development', 'research', 'text-documents', 'knowledge',
+                         'audio-video', 'image-design', 'automation', 'themes'):
+            data = {**self.raw['alpha-plugin'], 'dfsc.plugin.json': m.encoded({
+                'schemaVersion': 1, 'categories': [category], 'keywords': ['author wording']})}
+            with self.subTest(category=category):
+                m.plugin_manifest(data, 'alpha-plugin')
+        for metadata in ({'schemaVersion': 1}, {'schemaVersion': 1, 'categories': [], 'keywords': []}):
+            m.plugin_manifest({**self.raw['alpha-plugin'], 'dfsc.plugin.json': m.encoded(metadata)}, 'alpha-plugin')
+
+    def test_classification_preserves_exact_author_bytes_and_locks_the_original_file(self):
+        presentation = ('{ "schemaVersion": 1, "categories": ["research", "audio-video"],'
+                        ' "keywords": ["视频研究", " ASR "], "authors": [{"name":"Fixture author"}] }\r\n').encode('utf-8')
+        data = {**self.raw['alpha-plugin'], 'dfsc.plugin.json': presentation}
+        (self.root / 'sources/alpha-plugin/dfsc.plugin.json').write_bytes(presentation)
+        m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+        self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(), presentation)
+        locked = m.lockfile(self.root)
+        entry = next(item for item in locked['plugins'] if item['id'] == 'alpha-plugin')
+        self.assertIn(hashes('dfsc.plugin.json', presentation), entry['files'])
+        self.assertEqual(m.read_json(self.root, 'registry.json'), self.config)
+        self.assertEqual(m.read_json(self.root, '.step-plugin/marketplace.json'), m.native_manifest(self.config))
+        m.sync(self.root, 'alpha-plugin', self.root / 'sources/alpha-plugin')
+        self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(), presentation)
+
+    def test_invalid_classification_is_rejected_before_sync_changes_active_resources(self):
+        before = self.active()
+        invalid = [
+            {'categories': None}, {'categories': 'research'}, {'categories': [None]},
+            {'categories': [1]}, {'categories': ['']}, {'categories': [' ']},
+            {'categories': ['Research']}, {'categories': ['future-category']},
+            {'categories': ['audio/video']}, {'categories': ['research', ' research ']},
+            {'categories': ['development', 'research', 'knowledge', 'themes']},
+            {'keywords': None}, {'keywords': 'ASR'}, {'keywords': [None]}, {'keywords': [1]},
+            {'keywords': ['']}, {'keywords': [' ']}, {'keywords': ['two\nlines']},
+            {'keywords': ['\x00']}, {'keywords': ['x' * 49]}, {'keywords': ['😀' * 25]},
+            {'keywords': ['ASR', ' ASR ']}, {'keywords': ['a', 'b', 'c', 'd', 'e', 'f']},
+        ]
+        for change in invalid:
+            data = {**self.raw['alpha-plugin'], 'dfsc.plugin.json': m.encoded({'schemaVersion': 1, **change})}
+            with self.subTest(change=change), self.assertRaises(m.MarketError):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+            self.assertEqual(self.active(), before)
+        self.assertFalse((self.root / '.community-sync.lock').exists())
+
+    def test_classification_uses_host_utf16_and_whitespace_rules(self):
+        for keyword in ('x' * 48, '😀' * 24, '\u0085', '\ufeffASR\ufeff'):
+            data = {**self.raw['alpha-plugin'], 'dfsc.plugin.json': m.encoded({
+                'schemaVersion': 1, 'categories': [' research '], 'keywords': [keyword]})}
+            with self.subTest(keyword=keyword):
+                m.plugin_manifest(data, 'alpha-plugin')
+        for keywords in (['\ufeff'], ['ASR', '\ufeffASR\ufeff']):
+            data = {**self.raw['alpha-plugin'], 'dfsc.plugin.json': m.encoded({
+                'schemaVersion': 1, 'keywords': keywords})}
+            with self.subTest(keywords=keywords), self.assertRaises(m.MarketError):
+                m.plugin_manifest(data, 'alpha-plugin')
+
+    def test_invalid_optional_presentation_schema_encoding_and_size_are_rejected(self):
+        before = self.active()
+        values = [b'not json', b'\xff', b'[]', b'null', b'{}',
+                  b'{"schemaVersion":true}', b'{"schemaVersion":2}',
+                  b'{"schemaVersion":1,"categories":[],"categories":["research"]}',
+                  m.encoded({'schemaVersion': 1}).decode().encode('utf-16'),
+                  m.encoded({'schemaVersion': 1, 'ignored': 'x' * (64 * 1024)})]
+        for presentation in values:
+            data = {**self.raw['alpha-plugin'], 'dfsc.plugin.json': presentation}
+            with self.subTest(size=len(presentation)), self.assertRaises(m.MarketError):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+            self.assertEqual(self.active(), before)
+
+    def test_vendored_and_offline_classification_are_validated_even_with_matching_hashes(self):
+        presentation = m.encoded({'schemaVersion': 1, 'categories': ['unknown-category']})
+        (self.root / 'plugins/alpha-plugin/dfsc.plugin.json').write_bytes(presentation)
+        (self.root / 'sources/alpha-plugin/dfsc.plugin.json').write_bytes(presentation)
+        self.lock['plugins'][1]['files'].append(hashes('dfsc.plugin.json', presentation))
+        self.save()
+        before = self.active()
+        with self.assertRaisesRegex(m.MarketError, 'Unknown community category'):
+            m.validate(self.root)
+        with self.assertRaisesRegex(m.MarketError, 'Unknown community category'):
+            m.sync(self.root, 'alpha-plugin', self.root / 'sources/alpha-plugin')
+        self.assertEqual(self.active(), before)
+
 
 if __name__ == '__main__':
     unittest.main()
