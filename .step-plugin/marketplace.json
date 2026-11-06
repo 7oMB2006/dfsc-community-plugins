@@ -2,6 +2,11 @@
   "name": "dfsc-community",
   "plugins": [
     {
+      "name": "bilibili-video-research",
+      "source": "./plugins/bilibili-video-research",
+      "description": "BVR 视频研究：MCP、技能与 /bvr；需另装 BVR 本体，跟随账户和图形配置需支持 BVR 的新 DFSC 宿主。"
+    },
+    {
       "name": "hermes-engineering-bridge",
       "source": "./plugins/hermes-engineering-bridge",
       "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。"
