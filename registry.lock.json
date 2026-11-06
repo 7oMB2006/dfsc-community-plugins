@@ -5,7 +5,7 @@
       "id": "bilibili-video-research",
       "source": {
         "repository": "7oMB2006/Bilibili-Video-Research",
-        "commit": "3733f49d90a133774654092681440f03666581e8",
+        "commit": "fd2ab83b46b8793d80f8f8c6008945babdcbba80",
         "path": "plugins/bilibili-video-research"
       },
       "files": [
