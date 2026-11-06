@@ -5,7 +5,7 @@
       "id": "bilibili-video-research",
       "source": {
         "repository": "7oMB2006/Bilibili-Video-Research",
-        "commit": "fd2ab83b46b8793d80f8f8c6008945babdcbba80",
+        "commit": "db78c19f9ac27070540e5ff31addff4a31cf63a4",
         "path": "plugins/bilibili-video-research"
       },
       "files": [
@@ -17,9 +17,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "5ecc4f9f12f1aa2af2b95d4675bb0c9a0fbf24c4",
-          "sha256": "f2ade2b2973a9f251baab7b66642b6f9c651943ae13d16ad4e2e5a4de78eb75a",
-          "size": 9501
+          "gitBlobSha": "21c365abf586d9cb57dd7335b26ccb2804929c6d",
+          "sha256": "db86f2579cb8256c75ab2a9d5a98ffc295c8f32f4b978c9a3398d960c0f129d2",
+          "size": 9605
         },
         {
           "path": "commands/bvr.md",
@@ -47,9 +47,9 @@
         },
         {
           "path": "icon.png",
-          "gitBlobSha": "9f50b409170977fa64eff5fb9edb92f2784573b1",
-          "sha256": "8d8b5a750b8b0b43a2febaf92f238a7b19efb65b0a1c6a8382971a8be96557d5",
-          "size": 77281
+          "gitBlobSha": "e20c672fab2f6dc5cf0a2d5779802483a033eff8",
+          "sha256": "fe8f6a4dd63c0727eb2bdbd4d02821d59ffb6675105e6c28738eb3ea82ecf76b",
+          "size": 66300
         },
         {
           "path": "provider.example",
@@ -83,8 +83,8 @@
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "635247a66eaeda3693d824af567058bfb3b852e7",
-          "sha256": "53315edaa264c921cc65470a5a0671af6b94920ba41f516961a23c008202060f",
+          "gitBlobSha": "437f3cd41f6f03b68f1104a700444cc7c8bf7328",
+          "sha256": "5834941eeb8a8ded0aee851906890b1bc3fde492418d034d8e9f3d9a2dcc9d69",
           "size": 670
         }
       ]
