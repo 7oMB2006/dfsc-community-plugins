@@ -18,7 +18,7 @@
       "description": "BVR 视频研究：MCP、技能与 /bvr；需另装 BVR 本体，跟随账户和图形配置需支持 BVR 的新 DFSC 宿主。",
       "source": {
         "repository": "7oMB2006/Bilibili-Video-Research",
-        "commit": "047cb9adc4f0227c29ece23449d5e651c3ad16ec",
+        "commit": "3733f49d90a133774654092681440f03666581e8",
         "path": "plugins/bilibili-video-research"
       },
       "license": "MIT",

@@ -5,7 +5,7 @@
       "id": "bilibili-video-research",
       "source": {
         "repository": "7oMB2006/Bilibili-Video-Research",
-        "commit": "047cb9adc4f0227c29ece23449d5e651c3ad16ec",
+        "commit": "3733f49d90a133774654092681440f03666581e8",
         "path": "plugins/bilibili-video-research"
       },
       "files": [
@@ -26,6 +26,24 @@
           "gitBlobSha": "f58ee5bfeaa0d39e8a3752936394e601fd05db23",
           "sha256": "f11571dd06e7b8671d4fdd76da95100a10dc39d9720db8f506410b34d371f62b",
           "size": 654
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "e0d6f99db4a9f5b1fd1884d0cc857a48b729f1c4",
+          "sha256": "bfa2847288677d35a158076c5196cd3019958d1875cfcd770cc5b066c6d7b34a",
+          "size": 1333
+        },
+        {
+          "path": "docs/DFSC.en.md",
+          "gitBlobSha": "3a2589750bfcd6c41f4605e1ded0477c4bdeb7f7",
+          "sha256": "86f584d557abfb036054c2a4384f8f132a3c23933a8c93e5b74e04b2f3cd00bb",
+          "size": 2550
+        },
+        {
+          "path": "docs/DFSC.md",
+          "gitBlobSha": "84cdaea1dac9c5e53e6d8384d320f048a9e35c30",
+          "sha256": "66bcf5b0e31ffd4c901ba8e28be40ae09d1cadf23be00a143498d9a7d77bc9c0",
+          "size": 2155
         },
         {
           "path": "icon.png",
