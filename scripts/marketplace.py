@@ -18,6 +18,13 @@ MAX_FILE = 8 * 1024 * 1024
 MAX_TOTAL = 32 * 1024 * 1024
 MAX_FILES = 1000
 MAX_MANIFEST = 512 * 1024  # Step 0.6 readStepPluginManifest limit.
+MAX_PRESENTATION = 64 * 1024
+COMMUNITY_CATEGORIES = frozenset({
+    'development', 'research', 'text-documents', 'knowledge',
+    'audio-video', 'image-design', 'automation', 'themes',
+})
+JS_TRIM = (' \t\n\v\f\r\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005'
+           '\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff')
 HEX40 = re.compile(r'[0-9a-f]{40}')
 HEX64 = re.compile(r'[0-9a-f]{64}')
 NAME = re.compile(r'[a-z0-9][a-z0-9_-]{0,79}')
@@ -204,6 +211,36 @@ def verify_locked(files, rows):
         require(record(row['path'], files[row['path']]) == row, 'Resource hash mismatch: ' + row['path'])
 
 
+def plugin_classification(files):
+    data = files.get('dfsc.plugin.json')
+    if data is None:
+        return
+    require(len(data) <= MAX_PRESENTATION, 'Desktop presentation exceeds the 64 KiB limit')
+    try:
+        value = decode_json(data.decode('utf-8'))
+    except UnicodeError:
+        raise MarketError('Desktop presentation must be UTF-8 JSON') from None
+    require(isinstance(value, dict) and type(value.get('schemaVersion')) in (int, float)
+            and value['schemaVersion'] == 1, 'Unsupported Desktop presentation schema')
+    for key, limit in (('categories', 3), ('keywords', 5)):
+        if key not in value:
+            continue
+        terms = value[key]
+        require(isinstance(terms, list) and len(terms) <= limit, key + ' must be a bounded array')
+        seen = set()
+        for term in terms:
+            # Match host String.trim and UTF-16 limits without changing the author bytes.
+            require(isinstance(term, str) and term.strip(JS_TRIM)
+                    and len(term.encode('utf-16-le', errors='surrogatepass')) // 2 <= 48
+                    and not any(ord(c) < 32 for c in term), 'Invalid ' + key + ' term')
+            normalized = term.strip(JS_TRIM)
+            require(normalized not in seen, 'Duplicate ' + key + ' term')
+            seen.add(normalized)
+            if key == 'categories':
+                require(normalized in COMMUNITY_CATEGORIES,
+                        'Unknown community category; request a taxonomy review')
+
+
 def plugin_manifest(files, ident):
     # Run after the reviewed README overlay as well as on the upstream inventory.
     portable_paths(files)
@@ -235,6 +272,7 @@ def plugin_manifest(files, ident):
         require(path in files and isinstance(decode_json(files[path]), dict), 'Missing or invalid MCP declaration')
     elif 'mcpServers' in manifest:
         require(isinstance(mcp, dict), 'MCP declarations must be an object or resource path')
+    plugin_classification(files)
     return manifest
 
 
