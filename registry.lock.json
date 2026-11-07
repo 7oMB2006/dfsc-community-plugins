@@ -128,6 +128,52 @@
           "size": 358
         }
       ]
+    },
+    {
+      "id": "stellar-cruise",
+      "source": {
+        "repository": "7oMB2006/desktop-for-step-code",
+        "commit": "d7b19917a315c00c41cd8a22e2dcfe6d6d5b862e",
+        "path": "theme-marketplace/plugins/stellar-cruise"
+      },
+      "files": [
+        {
+          "path": "cover.png",
+          "gitBlobSha": "13f3adfcccb709b499b600ed26abb5b199900ca7",
+          "sha256": "506abc5aa5985ff76c08998866dc53a6e8736f7eac9a3d7eb7f5688f425aa335",
+          "size": 198768
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "01038085077dc13706fb7e23b9c04c9098042ecb",
+          "sha256": "21cf3bfb1946ca535318f6375ea29998b6bb5c5dffdb41d029cd7bd93d0ca2a5",
+          "size": 137
+        },
+        {
+          "path": "dfsc.theme.json",
+          "gitBlobSha": "f2fe9b29dd2f08f376e49d0938e9b4c5cbe2a612",
+          "sha256": "fe26d80089aad694ddd8d15262cae2f7fe1e9c33556d1dd77825a89826b159e2",
+          "size": 379
+        },
+        {
+          "path": "icon.png",
+          "gitBlobSha": "bdec2d28881ca87e449e0e01b65f03fd25bd8701",
+          "sha256": "f1aae196a455b754f18243ea3ac2ce7296369b269c66e72d44f8eff20019eafa",
+          "size": 42784
+        },
+        {
+          "path": "scene.json",
+          "gitBlobSha": "2b50eb510526657be3c370b50b96701621e16341",
+          "sha256": "e2cc522ad0781923cd25ceca58efe85bdb7991e411c40080ba64b01e42326b30",
+          "size": 1610717
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "7c6b787d9997c388d4049e321a3f846ee5287eb5",
+          "sha256": "e378303eed27465a70285fdd6789f3e75eaf96000b731f7283470ba57c14a51e",
+          "size": 353
+        }
+      ]
     }
   ]
 }

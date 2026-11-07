@@ -23,6 +23,17 @@
       },
       "license": "MIT",
       "readme": "docs/plugins/bilibili-video-research.md"
+    },
+    {
+      "id": "stellar-cruise",
+      "description": "星辰巡航动态主题：双龙星海与石墨阅读面板；需包含 DFSC #210 主题宿主的客户端，安装后在外观中手动启用。",
+      "source": {
+        "repository": "7oMB2006/desktop-for-step-code",
+        "commit": "d7b19917a315c00c41cd8a22e2dcfe6d6d5b862e",
+        "path": "theme-marketplace/plugins/stellar-cruise"
+      },
+      "license": "项目作者授权的 DFSC 主题分发；美术与品牌不按宿主代码 MIT 重新许可，详见收录说明",
+      "readme": "docs/plugins/stellar-cruise.md"
     }
   ]
 }
