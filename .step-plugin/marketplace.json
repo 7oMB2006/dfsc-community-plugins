@@ -10,6 +10,11 @@
       "name": "hermes-engineering-bridge",
       "source": "./plugins/hermes-engineering-bridge",
       "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。"
+    },
+    {
+      "name": "stellar-cruise",
+      "source": "./plugins/stellar-cruise",
+      "description": "星辰巡航动态主题：双龙星海与石墨阅读面板；需包含 DFSC #210 主题宿主的客户端，安装后在外观中手动启用。"
     }
   ]
 }
