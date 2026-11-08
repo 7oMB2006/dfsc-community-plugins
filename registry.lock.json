@@ -93,27 +93,63 @@
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "6b1dc36030c77b5c03d5454ce1a2c2583c704bf4",
+        "commit": "96f6281f433dc716b9eddfe8debfe108221dc58d",
         "path": "plugins/hermes-engineering-bridge"
       },
       "files": [
         {
+          "path": "CHANGELOG.md",
+          "gitBlobSha": "63474c770b4bd65191b5095c8f1c840c05aa3d97",
+          "sha256": "d88f236b5a2a5414efdafa317a44f6583415b26ce6902d2ed53afc43734c581f",
+          "size": 583
+        },
+        {
           "path": "README.md",
-          "gitBlobSha": "d2c0708e1c2beee44a4fd0c71120f9a28702b19d",
-          "sha256": "321eef6333c75ff35686991f51248dfa87f3cf3d07125942e2e5a7e8cd6ed258",
-          "size": 2215
+          "gitBlobSha": "c9cf88f5c04c9104fac259e66eb54baf85d85842",
+          "sha256": "8944941de1ab2a08a4b1cbf8f0bf71a638725425e8f5039370fccc4a26663d4e",
+          "size": 1832
         },
         {
           "path": "commands/hermes-bridge-help.md",
-          "gitBlobSha": "683769be91c2da160450ba083e6708584786f615",
-          "sha256": "17eb219e53d3caa54fa6b6912b9b1a5cafcf35af1b6b3e99665cc2b71acfc374",
-          "size": 1078
+          "gitBlobSha": "0f513a580a06f33404af3539328babd74a98680a",
+          "sha256": "0a6646dfb3cdffe8cd250f5c4595c7ff912466247285e8d738807371660a1691",
+          "size": 1770
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "bfe151876860ba00fc800d08febfc11ae1033c2e",
+          "sha256": "9fb7418b561359fadd2c1591a734cf697615277bd7f005d0dde95db27e104f6d",
+          "size": 867
+        },
+        {
+          "path": "docs/FIRST_TASK.md",
+          "gitBlobSha": "fa39308484bccc593076d8cc2f23b30f2265e993",
+          "sha256": "b99aedf18687c72ef7ad14d782abb5670d73e43968951d58f1b295341bcf3501",
+          "size": 2160
+        },
+        {
+          "path": "docs/SETUP.md",
+          "gitBlobSha": "13322cd088123288d71794c49f40beec75e509a4",
+          "sha256": "335ce869a3f17d3194b81506865fd7c4af9db31f0018f6f0c5fa9e7226ecfd6c",
+          "size": 2258
+        },
+        {
+          "path": "docs/START.md",
+          "gitBlobSha": "2838e5813118d280ab01abe1497234179177abc2",
+          "sha256": "53a4e8e2afa211e1cf313bc8161d1502e82e3154d11d2636b576e0e93773edda",
+          "size": 1852
+        },
+        {
+          "path": "docs/TROUBLESHOOTING.md",
+          "gitBlobSha": "cf094530c9aae9d9ab36713a1bab58e6272be7ef",
+          "sha256": "a7bb53f8d3b64b88e904f2898b13d6351d1563ca6dc24ebe3bf83037e9a96029",
+          "size": 2188
         },
         {
           "path": "icon.png",
-          "gitBlobSha": "ae15596df5655f4f188c9723fd24f4ed41df1f0e",
-          "sha256": "bac78108f0961cd347a8c8e131e9f2d1832031e6f344c9f966710973d655e0a3",
-          "size": 6873
+          "gitBlobSha": "43acec0ebcf78e81bfe42b49c9080b9eb06a773b",
+          "sha256": "94d7d38c86a760ac89095dc3bed7eb26da2d6eb60903345797e43e374cd9204c",
+          "size": 40561
         },
         {
           "path": "skills/engineering-evidence/SKILL.md",
@@ -123,9 +159,9 @@
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "c5006cf5042a71a1c2c570d2d6eb2447206163b7",
-          "sha256": "0ed181c550f8a23583de69b064c6644e377a4b064120bd4e05bc6b4b08a0cacc",
-          "size": 358
+          "gitBlobSha": "df0df97bed6ae76255c4f81e1bb4ddba2b983fad",
+          "sha256": "204290aef778f91dc7cc6058b4d8d0cfc788719327bf22dd9a02d9c0ef407d5f",
+          "size": 367
         }
       ]
     },

@@ -9,7 +9,7 @@
     {
       "name": "hermes-engineering-bridge",
       "source": "./plugins/hermes-engineering-bridge",
-      "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。"
+      "description": "Hermes 入门工作台、连接准备与工程证据规范；新入口需支持桌面入口协议的宿主，真实派工另需配套组件。"
     },
     {
       "name": "stellar-cruise",

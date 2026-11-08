@@ -4,10 +4,10 @@
   "plugins": [
     {
       "id": "hermes-engineering-bridge",
-      "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。",
+      "description": "Hermes 入门工作台、连接准备与工程证据规范；新入口需支持桌面入口协议的宿主，真实派工另需配套组件。",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "6b1dc36030c77b5c03d5454ce1a2c2583c704bf4",
+        "commit": "96f6281f433dc716b9eddfe8debfe108221dc58d",
         "path": "plugins/hermes-engineering-bridge"
       },
       "license": "MIT",
