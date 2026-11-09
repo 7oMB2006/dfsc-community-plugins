@@ -1,0 +1,13 @@
+{
+  "name": "dfsc-community-marketplace-checks",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test tests/plugin-metadata.test.mjs",
+    "check:metadata": "node scripts/check-plugin-metadata.mjs"
+  },
+  "dependencies": {
+    "semver": "7.8.5"
+  }
+}
