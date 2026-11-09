@@ -93,15 +93,15 @@
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "96f6281f433dc716b9eddfe8debfe108221dc58d",
+        "commit": "3be247ee770a6d7aac55ee2454d94c8702df2c15",
         "path": "plugins/hermes-engineering-bridge"
       },
       "files": [
         {
           "path": "CHANGELOG.md",
-          "gitBlobSha": "63474c770b4bd65191b5095c8f1c840c05aa3d97",
-          "sha256": "d88f236b5a2a5414efdafa317a44f6583415b26ce6902d2ed53afc43734c581f",
-          "size": 583
+          "gitBlobSha": "cee837587bca578a028c2aa820e44a1819ced409",
+          "sha256": "a2014c9b28b4bea8cac32fe99a5fe75a63dddc8cd498cd0712837a75f872680f",
+          "size": 631
         },
         {
           "path": "README.md",
@@ -117,9 +117,9 @@
         },
         {
           "path": "dfsc.plugin.json",
-          "gitBlobSha": "bfe151876860ba00fc800d08febfc11ae1033c2e",
-          "sha256": "9fb7418b561359fadd2c1591a734cf697615277bd7f005d0dde95db27e104f6d",
-          "size": 867
+          "gitBlobSha": "fa8c406417e964d55b9338a6450f446808c9ed52",
+          "sha256": "e76e655433ab2b959762cf5e911d77fbf74a7aab47fd29efa105463be2b8975c",
+          "size": 916
         },
         {
           "path": "docs/FIRST_TASK.md",
@@ -150,6 +150,18 @@
           "gitBlobSha": "43acec0ebcf78e81bfe42b49c9080b9eb06a773b",
           "sha256": "94d7d38c86a760ac89095dc3bed7eb26da2d6eb60903345797e43e374cd9204c",
           "size": 40561
+        },
+        {
+          "path": "icons/toolbar-dark.png",
+          "gitBlobSha": "a52fa308834c9c99180eeba652e8dc799f117844",
+          "sha256": "5fb10ee50d4bb49c37b9c24c068d646c613ca9fa74f076275a031e2c87ee51c0",
+          "size": 136
+        },
+        {
+          "path": "icons/toolbar-light.png",
+          "gitBlobSha": "af41e392b81f6e77856d1a73fb8561446fbc32f4",
+          "sha256": "945359dc44c52b65b9ccd7088b0ae2d6be93a706bfd0e7fe5f2c7399d1cc0593",
+          "size": 136
         },
         {
           "path": "skills/engineering-evidence/SKILL.md",
