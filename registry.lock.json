@@ -93,27 +93,27 @@
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "c3fe94bb947a57b7e37f129f1b6c2fc88901063e",
+        "commit": "0db4aa9655e03124e166f3d3fc98346d66cd0d1f",
         "path": "plugins/hermes-engineering-bridge"
       },
       "files": [
         {
           "path": "CHANGELOG.md",
-          "gitBlobSha": "097e5cb654b66bfc589bcd7af1b8f30cda4d6dd5",
-          "sha256": "b92f18b4be1b5af5149a4a58ea01b3c8a711ea4c1ef76a38242c3a013c1ecbc5",
-          "size": 1361
+          "gitBlobSha": "398b5824d97b1ce5cf36acc8de3e0d39d9a8e8eb",
+          "sha256": "236b2775612597149a78ce72d0236a9dbc70aa1bccd3a4df19fdc47a0325e9df",
+          "size": 1509
         },
         {
           "path": "README.md",
-          "gitBlobSha": "30ce56861f5a0af6e643d99b66080f3e718cec68",
-          "sha256": "fcbbbb21a24b61cd367045c5e40662412fb237454c96313b705c0652f6024a27",
-          "size": 2008
+          "gitBlobSha": "d6254ea94306ffdb1e46f71dbf5fc0043c10d746",
+          "sha256": "cdeda27a425623c9b1d9523cc76f18c174874e4214e812f8372dcc84f97ddd1c",
+          "size": 2289
         },
         {
           "path": "commands/hermes-bridge-help.md",
-          "gitBlobSha": "96760847314f9a4fa2ad6cb5d8dd70d311783410",
-          "sha256": "9f4363d6a369fa71ae58d80d9035f23d659f45d2b672f4ea090a2dc83cbbb301",
-          "size": 2016
+          "gitBlobSha": "a348a5a711f3d8f0504f9f109b155e7989b3e44c",
+          "sha256": "9cc755985c084d94d36db1a3f890dd11cad0f5240355d91b4d4c7f503b1f9102",
+          "size": 2122
         },
         {
           "path": "dfsc.plugin.json",
@@ -135,9 +135,9 @@
         },
         {
           "path": "docs/START.md",
-          "gitBlobSha": "a594d3281ab098a29c1672c94177c95ae8fa7c7a",
-          "sha256": "2d748ac709351a55a861d3e3e19c5d408fa8181373a64ca171bc32aa444c6687",
-          "size": 2591
+          "gitBlobSha": "ac07f247f0e392f6e763e631cee7ac457db1b145",
+          "sha256": "da27d39f2282eaaa56a6df2430ee5b604a09ce2fbfa1472e66cf50d3b7c9dd4c",
+          "size": 2941
         },
         {
           "path": "docs/TROUBLESHOOTING.md",
