@@ -259,7 +259,7 @@ def desktop_path(value):
 
 def plugin_desktop(value, files):
     require(isinstance(value, dict), 'Desktop entry must be an object')
-    require(not set(value) - {'title', 'surface', 'symbol', 'icon', 'defaultPage', 'pages'},
+    require(not set(value) - {'title', 'surface', 'symbol', 'icon', 'defaultPage', 'pages', 'connection'},
             'Unsupported Desktop entry field')
     desktop_text(value.get('title'))
     require(value.get('surface') in ('main-view', 'side-panel', 'window'),
@@ -291,6 +291,10 @@ def plugin_desktop(value, files):
     if 'defaultPage' in value:
         require(isinstance(value['defaultPage'], str) and value['defaultPage'] in ids,
                 'Desktop default page must exist')
+    if 'connection' in value:
+        require(value['connection'] == {'protocol': 'agent-bridge-v1'}
+                and value['surface'] == 'main-view' and 'connection' not in ids,
+                'Unsupported read-only Desktop connection declaration')
     if 'icon' in value:
         icon = value['icon']
         require(isinstance(icon, dict) and set(icon) <= {'light', 'dark'} and 'light' in icon,

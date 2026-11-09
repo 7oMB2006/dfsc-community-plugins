@@ -9,7 +9,7 @@
     {
       "name": "hermes-engineering-bridge",
       "source": "./plugins/hermes-engineering-bridge",
-      "description": "Hermes 入门工作台、连接准备与工程证据规范；新入口需支持桌面入口协议的宿主，真实派工另需配套组件。"
+      "description": "Hermes 只读连接工作台、安装指南与工程证据规范；需支持 agent-bridge-v1 的新客户端，真实派工另需配套组件。"
     },
     {
       "name": "stellar-cruise",

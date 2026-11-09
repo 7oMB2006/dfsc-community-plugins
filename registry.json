@@ -4,10 +4,10 @@
   "plugins": [
     {
       "id": "hermes-engineering-bridge",
-      "description": "Hermes 入门工作台、连接准备与工程证据规范；新入口需支持桌面入口协议的宿主，真实派工另需配套组件。",
+      "description": "Hermes 只读连接工作台、安装指南与工程证据规范；需支持 agent-bridge-v1 的新客户端，真实派工另需配套组件。",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "3be247ee770a6d7aac55ee2454d94c8702df2c15",
+        "commit": "c3fe94bb947a57b7e37f129f1b6c2fc88901063e",
         "path": "plugins/hermes-engineering-bridge"
       },
       "license": "MIT",

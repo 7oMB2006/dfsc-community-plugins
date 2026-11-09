@@ -432,6 +432,13 @@ class MarketplaceTests(unittest.TestCase):
             {'icon': {'light': '../icon.png'}}, {'icon': {'light': 'missing.png'}},
             {'icon': {'light': 'https://example.com/icon.png'}}, {'icon': {}},
             {'icon': {'dark': 'icon.png'}},
+            {'connection': None}, {'connection': {}}, {'connection': {'protocol': 'custom'}},
+            {'connection': {'protocol': 'agent-bridge-v1', 'method': 'task.create'}},
+            {'connection': {'protocol': 'agent-bridge-v1', 'profile': '/private'}},
+            {'connection': {'protocol': 'agent-bridge-v1'}, 'surface': 'window'},
+            {'connection': {'protocol': 'agent-bridge-v1'}, 'surface': 'side-panel'},
+            {'connection': {'protocol': 'agent-bridge-v1'}, 'defaultPage': 'connection',
+             'pages': [{'id': 'connection', 'title': 'Conflict', 'document': 'docs/START.md'}]},
         ]
         for change in invalid:
             desktop, data = self.desktop_fixture()
@@ -443,6 +450,15 @@ class MarketplaceTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(m.MarketError):
                 m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
             self.assertEqual(self.active(), before)
+
+    def test_read_only_bridge_declaration_is_fixed_and_preserves_resource_bytes(self):
+        desktop, data = self.desktop_fixture()
+        desktop['connection'] = {'protocol': 'agent-bridge-v1'}
+        data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+        m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+        self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(),
+                         data['dfsc.plugin.json'])
+        m.validate(self.root)
 
     def test_desktop_icon_format_and_size_are_reviewed(self):
         png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 8 + (32).to_bytes(4, 'big') * 2
