@@ -120,8 +120,9 @@ export async function checkPackage(directory, { optional = false } = {}) {
   if (!bounded(raw.name, 80) || !['dark', 'light'].includes(raw.scheme)
     || composition.ui === 'stellar-v1' && raw.scheme !== 'dark')
     add('error', 'dfsc.theme.json', 'A bounded name and supported scheme are required; stellar-v1 UI supports dark only.');
-  if (!object(raw.colors) || paletteKeys.some(key => !/^#[0-9a-f]{6}$/i.test(raw.colors[key] ?? ''))) {
-    add('error', 'dfsc.theme.json', 'All eight palette fields must be six-digit hex colors.');
+  if (!object(raw.colors) || paletteKeys.some(key =>
+    typeof raw.colors[key] !== 'string' || !/^#[0-9a-f]{6}$/i.test(raw.colors[key]))) {
+    add('error', 'dfsc.theme.json', 'All eight palette fields must be six-digit hex color strings.');
   } else {
     for (const fg of ['ink', 'muted']) for (const bg of ['bg', 'side', 'surface', 'code']) {
       if (contrast(raw.colors[fg], raw.colors[bg]) < 4.5)

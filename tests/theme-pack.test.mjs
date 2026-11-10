@@ -119,6 +119,41 @@ test('palette and scheme checks match the host reading constraints', async t => 
   }
 });
 
+test('palette fields reject array colors and other non-string JSON values before contrast checks', async t => {
+  const f = await fixture(t);
+  const raw = { ...theme(), background: { renderer: 'solid-v1' } };
+  await f.save('dfsc.theme.json', {
+    ...raw, colors: Object.fromEntries(Object.keys(raw.colors).map(key => [key, ['#000000']])),
+  });
+  const allArrays = errors(await checkPackage(f.root));
+  assert.equal(allArrays.length, 1, 'Array colors must not bypass palette and contrast gates');
+  assert.match(allArrays[0].message, /All eight palette fields/);
+  for (const [key, color] of Object.entries(raw.colors)) {
+    for (const value of [[color], [[color]], [], null, 0, false, {}]) {
+      await f.save('dfsc.theme.json', { ...raw, colors: { ...raw.colors, [key]: value } });
+      const invalid = errors(await checkPackage(f.root));
+      assert.equal(invalid.length, 1, `${key} must reject non-string JSON ${JSON.stringify(value)}`);
+      assert.equal(invalid[0].file, 'dfsc.theme.json');
+      assert.match(invalid[0].message, /All eight palette fields/);
+    }
+  }
+  await f.save('dfsc.theme.json', raw);
+  assert.deepEqual(errors(await checkPackage(f.root)), []);
+});
+
+test('CLI rejects an array-valued solid palette instead of reporting zero issues', async t => {
+  const f = await fixture(t), raw = theme();
+  await f.save('dfsc.theme.json', {
+    ...raw, background: { renderer: 'solid-v1' },
+    colors: Object.fromEntries(Object.keys(raw.colors).map(key => [key, ['#000000']])),
+  });
+  const result = spawnSync(process.execPath, [join(repository, 'scripts/check-theme-pack.mjs'), '--package', f.root],
+    { encoding: 'utf8', timeout: 15000 });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /All eight palette fields/);
+  assert.match(result.stdout, /"errors":1/);
+});
+
 test('optional covers warn without rejecting otherwise valid themes', async t => {
   const f = await fixture(t);
   await f.save('dfsc.theme.json', { ...theme(), cover: 'cover.png' });
