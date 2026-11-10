@@ -5,7 +5,7 @@
       "id": "bilibili-video-research",
       "source": {
         "repository": "7oMB2006/Bilibili-Video-Research",
-        "commit": "db78c19f9ac27070540e5ff31addff4a31cf63a4",
+        "commit": "3624427c4c9da65dc634cba1a65ff021d11194d2",
         "path": "plugins/bilibili-video-research"
       },
       "files": [
@@ -17,9 +17,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "21c365abf586d9cb57dd7335b26ccb2804929c6d",
-          "sha256": "db86f2579cb8256c75ab2a9d5a98ffc295c8f32f4b978c9a3398d960c0f129d2",
-          "size": 9605
+          "gitBlobSha": "ea4f015c2db96baf58873cadef4c8102065e2654",
+          "sha256": "b065756eb60f9d16868826ca65b61c98080afa5afe14fa6c4bf5bf5ef76d8668",
+          "size": 10086
         },
         {
           "path": "commands/bvr.md",
@@ -28,22 +28,34 @@
           "size": 654
         },
         {
+          "path": "dfsc.host.json",
+          "gitBlobSha": "69a3aba0bd6c0eedad252a592262a4c5f8a3f10d",
+          "sha256": "9f8a584ba4ef0ed93ef77708dd14b28520084071283145b5bad0faa66b84ce26",
+          "size": 166
+        },
+        {
           "path": "dfsc.plugin.json",
-          "gitBlobSha": "e0d6f99db4a9f5b1fd1884d0cc857a48b729f1c4",
-          "sha256": "bfa2847288677d35a158076c5196cd3019958d1875cfcd770cc5b066c6d7b34a",
-          "size": 1333
+          "gitBlobSha": "463f0b31e3aac51ff5662b785dc9ed00c5b9d3fb",
+          "sha256": "bf16c26946e7e4b952198f18c767e73a6b6127d5ff22c3dbd62994b9794626e8",
+          "size": 3014
+        },
+        {
+          "path": "dfsc.settings.json",
+          "gitBlobSha": "df5a6a867eddc68f8c5ea4123051f3ee4efd566a",
+          "sha256": "20062420be199aa7aa0d8f815a0829e8cd6f18a3658a04ef49bcbc7443e18bb2",
+          "size": 2131
         },
         {
           "path": "docs/DFSC.en.md",
-          "gitBlobSha": "3a2589750bfcd6c41f4605e1ded0477c4bdeb7f7",
-          "sha256": "86f584d557abfb036054c2a4384f8f132a3c23933a8c93e5b74e04b2f3cd00bb",
-          "size": 2550
+          "gitBlobSha": "df540642416292c5ccf2912b2ae91b3b82c9b2ba",
+          "sha256": "55b9d3133fae643c272c453089c7fc884976accd807f6fdda3d4210048b77acb",
+          "size": 4101
         },
         {
           "path": "docs/DFSC.md",
-          "gitBlobSha": "84cdaea1dac9c5e53e6d8384d320f048a9e35c30",
-          "sha256": "66bcf5b0e31ffd4c901ba8e28be40ae09d1cadf23be00a143498d9a7d77bc9c0",
-          "size": 2155
+          "gitBlobSha": "2f7feebe8e699668a90a4170dd95c6fd3e16a255",
+          "sha256": "f056017474fbe19506dbb7a1af2fa7bdc3dacbb316e70f4888a4cab4be2ff552",
+          "size": 3389
         },
         {
           "path": "icon.png",
@@ -59,33 +71,87 @@
         },
         {
           "path": "server/config.mjs",
-          "gitBlobSha": "c0ba4679606072392698a70689a8086ee8fed123",
-          "sha256": "c25cc83fa5619ae2be5d5b75c88effd8fd4018729af85ea8ebfed357c8a4b97f",
-          "size": 9058
+          "gitBlobSha": "de46e93c30d5e93f1930f025ee1e84ffe12c0a14",
+          "sha256": "167cfbda1cb39cd6de44dec67c514b3c009da1f2355d4e442e1a3ea281a07019",
+          "size": 8404
+        },
+        {
+          "path": "server/configuration.d.mts",
+          "gitBlobSha": "fd44252c14478a5f0b5081f7518405a8f6fd6aa6",
+          "sha256": "f479996b50a0770295263d65b3d5fd396814a1343cc9209d7ac0da755f7b9d5e",
+          "size": 300
+        },
+        {
+          "path": "server/configuration.mjs",
+          "gitBlobSha": "23425b01e1ff3d42f1e3faf8f62b63a65a908146",
+          "sha256": "0228969c84d2b7f8943b41e0b14522b1b20dc2d374ea06ab603cd339a2e65c79",
+          "size": 5619
         },
         {
           "path": "server/configure.mjs",
-          "gitBlobSha": "170b577d2b9d437eba8558185c13593907c127e5",
-          "sha256": "7ee01ac16645e051ce6322d7d849dbfcb88fff88b25c880643ed885fdcc0c082",
-          "size": 2309
+          "gitBlobSha": "1d66dc433804479149929b7f63d78ab04b38acbe",
+          "sha256": "f9454ee1476b92487992b87c2022681ecfcaf382a2e1ecb9edf7fb4c075660cd",
+          "size": 2358
+        },
+        {
+          "path": "server/host-client/LICENSE",
+          "gitBlobSha": "50dc421a3ca09945a7c658fc52c65d9307ce0d69",
+          "sha256": "5a5cf1065749eba250f2c35bf8f4efe32b2e2a2ac1da667692c49bdd221bc53d",
+          "size": 1091
+        },
+        {
+          "path": "server/host-client/UPSTREAM.md",
+          "gitBlobSha": "dec0ab8b0b62dd770fea022a9e161d47794e55bf",
+          "sha256": "fed739087d4ac8233fbb2ee015fd10f5f5079efa3180127c92567e9f9f505281",
+          "size": 1015
+        },
+        {
+          "path": "server/host-client/client.d.mts",
+          "gitBlobSha": "f2c42e889c0ad573a185312bf7ef0c4eb3fcc163",
+          "sha256": "ebe6e078b14328e7a3e898c298fdb83369b213318e12db02578af27e055e39b5",
+          "size": 714
+        },
+        {
+          "path": "server/host-client/client.mjs",
+          "gitBlobSha": "8b403dcced03638d85344cc4fb8a71270d69230b",
+          "sha256": "38c1faf50a6ced1aeeeeeee0b65f9bd63dc555834f6752b3c9ed4c3d1c1f1aeb",
+          "size": 4639
+        },
+        {
+          "path": "server/host-client/protocol.d.mts",
+          "gitBlobSha": "27616d95bfbb05701f0acb16b32158b39877a776",
+          "sha256": "0e08868c631b168a983af4b3350ea065db626440b160550ddceb07cd6540a10b",
+          "size": 3814
+        },
+        {
+          "path": "server/host-client/protocol.mjs",
+          "gitBlobSha": "32505d94e5613c2afb27645e2c5ee5efbd94da40",
+          "sha256": "2d6e6123ba2047c19fcb7ad06648d52925e04eee5fb0d252cbd7e5985540997d",
+          "size": 11103
+        },
+        {
+          "path": "server/host-config.mjs",
+          "gitBlobSha": "b0aa47ed766177530b7e048fa1d2c875d25f28f2",
+          "sha256": "b340a19799ce362029058002e5e79ff77ac8714da432c37c6961b6fffb316bca",
+          "size": 5360
         },
         {
           "path": "server/start.mjs",
-          "gitBlobSha": "55039d159a62e60931ac3824dcfcbb9562cf0a81",
-          "sha256": "a3205a2591f4337749fb50adfef1b7bb33a43fe72ccc791f06defca0bd7308fc",
-          "size": 1926
+          "gitBlobSha": "261572cbc0f1ea9b15ffd4db03d89307c24ca563",
+          "sha256": "1b09892024fd0f9a53e73db39eafefd763e45deec222264d3c5d48b90d3de4aa",
+          "size": 3679
         },
         {
           "path": "skills/bilibili-video-research/SKILL.md",
-          "gitBlobSha": "3afabfb4eb8787838362afc318b87ee4e9d6435a",
-          "sha256": "0da568fa7549a205c89ec7eed6820f3db0f3a48d5ef40565f39eeb5d98df858a",
-          "size": 3158
+          "gitBlobSha": "525d8da9bc9c81f77ff2847bcd9b88edfb0de964",
+          "sha256": "a720f3232e3d859cf0f2e08428507a395e70ebf7f80778be1552cdd6fd1cb635",
+          "size": 3226
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "437f3cd41f6f03b68f1104a700444cc7c8bf7328",
-          "sha256": "5834941eeb8a8ded0aee851906890b1bc3fde492418d034d8e9f3d9a2dcc9d69",
-          "size": 670
+          "gitBlobSha": "2266605922695aceea7dda80c8940a2d95ee2c59",
+          "sha256": "f9e33cc71d9415ac06e17d3005ae7076312c7f14877e1e917db54651eb865115",
+          "size": 665
         }
       ]
     },
