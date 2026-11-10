@@ -17,6 +17,9 @@
 投稿须按 [CONTRIBUTING.md](CONTRIBUTING.md) 说明依赖、数据和费用行为；
 这份文档不表示所有现有客户端已增加相同的安装确认界面。
 
+主题作者另读 [主题包投稿指南](docs/theme-authoring.md)，从 v2 示例开始，
+区分 UI、默认底图与可替换插槽；一体化主题也可以保持关闭。
+
 ## 添加到 DFSC
 
 1. 打开「设置 → 插件 → 市场来源」，选择「添加市场」。
@@ -88,6 +91,10 @@ tests/                        # 路径、来源、哈希和更新边界测试
 ```sh
 python3 scripts/validate-marketplace.py --check
 python3 -m unittest discover -s tests -v
+npm ci --ignore-scripts
+npm test
+node scripts/check-plugin-metadata.mjs
+node scripts/check-theme-pack.mjs
 ```
 
 使用已有 DFSC 0.6 开发环境和实际应用做原生市场验收：

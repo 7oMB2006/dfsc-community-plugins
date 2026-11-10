@@ -26,5 +26,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: node --test tests/plugin-metadata.test.mjs
+      - run: npm test
       - run: node scripts/check-plugin-metadata.mjs
+      - run: node scripts/check-theme-pack.mjs
