@@ -10,12 +10,12 @@
 是同一套作者路径。起步包与新指南须由包含它们的宿主源码提交交付；
 旧 checkout 缺少文件不表示可以用旧星辰包代替新模板。
 
-当前交付依赖 [宿主 PR #232](https://github.com/7oMB2006/desktop-for-step-code/pull/232)；
-合入前，上述 main 新文件链接尚不保证可用，市场 PR 保持草稿。
-提前审阅可使用固定候选提交的
-[中文指南](https://github.com/7oMB2006/desktop-for-step-code/blob/26cbdaa0f2b9b6dc93f60a68841a74b231edfef2/docs/THEME_AUTHORING.zh-CN.md)
-和 [起步包](https://github.com/7oMB2006/desktop-for-step-code/tree/26cbdaa0f2b9b6dc93f60a68841a74b231edfef2/examples/plugins/theme-starter)；
-这不是宣称已经合入或发布。
+这套作者资源已通过 [宿主 PR #232](https://github.com/7oMB2006/desktop-for-step-code/pull/232)
+合入主线，上述 main 入口现已可用。需要复现这次交付时，可使用合并提交
+`310c67987cfd8ba747ee3290348e4b7a54cc02ae` 的
+[固定中文指南](https://github.com/7oMB2006/desktop-for-step-code/blob/310c67987cfd8ba747ee3290348e4b7a54cc02ae/docs/THEME_AUTHORING.zh-CN.md)
+和 [固定起步包](https://github.com/7oMB2006/desktop-for-step-code/tree/310c67987cfd8ba747ee3290348e4b7a54cc02ae/examples/plugins/theme-starter)。
+这是源码交付基线，不是客户端安装包的发布声明，也不表示所有同版本号构建均已支持。
 
 组合协议与个人图片编辑器不是同一批交付：主线协议负责主题和插槽，
 导入、编辑及分区材质由宿主 [自定义背景候选 PR #223](https://github.com/7oMB2006/desktop-for-step-code/pull/223)
