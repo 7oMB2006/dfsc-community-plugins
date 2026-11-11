@@ -460,6 +460,35 @@ class MarketplaceTests(unittest.TestCase):
                          data['dfsc.plugin.json'])
         m.validate(self.root)
 
+    def test_connection_guides_preserve_optional_declared_page_references(self):
+        for guides in ({}, {'setup': 'start'},
+                       {'setup': 'start', 'firstTask': 'first-task', 'troubleshooting': 'start'}):
+            desktop, data = self.desktop_fixture()
+            desktop['pages'].append({'id': 'first-task', 'title': 'First task',
+                                     'document': 'docs/FIRST_TASK.md'})
+            desktop['connection'] = {'protocol': 'agent-bridge-v1', 'guides': guides}
+            data['docs/FIRST_TASK.md'] = b'# First task\n'
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(guides=guides):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+                self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(),
+                                 data['dfsc.plugin.json'])
+                m.validate(self.root)
+
+    def test_invalid_connection_guides_preserve_the_installed_copy(self):
+        before = self.active()
+        for guides in (None, [], 'start', 1, {'setup': 'missing'}, {'setup': 'connection'},
+                       {'firstTask': 'https://example.com'}, {'troubleshooting': '../start'},
+                       {'setup': 'docs/START.md'}, {'setup': ' start '}, {'setup': ''},
+                       {'setup': None}, {'setup': 42}, {'setup': []}, {'setup': {}},
+                       {'setup': 'start', 'command': 'powershell.exe'}, {'execute': 'start'}):
+            desktop, data = self.desktop_fixture()
+            desktop['connection'] = {'protocol': 'agent-bridge-v1', 'guides': guides}
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(guides=guides), self.assertRaises(m.MarketError):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+            self.assertEqual(self.active(), before)
+
     def test_desktop_icon_format_and_size_are_reviewed(self):
         png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 8 + (32).to_bytes(4, 'big') * 2
         supported = [('icon.png', png), ('icon.JPG', b'\xff\xd8fixture'),

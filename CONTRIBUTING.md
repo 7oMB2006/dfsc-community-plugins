@@ -109,6 +109,13 @@
   每份文档必须是同包存在的 UTF-8 Markdown，最多 256 KiB。
 - `defaultPage` 可省略，声明时须匹配页面 ID。文档与图标随原始资源复制、锁定哈希。
 
+可选 `desktop.connection` 只接受固定只读协议 `agent-bridge-v1`，且入口须为
+`main-view`，作者页面不得占用宿主保留的 `connection` ID。可省略的 `guides`
+仅接受 `setup`、`firstTask`、`troubleshooting`，每个值必须精确匹配已声明的页面
+ID；允许空对象。不接受文档路径、远程地址、任意方法、命令或身份配置。
+这份声明只提供宿主状态检查与指南跳转，不会启动 companion、配对或派工；
+真实派工协议及支持构建须由插件说明另外写清。
+
 市场不允许入口携带 JavaScript、任意 IPC、shell 命令或远程页面。
 入口出现不等于 MCP 服务、配套组件、连接、业务验收或付费授权已就绪；
 作者须在入门页说明实际可用功能、缺少依赖时的下一步和权限边界。

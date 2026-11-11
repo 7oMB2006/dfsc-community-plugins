@@ -292,9 +292,17 @@ def plugin_desktop(value, files):
         require(isinstance(value['defaultPage'], str) and value['defaultPage'] in ids,
                 'Desktop default page must exist')
     if 'connection' in value:
-        require(value['connection'] == {'protocol': 'agent-bridge-v1'}
+        connection = value['connection']
+        require(isinstance(connection, dict) and not set(connection) - {'protocol', 'guides'}
+                and connection.get('protocol') == 'agent-bridge-v1'
                 and value['surface'] == 'main-view' and 'connection' not in ids,
                 'Unsupported read-only Desktop connection declaration')
+        if 'guides' in connection:
+            guides = connection['guides']
+            require(isinstance(guides, dict)
+                    and not set(guides) - {'setup', 'firstTask', 'troubleshooting'}
+                    and all(isinstance(ident, str) and ident in ids for ident in guides.values()),
+                    'Desktop connection guides must reference declared local pages')
     if 'icon' in value:
         icon = value['icon']
         require(isinstance(icon, dict) and set(icon) <= {'light', 'dark'} and 'light' in icon,

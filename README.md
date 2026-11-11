@@ -40,7 +40,7 @@ Git 来源需要本机可用的 Git。公开 Git 源可直接访问；私有 Git
 
 | 插件 | 资源版本 | 提供内容 | 配套要求 |
 | --- | --- | --- | --- |
-| [Hermes 工程桥协作资源](docs/plugins/hermes-engineering-bridge.md) | 0.1.0 | 工程证据技能、帮助命令与图标 | 完整派工另需 DFSC Hermes 0.6.0 宿主及 Hermes companion 0.2.0 |
+| [Hermes x DFSC](docs/plugins/hermes-engineering-bridge.md) | 0.3.0 | 顶栏状态面板、四步连接引导、随包指南与工程证据资源 | 需支持所选协议的 DFSC 构建、Hermes 与独立 companion 0.2.0；通用模式不依赖飞书 |
 | [BVR 视频研究](docs/plugins/bilibili-video-research.md) | 0.1.0 | 视频研究 MCP、技能与 `/bvr` | 单独安装 BVR 本体与 Node.js 24+；跟随账户及图形配置另需 BVR 新宿主 |
 | [星辰巡航](docs/plugins/stellar-cruise.md) | 0.1.0 | 双龙星海动态主题、石墨阅读面板与铅笔细线 | 需包含 DFSC #210、支持 `stellar-v1` 的客户端；安装后在「外观」手动启用 |
 

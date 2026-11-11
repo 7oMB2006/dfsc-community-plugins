@@ -4,10 +4,10 @@
   "plugins": [
     {
       "id": "hermes-engineering-bridge",
-      "description": "Hermes Agent 状态面板、只读连接工作台与入门指南；需支持 agent-bridge-v1 的新客户端，真实派工另需配套组件。",
+      "description": "Hermes x DFSC 状态面板、四步连接引导与入门指南；通用本机派工需支持 dfsc-external-v1 的构建及独立 companion。",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "0db4aa9655e03124e166f3d3fc98346d66cd0d1f",
+        "commit": "df523a05e45355d43b911cdb78c163a7a120b1dd",
         "path": "plugins/hermes-engineering-bridge"
       },
       "license": "MIT",
