@@ -7,3 +7,4 @@ dist/
 .env.*
 .community-sync.lock
 .community-stage-*/
+node_modules/
