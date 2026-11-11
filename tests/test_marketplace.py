@@ -387,6 +387,146 @@ class MarketplaceTests(unittest.TestCase):
             m.sync(self.root, 'alpha-plugin', self.root / 'sources/alpha-plugin')
         self.assertEqual(self.active(), before)
 
+    def desktop_fixture(self):
+        entry = {'title': 'Fixture workspace', 'surface': 'main-view', 'symbol': 'bot',
+                 'defaultPage': 'start', 'pages': [
+                     {'id': 'start', 'title': '开始使用', 'document': 'docs/START.md'}]}
+        files = {**self.raw['alpha-plugin'], 'docs/START.md': '# Fixture guide\n'.encode('utf-8')}
+        return entry, files
+
+    def test_desktop_entry_is_optional_and_preserves_local_resources(self):
+        for surface in ('main-view', 'side-panel', 'window'):
+            desktop, data = self.desktop_fixture()
+            desktop['surface'] = surface
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(surface=surface):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+                self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(),
+                                 data['dfsc.plugin.json'])
+                self.assertEqual((self.root / 'plugins/alpha-plugin/docs/START.md').read_bytes(),
+                                 data['docs/START.md'])
+                locked = next(item for item in m.lockfile(self.root)['plugins']
+                              if item['id'] == 'alpha-plugin')
+                self.assertIn(hashes('docs/START.md', data['docs/START.md']), locked['files'])
+
+    def test_invalid_desktop_declarations_preserve_the_installed_copy(self):
+        before = self.active()
+        invalid = [
+            None, [], {},
+            {'title': ''}, {'title': 'x' * 161}, {'title': 'two\nlines'},
+            {'surface': 'iframe'}, {'surface': 'https://example.com'},
+            {'symbol': 'arbitrary-code'}, {'script': 'run.js'},
+            {'defaultPage': 'missing'}, {'pages': []},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': '../secret.md'}]},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': 'https://example.com/page.md'}]},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': 'docs/missing.md'}]},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': 'docs/page.html'}]},
+            {'pages': [{'id': 'start-', 'title': 'Start', 'document': 'docs/START.md'}]},
+            {'pages': [{'id': 'two--parts', 'title': 'Start', 'document': 'docs/START.md'}]},
+            {'pages': [{'id': 'x' * 65, 'title': 'Start', 'document': 'docs/START.md'}]},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': 'docs/START.md#anchor'}]},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': 'docs/START.md', 'script': 'run.js'}]},
+            {'pages': [{'id': 'start', 'title': 'Start', 'document': 'docs/START.md'}] * 2},
+            {'pages': [{'id': 'page-' + str(i), 'title': 'Page', 'document': 'docs/START.md'}
+                       for i in range(9)]},
+            {'icon': {'light': '../icon.png'}}, {'icon': {'light': 'missing.png'}},
+            {'icon': {'light': 'https://example.com/icon.png'}}, {'icon': {}},
+            {'icon': {'dark': 'icon.png'}},
+            {'connection': None}, {'connection': {}}, {'connection': {'protocol': 'custom'}},
+            {'connection': {'protocol': 'agent-bridge-v1', 'method': 'task.create'}},
+            {'connection': {'protocol': 'agent-bridge-v1', 'profile': '/private'}},
+            {'connection': {'protocol': 'agent-bridge-v1'}, 'surface': 'window'},
+            {'connection': {'protocol': 'agent-bridge-v1'}, 'surface': 'side-panel'},
+            {'connection': {'protocol': 'agent-bridge-v1'}, 'defaultPage': 'connection',
+             'pages': [{'id': 'connection', 'title': 'Conflict', 'document': 'docs/START.md'}]},
+        ]
+        for change in invalid:
+            desktop, data = self.desktop_fixture()
+            if isinstance(change, dict) and change:
+                desktop.update(change)
+            else:
+                desktop = change
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(change=change), self.assertRaises(m.MarketError):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+            self.assertEqual(self.active(), before)
+
+    def test_read_only_bridge_declaration_is_fixed_and_preserves_resource_bytes(self):
+        desktop, data = self.desktop_fixture()
+        desktop['connection'] = {'protocol': 'agent-bridge-v1'}
+        data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+        m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+        self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(),
+                         data['dfsc.plugin.json'])
+        m.validate(self.root)
+
+    def test_connection_guides_preserve_optional_declared_page_references(self):
+        for guides in ({}, {'setup': 'start'},
+                       {'setup': 'start', 'firstTask': 'first-task', 'troubleshooting': 'start'}):
+            desktop, data = self.desktop_fixture()
+            desktop['pages'].append({'id': 'first-task', 'title': 'First task',
+                                     'document': 'docs/FIRST_TASK.md'})
+            desktop['connection'] = {'protocol': 'agent-bridge-v1', 'guides': guides}
+            data['docs/FIRST_TASK.md'] = b'# First task\n'
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(guides=guides):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+                self.assertEqual((self.root / 'plugins/alpha-plugin/dfsc.plugin.json').read_bytes(),
+                                 data['dfsc.plugin.json'])
+                m.validate(self.root)
+
+    def test_invalid_connection_guides_preserve_the_installed_copy(self):
+        before = self.active()
+        for guides in (None, [], 'start', 1, {'setup': 'missing'}, {'setup': 'connection'},
+                       {'firstTask': 'https://example.com'}, {'troubleshooting': '../start'},
+                       {'setup': 'docs/START.md'}, {'setup': ' start '}, {'setup': ''},
+                       {'setup': None}, {'setup': 42}, {'setup': []}, {'setup': {}},
+                       {'setup': 'start', 'command': 'powershell.exe'}, {'execute': 'start'}):
+            desktop, data = self.desktop_fixture()
+            desktop['connection'] = {'protocol': 'agent-bridge-v1', 'guides': guides}
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(guides=guides), self.assertRaises(m.MarketError):
+                m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+            self.assertEqual(self.active(), before)
+
+    def test_desktop_icon_format_and_size_are_reviewed(self):
+        png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 8 + (32).to_bytes(4, 'big') * 2
+        supported = [('icon.png', png), ('icon.JPG', b'\xff\xd8fixture'),
+                     ('icon.jpeg', b'\xff\xd8fixture'),
+                     ('icon.webp', b'RIFF\x00\x00\x00\x00WEBPfixture'),
+                     ('icon.ico', b'\x00\x00\x01\x00fixture')]
+        for name, icon in supported:
+            desktop, data = self.desktop_fixture()
+            desktop['icon'] = {'light': name}
+            data.update({name: icon, 'dfsc.plugin.json': m.encoded({'schemaVersion': 1, 'desktop': desktop})})
+            with self.subTest(name=name):
+                m.plugin_manifest(data, 'alpha-plugin')
+        for icon in (b'<svg><script/></svg>', png + b'x' * (128 * 1024),
+                     png[:16] + (513).to_bytes(4, 'big') * 2):
+            desktop, data = self.desktop_fixture()
+            desktop['icon'] = {'light': 'icon.png'}
+            data.update({'icon.png': icon, 'dfsc.plugin.json': m.encoded({'schemaVersion': 1, 'desktop': desktop})})
+            with self.subTest(size=len(icon)), self.assertRaises(m.MarketError):
+                m.plugin_manifest(data, 'alpha-plugin')
+        for name in ('icon.bin', 'icon.svg', 'icon.png.txt'):
+            desktop, data = self.desktop_fixture()
+            desktop['icon'] = {'light': name}
+            data.update({name: png, 'dfsc.plugin.json': m.encoded({'schemaVersion': 1, 'desktop': desktop})})
+            with self.subTest(name=name), self.assertRaisesRegex(m.MarketError, 'icon extension'):
+                m.plugin_manifest(data, 'alpha-plugin')
+
+    def test_desktop_page_encoding_and_size_are_reviewed(self):
+        desktop, data = self.desktop_fixture()
+        desktop['pages'][0]['id'] = desktop['defaultPage'] = 'x' * 64
+        data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+        m.plugin_manifest(data, 'alpha-plugin')
+        for text in (b'\xff', b'x' * (256 * 1024 + 1)):
+            desktop, data = self.desktop_fixture()
+            data['docs/START.md'] = text
+            data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
+            with self.subTest(size=len(text)), self.assertRaises(m.MarketError):
+                m.plugin_manifest(data, 'alpha-plugin')
+
 
 if __name__ == '__main__':
     unittest.main()

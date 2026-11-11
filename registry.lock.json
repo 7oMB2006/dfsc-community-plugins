@@ -159,39 +159,87 @@
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
-        "commit": "6b1dc36030c77b5c03d5454ce1a2c2583c704bf4",
+        "commit": "df523a05e45355d43b911cdb78c163a7a120b1dd",
         "path": "plugins/hermes-engineering-bridge"
       },
       "files": [
         {
+          "path": "CHANGELOG.md",
+          "gitBlobSha": "45d4a1458869e514317c3a89239aa243e903c330",
+          "sha256": "1d82a3e6d10b0b8986323c417347312b6d7044bb849fa329480ac49e5e98d44d",
+          "size": 2952
+        },
+        {
           "path": "README.md",
-          "gitBlobSha": "d2c0708e1c2beee44a4fd0c71120f9a28702b19d",
-          "sha256": "321eef6333c75ff35686991f51248dfa87f3cf3d07125942e2e5a7e8cd6ed258",
-          "size": 2215
+          "gitBlobSha": "dac169113fa5c5b80c5e22de44a43208bffb93e8",
+          "sha256": "651056bea8e78a37e223bf20f4a200365888fb5d13f62ea59fb4f1d42cb9de80",
+          "size": 3378
         },
         {
           "path": "commands/hermes-bridge-help.md",
-          "gitBlobSha": "683769be91c2da160450ba083e6708584786f615",
-          "sha256": "17eb219e53d3caa54fa6b6912b9b1a5cafcf35af1b6b3e99665cc2b71acfc374",
-          "size": 1078
+          "gitBlobSha": "bd5708a649c4ffe0d11a8b95746838f4026edf73",
+          "sha256": "f40aba9572947257982846b9c01ba25a0683675aa6b9d143eb1ae7d3acb81277",
+          "size": 3256
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "1efa7edad68c81fb4b4cad0072923168ec747769",
+          "sha256": "728e05a920edbdde338512ca51e7b079c1c5a2b416c557e98e421f3258eb3dc8",
+          "size": 2601
+        },
+        {
+          "path": "docs/FIRST_TASK.md",
+          "gitBlobSha": "65ffbf636607cb787b57b9c816a37bd254e534d8",
+          "sha256": "1c9adde60ffc8a1708277217de7abee42d3ab8058b88fd593cb6c2a14759d21f",
+          "size": 4295
+        },
+        {
+          "path": "docs/SETUP.md",
+          "gitBlobSha": "41fd37b61e446467294245a8e315931a56ba76cc",
+          "sha256": "d9ccc5e1468fbeda40bdd57535ff5f8add247e611b5e10c0f8b6efc762fad447",
+          "size": 5804
+        },
+        {
+          "path": "docs/START.md",
+          "gitBlobSha": "c80196dc215762df2817a4ca72636409da4dfbdd",
+          "sha256": "8a742a6d60ca2f2890b3a36e9b73efc485b980347a82f529054bf6065e9a98a4",
+          "size": 4269
+        },
+        {
+          "path": "docs/TROUBLESHOOTING.md",
+          "gitBlobSha": "a6b8037b4e8876d8440a9ea28687d935cd47a9d3",
+          "sha256": "f74fa7f27e425ad7278eee7d6d9f7e832075bf3d60f6f521b4f1238d8af33d81",
+          "size": 5177
         },
         {
           "path": "icon.png",
-          "gitBlobSha": "ae15596df5655f4f188c9723fd24f4ed41df1f0e",
-          "sha256": "bac78108f0961cd347a8c8e131e9f2d1832031e6f344c9f966710973d655e0a3",
-          "size": 6873
+          "gitBlobSha": "43acec0ebcf78e81bfe42b49c9080b9eb06a773b",
+          "sha256": "94d7d38c86a760ac89095dc3bed7eb26da2d6eb60903345797e43e374cd9204c",
+          "size": 40561
+        },
+        {
+          "path": "icons/toolbar-dark.png",
+          "gitBlobSha": "a52fa308834c9c99180eeba652e8dc799f117844",
+          "sha256": "5fb10ee50d4bb49c37b9c24c068d646c613ca9fa74f076275a031e2c87ee51c0",
+          "size": 136
+        },
+        {
+          "path": "icons/toolbar-light.png",
+          "gitBlobSha": "af41e392b81f6e77856d1a73fb8561446fbc32f4",
+          "sha256": "945359dc44c52b65b9ccd7088b0ae2d6be93a706bfd0e7fe5f2c7399d1cc0593",
+          "size": 136
         },
         {
           "path": "skills/engineering-evidence/SKILL.md",
-          "gitBlobSha": "5b38a583fa16e0befd0e4b877ded72f95262274b",
-          "sha256": "970a8f9b103b28030881364babf46b6663f4102982b236324b3b5f340bdad6e0",
-          "size": 1107
+          "gitBlobSha": "50c135868fa51dfe0bc448f8ba27947b72f7bcec",
+          "sha256": "e86d9b4ec1aadfbb2f9fa0945f9c094d045e4e047aff74f03926c0e36940b262",
+          "size": 1222
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "c5006cf5042a71a1c2c570d2d6eb2447206163b7",
-          "sha256": "0ed181c550f8a23583de69b064c6644e377a4b064120bd4e05bc6b4b08a0cacc",
-          "size": 358
+          "gitBlobSha": "9ffb06192dac1dd3193c383afb4f45ee5ebd7b77",
+          "sha256": "0dbfc54d42fba6057a550ad6914508086810c6c49c600c23489f25b239c2040b",
+          "size": 383
         }
       ]
     },

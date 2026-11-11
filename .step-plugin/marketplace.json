@@ -9,7 +9,7 @@
     {
       "name": "hermes-engineering-bridge",
       "source": "./plugins/hermes-engineering-bridge",
-      "description": "Hermes 工程桥协作资源；完整派工另需 DFSC Hermes 0.6 宿主和 Hermes companion。"
+      "description": "Hermes x DFSC 状态面板、四步连接引导与入门指南；通用本机派工需支持 dfsc-external-v1 的构建及独立 companion。"
     },
     {
       "name": "stellar-cruise",

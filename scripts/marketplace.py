@@ -239,6 +239,90 @@ def plugin_classification(files):
             if key == 'categories':
                 require(normalized in COMMUNITY_CATEGORIES,
                         'Unknown community category; request a taxonomy review')
+    if 'desktop' in value:
+        plugin_desktop(value['desktop'], files)
+
+
+def desktop_text(value, limit=160):
+    require(isinstance(value, str) and value.strip(JS_TRIM)
+            and len(value.encode('utf-16-le', errors='surrogatepass')) // 2 <= limit
+            and not any(ord(c) < 32 for c in value), 'Invalid Desktop entry text')
+    return value.strip(JS_TRIM)
+
+
+def desktop_path(value):
+    path = relative(value)
+    require(len(path.encode('utf-16-le')) // 2 <= 256 and '#' not in path,
+            'Invalid Desktop resource path')
+    return path
+
+
+def plugin_desktop(value, files):
+    require(isinstance(value, dict), 'Desktop entry must be an object')
+    require(not set(value) - {'title', 'surface', 'symbol', 'icon', 'defaultPage', 'pages', 'connection'},
+            'Unsupported Desktop entry field')
+    desktop_text(value.get('title'))
+    require(value.get('surface') in ('main-view', 'side-panel', 'window'),
+            'Unsupported Desktop entry surface')
+    if 'symbol' in value:
+        require(value['symbol'] in ('plug', 'bot', 'book', 'wrench', 'sparkles'),
+                'Unsupported Desktop entry symbol')
+    pages = value.get('pages')
+    require(isinstance(pages, list) and 1 <= len(pages) <= 8,
+            'Desktop entry requires one to eight pages')
+    ids = set()
+    for page in pages:
+        require(isinstance(page, dict) and set(page) == {'id', 'title', 'document'},
+                'Invalid Desktop entry page')
+        ident = page['id']
+        require(isinstance(ident, str) and len(ident) <= 64
+                and re.fullmatch(r'[a-z][a-z0-9]*(?:-[a-z0-9]+)*', ident)
+                and ident not in ids, 'Invalid or duplicate Desktop page identifier')
+        ids.add(ident)
+        desktop_text(page['title'])
+        document = desktop_path(page['document'])
+        require(document.lower().endswith('.md') and document in files,
+                'Missing local Desktop page document')
+        require(len(files[document]) <= 256 * 1024, 'Desktop page document exceeds the size limit')
+        try:
+            files[document].decode('utf-8')
+        except UnicodeError:
+            raise MarketError('Desktop page document must be UTF-8') from None
+    if 'defaultPage' in value:
+        require(isinstance(value['defaultPage'], str) and value['defaultPage'] in ids,
+                'Desktop default page must exist')
+    if 'connection' in value:
+        connection = value['connection']
+        require(isinstance(connection, dict) and not set(connection) - {'protocol', 'guides'}
+                and connection.get('protocol') == 'agent-bridge-v1'
+                and value['surface'] == 'main-view' and 'connection' not in ids,
+                'Unsupported read-only Desktop connection declaration')
+        if 'guides' in connection:
+            guides = connection['guides']
+            require(isinstance(guides, dict)
+                    and not set(guides) - {'setup', 'firstTask', 'troubleshooting'}
+                    and all(isinstance(ident, str) and ident in ids for ident in guides.values()),
+                    'Desktop connection guides must reference declared local pages')
+    if 'icon' in value:
+        icon = value['icon']
+        require(isinstance(icon, dict) and set(icon) <= {'light', 'dark'} and 'light' in icon,
+                'Invalid Desktop entry icon')
+        for path in icon.values():
+            name = desktop_path(path)
+            require(re.search(r'\.(?:png|jpe?g|webp|ico)$', name, re.IGNORECASE),
+                    'Unsupported Desktop entry icon extension')
+            require(name in files and len(files[name]) <= 128 * 1024,
+                    'Missing or oversized Desktop entry icon')
+            data = files[name]
+            png = data.startswith(b'\x89PNG\r\n\x1a\n')
+            jpeg = data.startswith(b'\xff\xd8')
+            webp = data[:4] == b'RIFF' and data[8:12] == b'WEBP'
+            ico = data[:4] == b'\x00\x00\x01\x00'
+            require(png or jpeg or webp or ico, 'Unsupported Desktop entry icon image')
+            if png:
+                require(len(data) >= 24 and 0 < int.from_bytes(data[16:20], 'big') <= 512
+                        and 0 < int.from_bytes(data[20:24], 'big') <= 512,
+                        'Desktop entry icon dimensions exceed the size limit')
 
 
 def plugin_manifest(files, ident):

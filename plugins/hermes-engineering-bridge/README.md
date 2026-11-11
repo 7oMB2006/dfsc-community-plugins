@@ -1,36 +1,79 @@
-# Hermes 工程桥协作资源
+# Hermes x DFSC
 
-这是 DFSC 社区市场中的 `hermes-engineering-bridge` 资源插件，资源版本 **0.1.0**，许可证 **MIT**。
+这是 DFSC 社区市场中的 `hermes-engineering-bridge` 资源插件，资源版本 **0.3.0**，许可证 **MIT**。
 
 ## 安装后提供什么
 
-- `hermes-engineering-evidence` 技能：工程协作和原生执行证据的验收规范。
-- `hermes-bridge-help` 帮助命令：组件分工、连接入口与诊断说明。
-- 插件图标及配套说明。
+- Hermes x DFSC 状态入口：在支持 `agent-bridge-v1` 的 DFSC 构建中，顶栏图标先展开轻量 Agent 状态面板，不切换当前聊天。
+- 小面板展示本次检查的身份与首批最多 5 项任务，打开或手动刷新时更新，不是实时在线状态；再次点击、Escape 或点击外部收起。
+- 只读连接页：用户主动选择本机 profile 后，展示身份目录、companion 配置、Bridge 连接和授权目录四步检查；令牌不进入页面。配置存在不证明 companion 已启用或加载。
+- 四页随包指南：开始使用、连接准备、第一项任务、排查问题；无须先打开私有仓库阅读入门内容。
+- `hermes-engineering-evidence` 技能与 `hermes-bridge-help` 帮助命令。
+- 插件自带图标与更新记录。
 
-资源可由 DFSC 0.6 的原生市场加载。目标平台为 macOS Apple Silicon 和 Windows x64。
+旧宿主仍可加载原有资源，不会因为安装插件自动获得新界面。新工作台须使用支持
+连接协议的新客户端；相同 `0.6.0` 版本号不证明已有此适配，不声称已发布安装包均支持。
+目标平台为 macOS Apple Silicon 和 Windows x64。
 
-完整工程派工需要另行安装 **DFSC Hermes 0.6.0 宿主内置 Agent Bridge** 与 **Hermes companion 0.2.0**，并为每个智能体完成独立身份、目录授权与配对。安装本资源条目不会安装这些组件、注册飞书、派工或启用工程权限。
+**入口出现不代表已连接。只读核验成功也不代表 companion 已加载或可以派工。**
+DFSC 宿主 PR #225 已合入通用本机委托入口，但旧安装包不会因安装市场资源自动获得接口。
+仍需取得明确包含 `dfsc-external-v1` 的构建，以及独立安装、启用并重载的
+Hermes x DFSC companion 0.2.0、使用者自己的 Hermes 与模型环境。
+companion 是本项目维护的 Hermes 侧插件，不是 Hermes 官方组件。
+同号 `0.6.0` 不能证明所需接口已包含；本市场不分发宿主安装器或 companion，
+也不声明本轮源码已成为公开发行版。
+
+新增通用模式不依赖飞书：在本机明确授权目录后，通过原生 Ask 会话派工，
+需要的工具审批仍由本机用户处理，不开放远程审批。旧 DFSC Hermes 专版模式
+继续使用原协议及飞书工程授权，不会自动切换或降级；不要混用两种模式的配对文件。
 
 ## 安装与配套指南
 
-在 DFSC 的「市场来源」添加社区市场，在「发现」安装 `hermes-engineering-bridge`，再按 DFSC 提示让会话重新加载。
+在 DFSC 的「市场来源」添加社区市场，在「发现」安装 `hermes-engineering-bridge`。
+安装后点击 Hermes 顶栏图标查看状态；从「打开完整工作台」进入「连接」，
+选择、更换或忘记本机 profile。缺少组件时按四步卡片进入对应随包指南。
+旧宿主在插件详情阅读“开始使用”；技能与命令的生效按宿主提示重载会话。
+入门指南位于资源包的 `docs/START.md` 等文件，展示清单明确引用，不依赖被市场覆盖的 README。
 
 工程桥项目单独维护：
 
 - [项目与完整组件说明](https://github.com/7oMB2006/hermes-engineering-bridge)
 - [配套安装、配对、重载及卸载指南](https://github.com/7oMB2006/hermes-engineering-bridge/blob/main/INSTALL.txt)
 
-配套项目若为私有仓库，需要获得其访问权限；维护者应另行提供所需宿主与 companion。社区市场中没有 companion 安装目录或宿主安装器，不能用复制资源目录代替配套安装。
+配套项目的可访问性以 GitHub 和维护者提供的渠道为准。无法打开时，应向维护者取得受支持宿主和 companion，
+不要反复安装资源或使用不明来源的替代包。社区市场没有 companion 安装目录或
+宿主安装器，不能用复制资源目录代替配套安装。
+通用本机模式的准备顺序是：
+
+1. 在支持构建的「远程访问 → 接入渠道 → 外部 Agent」开启本机接入，为一个空练习项目授权。
+2. 复制该连接的非秘密配置路径，在 Hermes 自己的 Python 环境中按随包「连接准备」安装 companion；不手写令牌，也不使用旧模式的 `--pair`。
+3. 由你或管理员启用并重载目标 Hermes profile，回到本插件选择身份目录并重新检查。
+4. 按「第一项任务」只提交一个练习任务，再核对 DFSC 原生会话、所需本机审批及实际结果。
+
+本市场资源本身不增加模型请求、自动安装或权限。
+选择 profile 后，宿主仅检查 `config.yaml` 标记并读取 `dfsc-bridge/config.json`
+及其显式 `bridgeRoot` 中对应身份的 `model.json`，不读取 YAML 内容、`human.json` 或 `.env`。
+连接面板只列出首批 50 条中符合身份与真实目录交集的最多 20 项，不提供审批或任务控制。
+通用宿主当前每页最多 20 项，状态面板仅展示首批状态，不提供回答摘要或翻页，
+不能据此判断全部历史、工程正确性或用户验收。通用派工一任务一个新会话、单轮提交，
+回答摘要仅当前 DFSC 进程保存，重启后仅保留回执，不回读旧会话。
+忘记选择不修改原 profile 或配对文件；资源更新后需重新选择。
+用户主动进行真实练习仍可能使用其现有模型或服务并产生对应费用。
 
 ## 更新、停用与卸载
 
-更新社区市场后，当前 DFSC 0.6 需卸载旧资源再安装新资源，并按提示让会话重新加载。卸载本资源条目只移除技能、命令等资源。
+刷新市场不会更新已经安装的副本。支持更新操作的宿主使用插件中心的更新入口；
+旧宿主按其说明卸载旧资源、重新安装并重载会话。卸载本资源条目只移除指南、
+入口声明、技能和命令等资源。
 
 停用完整工程桥按配套项目指南分别处理宿主接入、Hermes 插件与智能体登记。资源卸载不会撤销身份权限或停止正在执行的工程。
 
 ## 来源与验证范围
 
-上游为 [7oMB2006/hermes-engineering-bridge](https://github.com/7oMB2006/hermes-engineering-bridge)，初始收录固定于提交 [`6b1dc36030c77b5c03d5454ce1a2c2583c704bf4`](https://github.com/7oMB2006/hermes-engineering-bridge/tree/6b1dc36030c77b5c03d5454ce1a2c2583c704bf4/plugins/hermes-engineering-bridge)。当前来源与文件哈希以社区市场的 `registry.json`、`registry.lock.json` 为准；本说明由社区市场维护。
+上游为 [7oMB2006/hermes-engineering-bridge](https://github.com/7oMB2006/hermes-engineering-bridge)。
+当前固定提交与文件哈希以社区市场的 `registry.json`、`registry.lock.json` 为准；
+本说明由社区市场维护。所有新页面、展示清单和原始图标随固定来源同步并锁定。
 
-既有资源已完成 macOS 原生市场发现、安装、技能／命令加载、卸载与重装检查。完整宿主另有双端原生验收；这些证据不等于新用户机器已完成安装、真实飞书新委托或连续过夜运行。
+0.3.0 的资源结构、固定只读协议、受限指南引用、已确认图标及未新增执行入口有自动化检查。
+完整宿主和 companion 的既有验证不等于新入口已在所有已发布宿主可用，
+也不代表新用户机器已完成安装、真实飞书新委托或连续过夜运行。
