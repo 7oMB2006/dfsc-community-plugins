@@ -115,6 +115,17 @@ node integration/verify-dfsc.mjs /absolute/path/to/dfsc-community-plugins
 最后一个参数也可使用市场 Git 地址。检查在一次性 DFSC 数据目录内验证市场发现、UI 安装、技能／命令加载、卸载和重装，证据写入 `test-results/`；不修改真实账户或工程任务。
 本地 Git 工作目录会通过 `file://` 原生 Git 来源验证，避免把忽略文件复制进市场快照；这不替代 GitHub 私仓网络认证的单独检查。
 
+自定义背景使用同样的环境变量，在包含该宿主能力的实际应用上单独验收：
+
+```sh
+node integration/verify-custom-background.mjs /absolute/path/to/committed-market
+```
+
+本地 Git 市场须先提交待验资源。此脚本覆盖发现、界面安装、图片导入、停启、
+重启持久化及卸载重装，不调用模型；系统选图窗口使用受控夹具。
+默认写入新的时间戳证据目录，也可用 `DFSC_VERIFY_OUTPUT` 指定尚不存在的目录。
+本地 Git 验收不等于远端 main 已上架，具体结果见[验证记录](docs/verification.md)。
+
 按 `registry.json` 中固定提交同步一个条目：
 
 ```sh
