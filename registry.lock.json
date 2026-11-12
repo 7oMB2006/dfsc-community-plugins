@@ -156,6 +156,52 @@
       ]
     },
     {
+      "id": "custom-background",
+      "source": {
+        "repository": "7oMB2006/desktop-for-step-code",
+        "commit": "ed7c6e46c5fdad85b678eff857ae0b39b96977ba",
+        "path": "theme-marketplace/plugins/custom-background"
+      },
+      "files": [
+        {
+          "path": "ICON-LICENSE.txt",
+          "gitBlobSha": "b70071e8df72e314b526a0d4d98ec32344b2a9c9",
+          "sha256": "8284cdd9d63b57341875ae52c388355a2f8ebc7e09fbaf64548e2c2df39a226c",
+          "size": 760
+        },
+        {
+          "path": "README.md",
+          "gitBlobSha": "72fff09050682f463862a95698ce26847ed5f6e7",
+          "sha256": "97dfd853d40910608cb7407c6fb11c856fe0038c11bf9994865e907b0c72ecee",
+          "size": 2911
+        },
+        {
+          "path": "dfsc.appearance.json",
+          "gitBlobSha": "436be2885ff2884d4dae74f6a31e3b22fffd6879",
+          "sha256": "a48a9c783e2d9cc2b09ecc02579c8ba475d093fcbbe2f97dd0ef899001f0f4f4",
+          "size": 63
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "f325a648854900aa9d3d831051a0db820b264769",
+          "sha256": "8b912cb9f632b8dff2f039b1d83f068bd3418c86e2b42de3b89e6ecd5047c2b1",
+          "size": 406
+        },
+        {
+          "path": "icon.png",
+          "gitBlobSha": "d24c8947ce5b910975a2d35a48bede740443e4ef",
+          "sha256": "4d01c9ce1c4155856180f2862983ebea83639ad5444d92cab24bc5952347044d",
+          "size": 2541
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "c3ae6077aa9d0120c7d64d49b3c386a1b27e4886",
+          "sha256": "98ff36f583bf700720ec8a14aa3c0bc3628fcf8cc8d986ac54fce5e3c2cf52b8",
+          "size": 370
+        }
+      ]
+    },
+    {
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",

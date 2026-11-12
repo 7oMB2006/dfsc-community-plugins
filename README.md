@@ -46,6 +46,7 @@ Git 来源需要本机可用的 Git。公开 Git 源可直接访问；私有 Git
 | [Hermes x DFSC](docs/plugins/hermes-engineering-bridge.md) | 0.3.0 | 顶栏状态面板、四步连接引导、随包指南与工程证据资源 | 需支持所选协议的 DFSC 构建、Hermes 与独立 companion 0.2.0；通用模式不依赖飞书 |
 | [BVR 视频研究](docs/plugins/bilibili-video-research.md) | 0.1.0 | 视频研究 MCP、技能与 `/bvr` | 单独安装 BVR 本体与 Node.js 24+；跟随账户及图形配置另需 BVR 新宿主 |
 | [星辰巡航](docs/plugins/stellar-cruise.md) | 0.1.0 | 双龙星海动态主题、石墨阅读面板与铅笔细线 | 需包含 DFSC #210、支持 `stellar-v1` 的客户端；安装后在「外观」手动启用 |
+| [自定义背景](docs/plugins/custom-background.md) | 0.1.0 | 本机 PNG/JPEG、构图调节、鼠标视差及标准界面分区材质 | 需包含 DFSC #223、提供 `custom-background-v1` 的构建；安装后进入插件配置导入图片 |
 
 工程桥的独立项目继续在 [7oMB2006/hermes-engineering-bridge](https://github.com/7oMB2006/hermes-engineering-bridge) 维护。本市场收录其中的 DFSC 资源目录；市场安装不会自动安装 Hermes companion、创建飞书机器人或授予工程权限。宿主安装器和 companion 按各自指南单独取得与安装。
 
@@ -60,6 +61,12 @@ BVR 继续在 [7oMB2006/Bilibili-Video-Research](https://github.com/7oMB2006/Bil
 它是声明式主题资源，不提供技能、MCP 或任意插件前端。
 仅有插件市场或相同的 `0.6.0` 版本号不代表支持主题；宿主能力需单独核对。
 安装不会自动切换外观，卸载正在使用的主题会回退到「原版深色」。
+
+自定义背景是固定的宿主适配入口，不是另一个 UI 皮肤或可执行前端插件。
+内置主题可使用个人图片；主题包必须明确开放 `image-v1` 插槽，
+原版星辰巡航仍保持完整场景。未开放时图片与参数保留但暂停生效。
+关闭或卸载背景插件会停止生效，重新安装后需再次启用。
+插件尚未声明作者与版本范围字段；能力与数据保留边界见[完整说明](docs/plugins/custom-background.md)。
 
 - Git 来源可在「市场来源」更新，获取最新市场清单和资源副本。
 - 更新市场只刷新来源，不自动替换已经安装的插件。支持显式插件更新的 DFSC 宿主
@@ -107,6 +114,17 @@ node integration/verify-dfsc.mjs /absolute/path/to/dfsc-community-plugins
 
 最后一个参数也可使用市场 Git 地址。检查在一次性 DFSC 数据目录内验证市场发现、UI 安装、技能／命令加载、卸载和重装，证据写入 `test-results/`；不修改真实账户或工程任务。
 本地 Git 工作目录会通过 `file://` 原生 Git 来源验证，避免把忽略文件复制进市场快照；这不替代 GitHub 私仓网络认证的单独检查。
+
+自定义背景使用同样的环境变量，在包含该宿主能力的实际应用上单独验收：
+
+```sh
+node integration/verify-custom-background.mjs /absolute/path/to/committed-market
+```
+
+本地 Git 市场须先提交待验资源。此脚本覆盖发现、界面安装、图片导入、停启、
+重启持久化及卸载重装，不调用模型；系统选图窗口使用受控夹具。
+默认写入新的时间戳证据目录，也可用 `DFSC_VERIFY_OUTPUT` 指定尚不存在的目录。
+本地 Git 验收不等于远端 main 已上架，具体结果见[验证记录](docs/verification.md)。
 
 按 `registry.json` 中固定提交同步一个条目：
 

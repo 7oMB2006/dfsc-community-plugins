@@ -1,5 +1,46 @@
 # 市场验证记录
 
+## 自定义背景 0.1.0 收录候选（2026-11-12）
+
+固定来源为 `7oMB2006/desktop-for-step-code` 的 #223 合并提交
+`ed7c6e46c5fdad85b678eff857ae0b39b96977ba`，资源目录为
+`theme-marketplace/plugins/custom-background`。通过 GitHub 固定提交同步六个原始
+文件并核对 Git blob，再生成资源、来源锁和原生清单；维护者说明作为 README
+覆盖，保留完整 MIT 通知及 Lucide ISC 图标许可。BVR、Hermes、Stellar 的
+登记、完整锁项、资源和维护者说明均保持不变。
+
+| 验证 | 结果与边界 |
+| --- | --- |
+| `python scripts/validate-marketplace.py --check` | 通过，四个插件的来源、锁与资源一致 |
+| `python -m unittest discover -s tests -v` | 35 项：34 通过，1 项既有 Windows 符号链接权限跳过 |
+| `npm test` | 32 项：31 通过，1 项既有符号链接权限跳过 |
+| `node scripts/check-plugin-metadata.mjs` | 零错误；保留 Stellar 既有三项及背景插件三项缺失声明提醒 |
+| `node scripts/check-theme-pack.mjs` | 零错误，保留 Stellar v1 既有提醒；此项不校验背景适配器语义 |
+| 原始适配器声明回归 | 验证逐字节同步、来源锁、篡改后拒绝资源漂移及其他插件隔离，不冒充 provider 语义验证 |
+| 原生市场发现与 UI 安装 | 通过；来源为 `dfsc-community`，安装记录及 `custom-background-v1` 由宿主确认，安装 README 字节与审核说明一致 |
+| 图片导入、停启与重启 | 通过；真实宿主导入和解码 PNG，关闭时保留图片，再启用及正常重启后参数与图片一致 |
+| 卸载、重装与市场移除 | 通过；卸载停止生效，重装保留图片但默认关闭，移除市场后原有插件基线不变 |
+| 隔离与退出 | 两次启动均为实际打包 EXE、独立用户目录和 `app.asar` 主模块；renderer 沙箱保持开启，零页面异常、零模型请求，两次退出码均为 0、剩余窗口均为 0 |
+
+原生检查使用 `integration/verify-custom-background.mjs`，实际克隆已提交的市场
+快照 `1985f62aae9a38ad646a902a6080695cd2d19bbe`，通过 `file://` 原生 Git
+来源及插件中心安装，而非直接写入插件目录。证据保存在忽略目录
+`test-results/custom-background-market-1985f62/`，不上传临时 profile 或日志。
+后续仅补本文及 README 的运行说明，不改变该快照的插件资源、登记、锁或验收脚本。
+
+宿主为 Windows x64 的本地 0.6.0 体验包，构建收据固定到上述宿主合并提交，
+源码树与已验收 head `02750b5131780c731bb04cc8c86681e3d75fb9cd` 一致；
+不能仅凭相同版本号推断其他安装包支持。验收使用独立数据目录、回环提供商，
+不修改现用账号或应用。系统选图对话框由受控夹具返回测试 PNG 路径，
+不是实际操作系统对话框交互验收。宿主此前的分区材质、主题插槽矩阵、
+MiniChat 和退出验收不计为本次市场脚本重新覆盖。
+
+背景来源的 `dfsc.plugin.json` 缺少 `authors`、`requirements.dfsc`、
+`requirements.external`，本次如实保留三项提醒，不代作者补写或编造版本范围。
+本地 Git 成功不等于 GitHub 网络安装、认证或公共 main 已上架；本记录也不代表
+新 PR 云端 CI、真实账户/计费、macOS/Linux、安装器升级或长期性能已通过。
+市场候选仍须独立审核及合并，不自动发布客户端。
+
 ## Hermes x DFSC 合并后来源同步（2026-11-11）
 
 Hermes companion PR #1 已合并，来源由
