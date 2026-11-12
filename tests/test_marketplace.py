@@ -187,6 +187,26 @@ class MarketplaceTests(unittest.TestCase):
         self.assertEqual(json.loads((self.root / 'plugins/alpha-plugin/step.plugin.json').read_text())['version'], '1.1.0')
         self.assertEqual(beta, {p.name: p.read_bytes() for p in (self.root / 'plugins/beta-plugin').iterdir() if p.is_file()})
 
+    def test_appearance_marker_bytes_are_synced_locked_and_hash_protected(self):
+        beta = m.inventory(self.root / 'plugins/beta-plugin')
+        marker = b'{ "schemaVersion": 1, "provider": "custom-background-v1" }\r\n'
+        data = {**self.raw['alpha-plugin'], 'dfsc.appearance.json': marker,
+                'step.plugin.json': m.encoded({
+                    'id': 'alpha-plugin', 'version': '1.0.0',
+                    'skills': [], 'commands': [], 'agents': [], 'mcpServers': {}})}
+        m.sync(self.root, 'alpha-plugin', fetch=self.api(data))
+        installed = self.root / 'plugins/alpha-plugin/dfsc.appearance.json'
+        self.assertEqual(installed.read_bytes(), marker)
+        locked = next(p for p in m.lockfile(self.root)['plugins'] if p['id'] == 'alpha-plugin')
+        self.assertIn(hashes('dfsc.appearance.json', marker), locked['files'])
+        self.assertEqual(m.validate(self.root)['plugins'], ['alpha-plugin', 'beta-plugin'])
+        self.assertEqual(m.inventory(self.root / 'plugins/beta-plugin'), beta)
+
+        installed.write_bytes(marker + b' ')
+        with self.assertRaisesRegex(m.MarketError, r'resource drift: dfsc\.appearance\.json'):
+            m.validate(self.root)
+        self.assertEqual(m.inventory(self.root / 'plugins/beta-plugin'), beta)
+
     def test_write_failure_rolls_back_plugin_and_both_metadata_files(self):
         (self.root / self.entry()['readme']).write_text('New reviewed README\n')
         before = self.active()
