@@ -53,14 +53,13 @@ Git 来源需要本机可用的 Git。公开 Git 源可直接访问；私有 Git
 
 当前 DFSC 0.6 的市场入口接受 Git 来源和本地目录。ZIP 需先解压，再添加本地目录；GitHub Release 的 ZIP 下载链接不能直接作为市场地址。
 
-## 首批收录
+## 当前收录
 
 | 插件 | 资源版本 | 提供内容 | 配套要求 |
 | --- | --- | --- | --- |
 | [Hermes x DFSC](docs/plugins/hermes-engineering-bridge.md) | 0.3.0 | 顶栏状态面板、四步连接引导、随包指南与工程证据资源 | 需支持所选协议的 DFSC 构建、Hermes 与独立 companion 0.2.0；通用模式不依赖飞书 |
 | [BVR 视频研究](docs/plugins/bilibili-video-research.md) | 0.1.0 | 视频研究 MCP、技能与 `/bvr` | 单独安装 BVR 本体与 Node.js 24+；跟随账户及图形配置另需 BVR 新宿主 |
 | [星辰巡航](docs/plugins/stellar-cruise.md) | 0.1.0 | 双龙星海动态主题、石墨阅读面板与铅笔细线 | 需包含 DFSC #210、支持 `stellar-v1` 的客户端；安装后在「外观」手动启用 |
-| [自定义背景](docs/plugins/custom-background.md)（旧宿主兼容，由 DFSC 项目维护） | 0.1.1 | 本机 PNG/JPEG、构图调节、鼠标视差及标准界面分区材质 | 含基础背景内置改动的新构建直接到「设置 → 外观」，无需安装；旧构建仍须 #223 适配器及本插件 |
 
 工程桥的独立项目继续在 [7oMB2006/hermes-engineering-bridge](https://github.com/7oMB2006/hermes-engineering-bridge) 维护。本市场收录其中的 DFSC 资源目录；市场安装不会自动安装 Hermes companion、创建飞书机器人或授予工程权限。宿主安装器和 companion 按各自指南单独取得与安装。
 
@@ -76,12 +75,16 @@ BVR 继续在 [7oMB2006/Bilibili-Video-Research](https://github.com/7oMB2006/Bil
 仅有插件市场或相同的 `0.6.0` 版本号不代表支持主题；宿主能力需单独核对。
 安装不会自动切换外观，卸载正在使用的主题会回退到「原版深色」。
 
-基础自定义背景在新版宿主内置于外观设置；此包保留旧宿主入口兼容，
-不是另一个 UI 皮肤或可执行前端插件。源码支持不代表所有公开安装包都已升级。
+基础自定义背景已随宿主 #240 内置于「设置 → 外观」，
+`custom-background` 已从当前市场清单撤下，不再提供新的安装或更新入口。
+市场刷新后生效；旧缓存仍可能显示条目，已安装副本不会被本次下架自动卸载。
+新版可直接使用外观设置，卸载旧兼容插件不影响背景；旧宿主仍依赖已安装插件，
+不要仅因市场下架而卸载。旧版获取方式见[兼容归档](docs/plugins/custom-background.md)。
+源码支持不代表所有公开安装包都已升级。
 内置主题可使用个人图片；主题包必须明确开放 `image-v1` 插槽，
 原版星辰巡航仍保持完整场景。未开放时图片与参数保留但暂停生效。
-关闭或卸载背景插件会停止生效，重新安装后需再次启用。
-插件已声明作者、DFSC 数值版本要求及无额外依赖；版本符合不替代宿主能力或主题插槽检查。
+仅在旧宿主中，关闭背景或卸载背景插件会停止生效，重新安装后需再次启用。
+同一个 `0.6.0` 版本号不替代宿主能力或主题插槽检查。
 当前图片导入、渲染与配置仍由宿主管理，不是完全外置的渲染模块；
 能力与数据保留边界见[完整说明](docs/plugins/custom-background.md)。
 
@@ -132,16 +135,10 @@ node integration/verify-dfsc.mjs /absolute/path/to/dfsc-community-plugins
 最后一个参数也可使用市场 Git 地址。检查在一次性 DFSC 数据目录内验证市场发现、UI 安装、技能／命令加载、卸载和重装，证据写入 `test-results/`；不修改真实账户或工程任务。
 本地 Git 工作目录会通过 `file://` 原生 Git 来源验证，避免把忽略文件复制进市场快照；这不替代 GitHub 私仓网络认证的单独检查。
 
-自定义背景使用同样的环境变量，在包含该宿主能力的实际应用上单独验收：
-
-```sh
-node integration/verify-custom-background.mjs /absolute/path/to/committed-market
-```
-
-本地 Git 市场须先提交待验资源。此脚本覆盖发现、界面安装、图片导入、停启、
-重启持久化及卸载重装，不调用模型；系统选图窗口使用受控夹具。
-默认写入新的时间戳证据目录，也可用 `DFSC_VERIFY_OUTPUT` 指定尚不存在的目录。
-本地 Git 验收不等于远端 main 已上架，具体结果见[验证记录](docs/verification.md)。
+`integration/verify-custom-background.mjs` 只适用于仍包含兼容插件的历史市场和 #223 旧宿主，
+不能用于当前已下架的清单或 #240 内置入口验收。
+历史用法与固定快照见[兼容归档](docs/plugins/custom-background.md)；
+记录不等于远端 main 已上架，具体结果见[验证记录](docs/verification.md)。
 
 按 `registry.json` 中固定提交同步一个条目：
 
@@ -156,6 +153,16 @@ python3 scripts/sync-plugin.py --plugin hermes-engineering-bridge --source-dir /
 ```
 
 `--source-dir` 指向直接包含 `step.plugin.json` 的目录；文件清单与哈希须和锁定记录一致。修改来源提交、依赖或权限需求后，先审核变更，再运行同步、校验和测试。收录流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+退役条目时先保留维护者归档说明与固定历史来源，再显式执行：
+
+```sh
+python3 scripts/sync-plugin.py --retire plugin-id
+```
+
+工具先校验当前市场，拒绝删除有资源漂移的副本；随后一起移除登记、来源锁、
+发现条目和对应资源目录，失败则回滚，保留 `docs/plugins/<id>.md`。
+不联网同步其他插件，也不操作用户已安装的插件、配置或图片。
 
 仓库校验与受控安装检查分别记录。市场能够发现和安装一个条目，不表示该插件的外部服务、真实账户、飞书业务闭环或连续过夜运行已完成验收。
 

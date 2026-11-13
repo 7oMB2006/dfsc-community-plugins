@@ -462,14 +462,24 @@ def fetch_source(item, fetch=github_json):
     return files
 
 
-def sync(root, ident=None, source_dir=None, fetch=github_json):
+def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
     root = Path(root).resolve()
     config = registry(root)
     current = lockfile(root) if plain(root, 'registry.lock.json').exists() else {'schemaVersion': 1, 'plugins': []}
-    selected = [p for p in config['plugins'] if ident is None or p['id'] == ident]
-    require(selected, 'Unknown plugin identifier')
-    require(source_dir is None or len(selected) == 1 and ident is not None, '--source-dir requires one --plugin')
     locks = {p['id']: p for p in current['plugins']}
+    if retire is not None:
+        safe_name(retire)
+        require(ident is None and source_dir is None, '--retire cannot be combined with synchronization options')
+        require(any(p['id'] == retire for p in config['plugins']), 'Unknown plugin identifier')
+        # Refuse to remove drifted or unreviewed resources before staging retirement.
+        validate(root)
+        config['plugins'] = [p for p in config['plugins'] if p['id'] != retire]
+        del locks[retire]
+        selected = []
+    else:
+        selected = [p for p in config['plugins'] if ident is None or p['id'] == ident]
+        require(selected, 'Unknown plugin identifier')
+        require(source_dir is None or len(selected) == 1 and ident is not None, '--source-dir requires one --plugin')
     prepared = {}
     # Complete acquisition and validation before changing any active package.
     for item in selected:
@@ -506,8 +516,12 @@ def sync(root, ident=None, source_dir=None, fetch=github_json):
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_bytes(data)
                 updates.append((plain(root, 'plugins/' + name), candidate))
-            for name, data in [('registry.lock.json', encoded(result_lock)),
-                               ('.step-plugin/marketplace.json', encoded(native_manifest(config)))]:
+            metadata = [('registry.lock.json', encoded(result_lock)),
+                        ('.step-plugin/marketplace.json', encoded(native_manifest(config)))]
+            if retire is not None:
+                updates.append((plain(root, 'plugins/' + retire), None))
+                metadata.append(('registry.json', encoded(config)))
+            for name, data in metadata:
                 pending = stage / ('metadata-' + str(len(updates)))
                 pending.write_bytes(data)
                 updates.append((plain(root, name), pending))
@@ -520,7 +534,8 @@ def sync(root, ident=None, source_dir=None, fetch=github_json):
                     if had_previous:
                         active.replace(backup)
                     changed.append((active, backup, had_previous))
-                    pending.replace(active)
+                    if pending is not None:
+                        pending.replace(active)
                 outcome = validate(root)
             except Exception:
                 for active, backup, had_previous in reversed(changed):
@@ -533,4 +548,5 @@ def sync(root, ident=None, source_dir=None, fetch=github_json):
                 raise
     finally:
         guard.unlink()
-    return {**outcome, 'synchronized': sorted(prepared)}
+    return {**outcome, 'synchronized': sorted(prepared),
+            **({'retired': [retire]} if retire is not None else {})}

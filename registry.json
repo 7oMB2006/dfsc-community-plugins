@@ -34,17 +34,6 @@
       },
       "license": "项目作者授权的 DFSC 主题分发；美术与品牌不按宿主代码 MIT 重新许可，详见收录说明",
       "readme": "docs/plugins/stellar-cruise.md"
-    },
-    {
-      "id": "custom-background",
-      "description": "自定义背景旧宿主兼容入口：新构建直接到设置的外观页，无需安装；旧构建需 #223 / custom-background-v1，支持本机 PNG/JPEG 和分区材质。",
-      "source": {
-        "repository": "7oMB2006/desktop-for-step-code",
-        "commit": "7ff960c98ed465dc6c7e6a4829f8c6e04db74f51",
-        "path": "theme-marketplace/plugins/custom-background"
-      },
-      "license": "MIT；Lucide 图标 ISC，保留原始图标许可与收录说明中的 MIT 通知",
-      "readme": "docs/plugins/custom-background.md"
     }
   ]
 }

@@ -16,7 +16,7 @@ const { _electron: electron } = require('playwright');
 const { closeDesktopFixtureAndWait } = await import(pathToFileURL(join(resolve(desktop), 'scripts/close-desktop-fixture.mjs')));
 const registry = JSON.parse(await readFile(join(root, 'registry.json'), 'utf8'));
 const selected = registry.plugins.find(item => item.id === 'custom-background');
-assert.ok(selected);
+assert.ok(selected, 'custom-background is retired; run this legacy scenario from the documented fixed marketplace snapshot against a #223 host');
 assert.equal(registry.marketplaceName, 'dfsc-community');
 const manifest = JSON.parse(await readFile(join(root, 'plugins', selected.id, 'step.plugin.json'), 'utf8'));
 const presentation = JSON.parse(await readFile(join(root, 'plugins', selected.id, 'dfsc.plugin.json'), 'utf8'));

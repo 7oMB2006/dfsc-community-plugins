@@ -156,58 +156,6 @@
       ]
     },
     {
-      "id": "custom-background",
-      "source": {
-        "repository": "7oMB2006/desktop-for-step-code",
-        "commit": "7ff960c98ed465dc6c7e6a4829f8c6e04db74f51",
-        "path": "theme-marketplace/plugins/custom-background"
-      },
-      "files": [
-        {
-          "path": "CHANGELOG.md",
-          "gitBlobSha": "3ba49a166403958b507bf1d556111101b8083c02",
-          "sha256": "0a9c47776b71c392967f26c5008de92121a183a67ae51bfe076b9c1f3147898a",
-          "size": 694
-        },
-        {
-          "path": "ICON-LICENSE.txt",
-          "gitBlobSha": "b70071e8df72e314b526a0d4d98ec32344b2a9c9",
-          "sha256": "8284cdd9d63b57341875ae52c388355a2f8ebc7e09fbaf64548e2c2df39a226c",
-          "size": 760
-        },
-        {
-          "path": "README.md",
-          "gitBlobSha": "e6c1104cf23ff4bcd2cec923625f927054db7c71",
-          "sha256": "34a3f1a78dcfe18fb1e669be7d50affba201824e7b4f7f658e2e1469203357cf",
-          "size": 4801
-        },
-        {
-          "path": "dfsc.appearance.json",
-          "gitBlobSha": "436be2885ff2884d4dae74f6a31e3b22fffd6879",
-          "sha256": "a48a9c783e2d9cc2b09ecc02579c8ba475d093fcbbe2f97dd0ef899001f0f4f4",
-          "size": 63
-        },
-        {
-          "path": "dfsc.plugin.json",
-          "gitBlobSha": "d93944fa4a00cda814a607b2ff9d3760ff6d1b88",
-          "sha256": "5f69392161508024ebc90ea93a9e9816d50363127ed4adcad5df136435a491e8",
-          "size": 565
-        },
-        {
-          "path": "icon.png",
-          "gitBlobSha": "d24c8947ce5b910975a2d35a48bede740443e4ef",
-          "sha256": "4d01c9ce1c4155856180f2862983ebea83639ad5444d92cab24bc5952347044d",
-          "size": 2541
-        },
-        {
-          "path": "step.plugin.json",
-          "gitBlobSha": "1c8e4a37ad3b8296e925786ba5dc719a278c3bf4",
-          "sha256": "810858967608906e02d937f36d5a30efe4e113c8755d05ff6608e6373a5b82f6",
-          "size": 370
-        }
-      ]
-    },
-    {
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",
