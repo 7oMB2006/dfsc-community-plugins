@@ -159,7 +159,7 @@
       "id": "custom-background",
       "source": {
         "repository": "7oMB2006/desktop-for-step-code",
-        "commit": "769ccfba9ae55014289f908003d9314fd18e1d2e",
+        "commit": "2c2ff1b7687dc2d57380df9e73e30f38d3aec585",
         "path": "theme-marketplace/plugins/custom-background"
       },
       "files": [
@@ -177,9 +177,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "21e73044f27f4f92782868949d00a446cd79ef09",
-          "sha256": "a833163ad5e6b67b8b7794b25d74d807430e2ade872010215cf43c8a211e84b6",
-          "size": 3758
+          "gitBlobSha": "a5783d09afddbb55767fe2a683f61743b4582979",
+          "sha256": "0c751181835d5d67d8a2b0e00d96004ce1a03964f5c1228101d207e8a56a3c76",
+          "size": 4043
         },
         {
           "path": "dfsc.appearance.json",

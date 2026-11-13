@@ -5,6 +5,9 @@
 不是上传 CSS、JavaScript 或独立前端的通用插件。
 作者声明为 `Desktop for Step Code contributors`，沿用上游正式署名，
 不由市场从仓库拥有者推断。
+该插件由 DFSC 项目维护，与第三方插件通过同一社区市场按需分发，
+不是 Step Code 上游或阶跃官方插件，不因维护归属获得额外权限。
+当前图片导入、渲染和配置仍由受限宿主适配器实现，本包没有独立渲染代码。
 
 ## 宿主要求
 
@@ -80,7 +83,7 @@ MiniChat 可显示共享背景，但不能导入、修改或删除图片。
 
 来源为 `7oMB2006/desktop-for-step-code` 的
 `theme-marketplace/plugins/custom-background`，固定到声明更新提交：
-`769ccfba9ae55014289f908003d9314fd18e1d2e`，包含 #223 背景宿主实现。
+`2c2ff1b7687dc2d57380df9e73e30f38d3aec585`，包含 #223 背景宿主实现及维护归属说明。
 来源文件、原始 Git blob、SHA-256 和大小记录在 `registry.lock.json`。
 资源由同步工具生成，本说明作为维护者审核的 README 覆盖；
 不手工修改源资源或锁定哈希。
