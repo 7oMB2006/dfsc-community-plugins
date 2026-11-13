@@ -159,10 +159,16 @@
       "id": "custom-background",
       "source": {
         "repository": "7oMB2006/desktop-for-step-code",
-        "commit": "ed7c6e46c5fdad85b678eff857ae0b39b96977ba",
+        "commit": "769ccfba9ae55014289f908003d9314fd18e1d2e",
         "path": "theme-marketplace/plugins/custom-background"
       },
       "files": [
+        {
+          "path": "CHANGELOG.md",
+          "gitBlobSha": "1d34c4f4cddbdbf8829868678d42d2bd55a4a975",
+          "sha256": "6eeed2ebf1db03f2f6aad0c4d2a4f08c4c6c15cd1b9c50f37ebd4c5dd0df648c",
+          "size": 481
+        },
         {
           "path": "ICON-LICENSE.txt",
           "gitBlobSha": "b70071e8df72e314b526a0d4d98ec32344b2a9c9",
@@ -171,9 +177,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "72fff09050682f463862a95698ce26847ed5f6e7",
-          "sha256": "97dfd853d40910608cb7407c6fb11c856fe0038c11bf9994865e907b0c72ecee",
-          "size": 2911
+          "gitBlobSha": "21e73044f27f4f92782868949d00a446cd79ef09",
+          "sha256": "a833163ad5e6b67b8b7794b25d74d807430e2ade872010215cf43c8a211e84b6",
+          "size": 3758
         },
         {
           "path": "dfsc.appearance.json",
@@ -183,9 +189,9 @@
         },
         {
           "path": "dfsc.plugin.json",
-          "gitBlobSha": "f325a648854900aa9d3d831051a0db820b264769",
-          "sha256": "8b912cb9f632b8dff2f039b1d83f068bd3418c86e2b42de3b89e6ecd5047c2b1",
-          "size": 406
+          "gitBlobSha": "d93944fa4a00cda814a607b2ff9d3760ff6d1b88",
+          "sha256": "5f69392161508024ebc90ea93a9e9816d50363127ed4adcad5df136435a491e8",
+          "size": 565
         },
         {
           "path": "icon.png",
@@ -195,8 +201,8 @@
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "c3ae6077aa9d0120c7d64d49b3c386a1b27e4886",
-          "sha256": "98ff36f583bf700720ec8a14aa3c0bc3628fcf8cc8d986ac54fce5e3c2cf52b8",
+          "gitBlobSha": "1c8e4a37ad3b8296e925786ba5dc719a278c3bf4",
+          "sha256": "810858967608906e02d937f36d5a30efe4e113c8755d05ff6608e6373a5b82f6",
           "size": 370
         }
       ]

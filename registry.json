@@ -40,7 +40,7 @@
       "description": "自定义背景：本机 PNG/JPEG、画面调节及分区透明度；需包含 DFSC #223、提供 custom-background-v1 的构建，安装后手动启用。",
       "source": {
         "repository": "7oMB2006/desktop-for-step-code",
-        "commit": "ed7c6e46c5fdad85b678eff857ae0b39b96977ba",
+        "commit": "769ccfba9ae55014289f908003d9314fd18e1d2e",
         "path": "theme-marketplace/plugins/custom-background"
       },
       "license": "MIT；Lucide 图标 ISC，保留原始图标许可与收录说明中的 MIT 通知",

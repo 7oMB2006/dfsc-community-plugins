@@ -19,6 +19,11 @@ const selected = registry.plugins.find(item => item.id === 'custom-background');
 assert.ok(selected);
 assert.equal(registry.marketplaceName, 'dfsc-community');
 const manifest = JSON.parse(await readFile(join(root, 'plugins', selected.id, 'step.plugin.json'), 'utf8'));
+const presentation = JSON.parse(await readFile(join(root, 'plugins', selected.id, 'dfsc.plugin.json'), 'utf8'));
+const expectedAuthor = presentation.authors.map(item => item.name).join(', ');
+assert.ok(expectedAuthor);
+assert.equal(presentation.requirements.dfsc, '0.6.0');
+assert.deepEqual(presentation.requirements.external, []);
 const expectedReadme = await readFile(join(root, selected.readme));
 assert.deepEqual(await readFile(join(root, 'plugins', selected.id, 'README.md')), expectedReadme);
 const requestedSource = process.argv[2] ?? root;
@@ -128,6 +133,9 @@ try {
   const entry = discovered.available.find(item => item.name === selected.id && item.marketplace === registry.marketplaceName);
   assert.ok(entry && !entry.installed && entry.package?.ref);
   assert.equal(entry.description, selected.description);
+  assert.equal(entry.package.author, expectedAuthor);
+  assert.deepEqual(entry.package.requirements, presentation.requirements);
+  assert.equal(entry.package.documentation.changelog, 'CHANGELOG.md');
   const market = discovered.marketplaces.find(item => item.origin === source);
   assert.ok(market); assert.equal(market.kind, gitSource ? 'git' : 'local');
   await page.getByRole('button', { name: 'Plugin marketplace', exact: true }).click();
@@ -140,6 +148,11 @@ try {
   assert.equal(installed.version, manifest.version);
   assert.equal(installed.package.provenance, 'recorded');
   assert.equal(installed.package.hostConfiguration, 'custom-background-v1');
+  assert.equal(installed.package.author, expectedAuthor);
+  assert.deepEqual(installed.package.requirements, presentation.requirements);
+  const changelog = await page.evaluate(ref =>
+    window.desktop.pluginDocument({ ref, path: 'CHANGELOG.md' }), installed.package.ref);
+  assert.ok(changelog.text.includes(manifest.version));
   assert.equal(installed.installationSource.status, 'recorded');
   assert.deepEqual(installed.mcpServers, []);
   const copied = await app.evaluate(({ app }) => {
@@ -152,7 +165,7 @@ try {
   for (const key of ['skills', 'commands', 'agents']) assert.deepEqual(copied.manifest[key], []);
   assert.deepEqual(copied.manifest.mcpServers, {});
   assert.equal((await state()).options.enabled, false);
-  checks.push('community discovery, UI install, recorded adapter, exact reviewed README and empty resources');
+  checks.push('community discovery, UI install, declared author and requirements, readable changelog, recorded adapter, exact reviewed README and empty resources');
   await configure();
   await app.evaluate((_electron, selection) => { globalThis.backgroundPicker.selection = selection; }, png);
   await settings().getByRole('button', { name: 'Import background image', exact: true }).click();
