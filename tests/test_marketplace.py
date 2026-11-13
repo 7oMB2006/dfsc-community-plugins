@@ -222,6 +222,90 @@ class MarketplaceTests(unittest.TestCase):
         self.assertEqual(self.active(), before)
         self.assertFalse((self.root / '.community-sync.lock').exists())
 
+    def test_retirement_removes_only_the_selected_entry_without_fetching(self):
+        beta = m.inventory(self.root / 'plugins/beta-plugin')
+        beta_lock = copy.deepcopy(self.lock['plugins'][0])
+        guide = (self.root / self.entry()['readme']).read_bytes()
+        with patch.object(m, 'fetch_source') as fetch:
+            result = m.sync(self.root, retire='alpha-plugin')
+        fetch.assert_not_called()
+        self.assertEqual(result['retired'], ['alpha-plugin'])
+        self.assertEqual(result['synchronized'], [])
+        self.assertEqual(m.validate(self.root)['plugins'], ['beta-plugin'])
+        self.assertFalse((self.root / 'plugins/alpha-plugin').exists())
+        self.assertEqual((self.root / self.entry()['readme']).read_bytes(), guide)
+        self.assertEqual(m.inventory(self.root / 'plugins/beta-plugin'), beta)
+        self.assertEqual(m.lockfile(self.root)['plugins'], [beta_lock])
+        self.assertEqual(m.registry(self.root)['plugins'], [self.config['plugins'][0]])
+        m.sync(self.root, retire='beta-plugin')
+        self.assertEqual(m.validate(self.root)['plugins'], [])
+
+    def test_retirement_rejects_unknown_ids_paths_and_sync_options(self):
+        before = self.active()
+        registry = (self.root / 'registry.json').read_bytes()
+        for options in ({'retire': 'unknown'}, {'retire': '../alpha-plugin'},
+                        {'retire': 'alpha-plugin', 'ident': 'beta-plugin'},
+                        {'retire': 'alpha-plugin', 'source_dir': self.root / 'sources/alpha-plugin'}):
+            with self.subTest(options=options), self.assertRaises(m.MarketError):
+                m.sync(self.root, **options)
+            self.assertEqual(self.active(), before)
+            self.assertEqual((self.root / 'registry.json').read_bytes(), registry)
+
+    def test_retirement_refuses_resource_drift_instead_of_deleting_local_changes(self):
+        target = self.root / 'plugins/alpha-plugin/commands/help.md'
+        target.write_bytes(b'Local change to preserve\n')
+        before = self.active()
+        registry = (self.root / 'registry.json').read_bytes()
+        with self.assertRaisesRegex(m.MarketError, 'resource drift'):
+            m.sync(self.root, retire='alpha-plugin')
+        self.assertEqual(self.active(), before)
+        self.assertEqual((self.root / 'registry.json').read_bytes(), registry)
+        self.assertFalse((self.root / '.community-sync.lock').exists())
+
+    def test_retirement_rolls_back_resources_and_all_metadata_on_failure(self):
+        before = self.active()
+        registry = (self.root / 'registry.json').read_bytes()
+        original = Path.replace
+        for failing_file in ('.step-plugin/marketplace.json', 'registry.json'):
+            failed = []
+            def replace(path, target):
+                if Path(target) == self.root / failing_file and path.name.startswith('metadata-') and not failed:
+                    failed.append(True)
+                    raise OSError('Synthetic retirement failure')
+                return original(path, target)
+            with self.subTest(failing_file=failing_file), patch.object(Path, 'replace', replace), \
+                    self.assertRaisesRegex(OSError, 'Synthetic retirement failure'):
+                m.sync(self.root, retire='alpha-plugin')
+            self.assertTrue(failed)
+            self.assertEqual(self.active(), before)
+            self.assertEqual((self.root / 'registry.json').read_bytes(), registry)
+            self.assertFalse((self.root / '.community-sync.lock').exists())
+
+    def test_retirement_rolls_back_when_final_validation_fails(self):
+        before = self.active()
+        registry = (self.root / 'registry.json').read_bytes()
+        original = m.validate
+        def validate(root):
+            if not (self.root / 'plugins/alpha-plugin').exists():
+                raise m.MarketError('Synthetic post-retirement validation failure')
+            return original(root)
+        with patch.object(m, 'validate', validate), \
+                self.assertRaisesRegex(m.MarketError, 'post-retirement validation failure'):
+            m.sync(self.root, retire='alpha-plugin')
+        self.assertEqual(self.active(), before)
+        self.assertEqual((self.root / 'registry.json').read_bytes(), registry)
+        self.assertFalse((self.root / '.community-sync.lock').exists())
+
+    def test_cli_retirement_updates_the_native_marketplace(self):
+        script = Path(__file__).resolve().parents[1] / 'scripts/sync-plugin.py'
+        stdout = io.StringIO()
+        with patch.object(sys, 'argv', [str(script), '--root', str(self.root), '--retire', 'alpha-plugin']), \
+                patch.object(sys, 'path', [str(script.parent), *sys.path]), \
+                contextlib.redirect_stdout(stdout):
+            runpy.run_path(str(script), run_name='__main__')
+        self.assertEqual(json.loads(stdout.getvalue())['retired'], ['alpha-plugin'])
+        self.assertEqual(m.validate(self.root)['plugins'], ['beta-plugin'])
+
     def test_unsupported_entry_and_outside_resource_declarations_are_rejected(self):
         for change in [{'entry': 'run.py'}, {'commands': ['../outside']}, {'mcpServers': '../mcp.json'}]:
             data = {**self.raw['alpha-plugin']}

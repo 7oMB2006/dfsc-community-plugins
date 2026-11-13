@@ -7,11 +7,6 @@
       "description": "BVR 视频研究：MCP、技能与 /bvr；需通用宿主 v1、Node.js 24+ 和另装新版 BVR 本体，显式选择跟随或独立配置。"
     },
     {
-      "name": "custom-background",
-      "source": "./plugins/custom-background",
-      "description": "自定义背景：本机 PNG/JPEG、画面调节及分区透明度；需包含 DFSC #223、提供 custom-background-v1 的构建，安装后手动启用。"
-    },
-    {
       "name": "hermes-engineering-bridge",
       "source": "./plugins/hermes-engineering-bridge",
       "description": "Hermes x DFSC 状态面板、四步连接引导与入门指南；通用本机派工需支持 dfsc-external-v1 的构建及独立 companion。"
