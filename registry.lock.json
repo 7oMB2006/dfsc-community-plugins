@@ -159,15 +159,15 @@
       "id": "custom-background",
       "source": {
         "repository": "7oMB2006/desktop-for-step-code",
-        "commit": "2c2ff1b7687dc2d57380df9e73e30f38d3aec585",
+        "commit": "7ff960c98ed465dc6c7e6a4829f8c6e04db74f51",
         "path": "theme-marketplace/plugins/custom-background"
       },
       "files": [
         {
           "path": "CHANGELOG.md",
-          "gitBlobSha": "1d34c4f4cddbdbf8829868678d42d2bd55a4a975",
-          "sha256": "6eeed2ebf1db03f2f6aad0c4d2a4f08c4c6c15cd1b9c50f37ebd4c5dd0df648c",
-          "size": 481
+          "gitBlobSha": "3ba49a166403958b507bf1d556111101b8083c02",
+          "sha256": "0a9c47776b71c392967f26c5008de92121a183a67ae51bfe076b9c1f3147898a",
+          "size": 694
         },
         {
           "path": "ICON-LICENSE.txt",
@@ -177,9 +177,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "a5783d09afddbb55767fe2a683f61743b4582979",
-          "sha256": "0c751181835d5d67d8a2b0e00d96004ce1a03964f5c1228101d207e8a56a3c76",
-          "size": 4043
+          "gitBlobSha": "e6c1104cf23ff4bcd2cec923625f927054db7c71",
+          "sha256": "34a3f1a78dcfe18fb1e669be7d50affba201824e7b4f7f658e2e1469203357cf",
+          "size": 4801
         },
         {
           "path": "dfsc.appearance.json",

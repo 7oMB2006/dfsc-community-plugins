@@ -9,7 +9,7 @@
     {
       "name": "custom-background",
       "source": "./plugins/custom-background",
-      "description": "自定义背景：本机 PNG/JPEG、画面调节及分区透明度；需包含 DFSC #223、提供 custom-background-v1 的构建，安装后手动启用。"
+      "description": "自定义背景旧宿主兼容入口：新构建直接到设置的外观页，无需安装；旧构建需 #223 / custom-background-v1，支持本机 PNG/JPEG 和分区材质。"
     },
     {
       "name": "hermes-engineering-bridge",
