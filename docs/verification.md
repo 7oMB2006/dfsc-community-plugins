@@ -1,5 +1,37 @@
 # 市场验证记录
 
+## 自定义背景 0.1.1 声明更新（2026-11-13）
+
+来源固定到 `7oMB2006/desktop-for-step-code@769ccfba9ae55014289f908003d9314fd18e1d2e`，
+目录仍为 `theme-marketplace/plugins/custom-background`。同步工具通过 GitHub 取得并核对
+七个原始文件的 Git blob，生成资源副本与来源锁；README 继续采用维护者审核说明。
+新增作者 `Desktop for Step Code contributors`、DFSC 数值要求 `0.6.0`、
+明确的 `external: []` 与随包 CHANGELOG。没有新增权限、外部组件、数据用途或费用。
+相同版本号仍不能证明具备 #223 / `custom-background-v1`，也不替代主题的 `image-v1` 插槽。
+
+| 验证 | 结果与边界 |
+| --- | --- |
+| 市场静态校验与来源锁 | 通过；仅更新背景插件，其他插件登记和完整锁项不变 |
+| Python 单测 | 35 项：34 通过，1 项既有 Windows 符号链接权限跳过 |
+| Node 单测 | 32 项：31 通过，1 项既有 Windows 符号链接权限跳过 |
+| 展示声明检查 | 零错误；背景插件的三项缺失提醒消失，保留 Stellar 的三项既有提醒 |
+| 主题检查 | 零错误，保留 Stellar v1 既有迁移提醒 |
+| 上游定向测试 | 40 项通过，另有 TypeScript 检查与空白检查通过；未跑本地全套宿主验收 |
+| 原生发现与 UI 安装 | 从已提交市场快照 `c9cf109` 经本地 Git 安装 0.1.1；发现和安装后均能读取正式作者、数值版本要求及空外部依赖，CHANGELOG 可由受限文档接口读取 |
+| 背景生命周期 | PNG 导入、停启、正常重启持久化、卸载撤销、重装默认关闭及市场移除后基线恢复通过 |
+| 隔离与退出 | 独立临时 profile，零页面异常、零模型请求；两次退出码均为 0、剩余窗口均为 0 |
+
+原生检查使用 `integration/verify-custom-background.mjs` 和此前已交付的 Windows x64
+0.6.0 体验包，宿主构建提交为 `ed7c6e46c5fdad85b678eff857ae0b39b96977ba`，
+不是新打的客户端包，也不是以上声明更新提交的宿主构建。
+证据保存在忽略目录 `test-results/custom-background-metadata-c9cf109/`；
+选图对话框使用受控夹具，不修改日常 profile。随后只补充本文和维护者说明，
+没有改变已验资源的声明、版本、CHANGELOG、图标、适配器或验证脚本。
+
+本地 Git 通过不代表新版资源已在公共 main 上架或完成 HTTPS 安装、GitHub 认证；
+也不包含 0.1.0 原地更新、真实账户、计费、macOS/Linux、安装器升级或长期性能验收。
+宿主与市场 PR 的云端 CI、审核和合并分别判断，本次不自动合并或发布客户端。
+
 ## 自定义背景 0.1.0 收录候选（2026-11-12）
 
 固定来源为 `7oMB2006/desktop-for-step-code` 的 #223 合并提交
