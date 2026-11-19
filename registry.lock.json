@@ -156,6 +156,178 @@
       ]
     },
     {
+      "id": "dfsc-stepaudio",
+      "source": {
+        "repository": "7oMB2006/dfsc-stepaudio",
+        "commit": "0dfa906f97951ca20fbdcf31476a0e9660da8e68",
+        "path": "plugins/dfsc-stepaudio"
+      },
+      "files": [
+        {
+          "path": "CHANGELOG.md",
+          "gitBlobSha": "6cdb78da1a7b8e061f797173ebb45b66c507c331",
+          "sha256": "9b32761bfb740f1a328cacab87f68269e4463fcc4e9f819db71d72cb237e8703",
+          "size": 4068
+        },
+        {
+          "path": "LICENSE",
+          "gitBlobSha": "f3e5c571fd0b9e690644af07f0c30c5da9c0a69d",
+          "sha256": "ca01b68f1eb25ea64790e6ff669a0a2ea1d9d0ff5e80217021ce53b276b8dc35",
+          "size": 1084
+        },
+        {
+          "path": "README.md",
+          "gitBlobSha": "bfa6f746f56a5a71d07fefcf33332e662ae37170",
+          "sha256": "793bb691f72a5537384a433f3aa1975d1c2bb6d234efb51b8cc8dbc3d0e0a05e",
+          "size": 8822
+        },
+        {
+          "path": "UPSTREAM.md",
+          "gitBlobSha": "9ac2cb5cdd7518cff33be7bec78538ebcab71c17",
+          "sha256": "34c57ced9d54211a199b85522028ba046b4c0a65c94f079eb73168ae9399a22c",
+          "size": 2347
+        },
+        {
+          "path": "data/system-voices.json",
+          "gitBlobSha": "07af841d688962b183a22a1017b3074b181bdfae",
+          "sha256": "56f8303a9430446516bf50e66fc2f92308331d10c1da245ce042ff70858dc162",
+          "size": 9182
+        },
+        {
+          "path": "dfsc.host.json",
+          "gitBlobSha": "282c802a61e165870de2f4cf63d2ca17328c2ef3",
+          "sha256": "48859482f23ccdb83c1543a093fb1ba3839d7e544f0ce184d8d7caad6a0a8e22",
+          "size": 143
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "8513eb6d4518b31d7f81d5df9fa67b8f8726397f",
+          "sha256": "311e4091d0872cd68bc46b2ece94b6fb81d6f8722c7f48616a48ece9279ac0f9",
+          "size": 1620
+        },
+        {
+          "path": "dfsc.settings.json",
+          "gitBlobSha": "45cef5d02c0a42a1b8d977b30fe36d7c484c8ad2",
+          "sha256": "483d1bc1b4fa3e7fcd611771e47a3f798231ddcf238df29292027852796a9e07",
+          "size": 2469
+        },
+        {
+          "path": "dist/THIRD_PARTY_LICENSES.txt",
+          "gitBlobSha": "830fb871ef5d90a01ad3f2b0202011d953b4e22e",
+          "sha256": "dfab07a2d3484627e34d8513df7d3e9b96e5feba133d956d852e12657c06ed9e",
+          "size": 9289
+        },
+        {
+          "path": "dist/index.js",
+          "gitBlobSha": "88141d2811118fe6a1f61d4287398625f0284555",
+          "sha256": "6f1bc2e5edb6d39d51393df9eb4997c6a62652c70ae2d34e9bf26f873b837703",
+          "size": 663981
+        },
+        {
+          "path": "docs/acceptance-runbook.md",
+          "gitBlobSha": "7d0b3c5c13538f6dcb78e84538481f830fb7575e",
+          "sha256": "b0ce5a26fb9113bdc460935bb1157fafcca411f41d77f64c2ddee7a8c5039360",
+          "size": 7085
+        },
+        {
+          "path": "docs/dfsc-integration.md",
+          "gitBlobSha": "7bea60f37593d558232ff48f3d487c52f091b710",
+          "sha256": "4e8c0ed938072fe75a1c36276c2ddc68fa1e6b5945d8391f33fa65778ff70397",
+          "size": 10058
+        },
+        {
+          "path": "docs/recipes.md",
+          "gitBlobSha": "900ee6f7debbe8258e3a9e7cdb9f3c527da64b35",
+          "sha256": "30cd8fd71102aa431c8fde4358e2486c08562931f373c10a5abd3eaa148ed0b6",
+          "size": 2570
+        },
+        {
+          "path": "docs/start.md",
+          "gitBlobSha": "458a371d2874bffcb66e8cf8f4841d6ea03f62f2",
+          "sha256": "8be94214431dac66829dc1a78564835585bb86539e15120217a18c7c42fdb262",
+          "size": 1922
+        },
+        {
+          "path": "docs/voices.md",
+          "gitBlobSha": "7d0f5703fc81959519faeb9a3a00781f5a88a0d5",
+          "sha256": "d94b8932be1318b530f335d52b4854f057d676669d4b9b222469096dda57e397",
+          "size": 7578
+        },
+        {
+          "path": "icon.png",
+          "gitBlobSha": "b1eabfc124da040627476a264fc2c6df4a402b0e",
+          "sha256": "73e5bb500d8209b023e3a7bc9096e5786bd4c87d1b66dc2a989a07eba728f6be",
+          "size": 12754
+        },
+        {
+          "path": "provider.example",
+          "gitBlobSha": "0403bebebb8970757c9bf02cad2a3f5b121dfb63",
+          "sha256": "909da0de1eae945590f24d61f6ad2e0f535730549c297884a5b13d0541404ac6",
+          "size": 1172
+        },
+        {
+          "path": "scripts/configure.mjs",
+          "gitBlobSha": "64844df7acd970e8b0659783d2ee7f3fb6d88fce",
+          "sha256": "f77b071fc12a7cdab8aeeca9e97aac90879e09028697196cdb76655bad888dd2",
+          "size": 7686
+        },
+        {
+          "path": "src/lib/env-file.js",
+          "gitBlobSha": "3925836a3fe43de17132450945f23a172a3c5694",
+          "sha256": "bb216d12817d3d12945c390e017a8f1d7e74ec027cd69c22e3eae0503a0aa1b1",
+          "size": 930
+        },
+        {
+          "path": "src/lib/errors.js",
+          "gitBlobSha": "985ddebcf07258861d7c081efb576f140fca9802",
+          "sha256": "312fdd25d860a2f1a479c783fdbd1800eeabc48a2dd46d41076a70c426017632",
+          "size": 1165
+        },
+        {
+          "path": "src/lib/host-client/LICENSE",
+          "gitBlobSha": "50dc421a3ca09945a7c658fc52c65d9307ce0d69",
+          "sha256": "5a5cf1065749eba250f2c35bf8f4efe32b2e2a2ac1da667692c49bdd221bc53d",
+          "size": 1091
+        },
+        {
+          "path": "src/lib/host-client/README.md",
+          "gitBlobSha": "4ac5fb81eff0f31d1dc0294cf6b6f20847852e39",
+          "sha256": "f3e7f47fd21029d9122d907a0a9fc5d59c1b95e81c23dca09d1af89da11c5968",
+          "size": 3303
+        },
+        {
+          "path": "src/lib/host-client/client.d.mts",
+          "gitBlobSha": "f2c42e889c0ad573a185312bf7ef0c4eb3fcc163",
+          "sha256": "ebe6e078b14328e7a3e898c298fdb83369b213318e12db02578af27e055e39b5",
+          "size": 714
+        },
+        {
+          "path": "src/lib/host-client/client.mjs",
+          "gitBlobSha": "8b403dcced03638d85344cc4fb8a71270d69230b",
+          "sha256": "38c1faf50a6ced1aeeeeeee0b65f9bd63dc555834f6752b3c9ed4c3d1c1f1aeb",
+          "size": 4639
+        },
+        {
+          "path": "src/lib/host-client/protocol.d.mts",
+          "gitBlobSha": "9903dd07a7dd846b8c8ac4be85d0c35d8c26a5f9",
+          "sha256": "c2d2da34e6642d89659fb2fef39e46e964707d60117ec839cf08caef5a29ecd5",
+          "size": 3938
+        },
+        {
+          "path": "src/lib/host-client/protocol.mjs",
+          "gitBlobSha": "5bec9c8f6e16948b3deec1688488cdf16628c2c1",
+          "sha256": "ab98f137325307d324d43cc05d66673e95b48006a9e642214b5a31d42005cf60",
+          "size": 11673
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "9c5721f61d59e3f14b7e5ec6e9626470b4c3c736",
+          "sha256": "06b965088ecd997d888f54d9e74289ed9343746cb3ae8edaca8bf3c113cc2c9c",
+          "size": 623
+        }
+      ]
+    },
+    {
       "id": "hermes-engineering-bridge",
       "source": {
         "repository": "7oMB2006/hermes-engineering-bridge",

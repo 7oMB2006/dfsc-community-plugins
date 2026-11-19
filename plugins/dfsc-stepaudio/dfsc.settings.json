@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "consumer": { "kind": "json-file-v1", "server": "stepaudio" },
+  "groups": [
+    {
+      "id": "connection",
+      "title": "连接 / Connection",
+      "fields": [
+        {
+          "id": "mode",
+          "label": "后端模式 / Backend Mode",
+          "type": "text",
+          "default": "stepplan",
+          "maxLength": 32,
+          "help": "stepplan = Step Plan 登录态额度；openapi = 开放平台或任意 OpenAI 兼容网关"
+        },
+        {
+          "id": "base_url",
+          "label": "接口地址 / Base URL",
+          "type": "text",
+          "maxLength": 512,
+          "help": "留空按模式默认：stepplan → https://api.stepfun.com/step_plan/v1；openapi → https://api.stepfun.com/v1"
+        },
+        {
+          "id": "model",
+          "label": "默认模型 / Model",
+          "type": "text",
+          "default": "stepaudio-2.5-tts",
+          "maxLength": 160,
+          "help": "可选：stepaudio-2.5-tts / stepaudio-3-tts / step-tts-2 / step-tts-mini"
+        },
+        {
+          "id": "api_key",
+          "label": "API Key",
+          "type": "secret",
+          "required": true
+        },
+        {
+          "id": "output_dir",
+          "label": "输出目录 / Output Directory",
+          "type": "path",
+          "selection": "directory",
+          "help": "音频文件输出目录；留空使用系统临时目录。请勿指向插件包内目录"
+        }
+      ]
+    },
+    {
+      "id": "defaults",
+      "title": "合成默认值 / Synthesis Defaults",
+      "fields": [
+        {
+          "id": "voice",
+          "label": "默认音色 / Default Voice",
+          "type": "text",
+          "maxLength": 160,
+          "help": "默认音色 ID（如 cixingnansheng）；留空则每次合成时指定。可用 list_voices 查询"
+        },
+        {
+          "id": "instruction",
+          "label": "默认语境 / Default Instruction",
+          "type": "text",
+          "maxLength": 500,
+          "help": "默认全局语境（情绪基调、人设）；stepaudio-2.5-tts 上限 200 字符。每次合成可覆盖"
+        },
+        {
+          "id": "response_format",
+          "label": "输出格式 / Response Format",
+          "type": "text",
+          "default": "mp3",
+          "maxLength": 16,
+          "help": "默认输出格式：mp3 / wav / flac / opus / pcm；每次合成可覆盖（例如“输出 wav”）"
+        }
+      ]
+    }
+  ]
+}
