@@ -34,6 +34,17 @@
       },
       "license": "项目作者授权的 DFSC 主题分发；美术与品牌不按宿主代码 MIT 重新许可，详见收录说明",
       "readme": "docs/plugins/stellar-cruise.md"
+    },
+    {
+      "id": "superpowers",
+      "description": "Superpowers 核心技能库（15 个技能）：TDD、系统化调试、计划编写与执行、子代理驱动开发、代码审查收发、Git worktree、验证收尾等；部分技能脚本需 bash，可视化伴侣可选依赖 Node.js。",
+      "source": {
+        "repository": "Niangaol/superpowers-dfsc",
+        "commit": "d0e3a3006da372c5b521bbd37c87fc2d1202860f",
+        "path": "plugins/superpowers"
+      },
+      "license": "MIT",
+      "readme": "docs/plugins/superpowers.md"
     }
   ]
 }
