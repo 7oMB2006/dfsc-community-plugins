@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "categories": ["audio-video", "automation"],
+  "keywords": ["语音合成", "TTS", "音色复刻", "StepAudio", "配音"],
+  "authors": [{ "name": "dfsc-StepAudio contributors" }],
+  "license": "MIT",
+  "documentation": { "readme": "README.md", "changelog": "CHANGELOG.md" },
+  "requirements": {
+    "dfsc": "0.6.0",
+    "external": [
+      {
+        "name": "Node.js",
+        "description": "运行本插件 MCP 服务所需（20 或更高版本）。市场安装不执行依赖安装，请提前在 PATH 中准备。",
+        "url": "https://nodejs.org/",
+        "optional": false
+      },
+      {
+        "name": "模型访问与额度",
+        "description": "独立模式自备 Step Plan 订阅或阶跃开放平台 API Key（插件中心配置页填写）；跟随模式使用 DFSC 登录的 Step 账户、零 Key，但需含 TTS broker 的宿主构建（上游 #247 合入之后）。语音合成消耗套餐额度或按量计费；市场收录不等于账户或付费授权。",
+        "url": "https://platform.stepfun.com/",
+        "optional": false
+      }
+    ]
+  },
+  "locales": {
+    "zh": {
+      "description": "阶跃 StepAudio 语音合成 MCP 服务：文本转语音、音色列表、音色复刻；可沿用 Step Plan 额度或独立配置任意 OpenAI 兼容网关。",
+      "documentation": { "readme": "README.md" }
+    },
+    "en": {
+      "description": "StepFun StepAudio TTS as an MCP service: text to speech, voice listing and voice cloning; use Step Plan quota or any OpenAI-compatible gateway.",
+      "documentation": { "readme": "README.md" }
+    }
+  }
+}
