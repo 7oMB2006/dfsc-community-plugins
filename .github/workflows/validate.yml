@@ -29,4 +29,3 @@ jobs:
       - run: npm test
       - run: node scripts/check-plugin-metadata.mjs
       - run: node scripts/check-theme-pack.mjs
-      - run: npm run test:plugins

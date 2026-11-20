@@ -293,13 +293,32 @@ python3 -m unittest discover -s tests -v
 npm ci --ignore-scripts
 node scripts/check-plugin-metadata.mjs
 node --test tests/plugin-metadata.test.mjs
-npm run test:plugins
 ```
 
-`npm run test:plugins` 会运行 `registry.json` 中已登记插件对应的 `test:<插件 id>`
-脚本，CI 用它补跑各插件自带的验证。没有登记任何插件测试时它是成功的空操作；
-不匹配已登记 id 的脚本（如 `test:fixtures`）不会被执行。
-插件作者把自己的验证套件挂在这个命名下，就会随插件收录一起进 CI。
+### 插件专项回归
+
+PR 与推送继续执行市场的 Windows、Ubuntu 公共检查，不运行插件自带测试。专项回归
+使用独立的 `Validate selected plugin suites`，不作为合并门禁。维护者在 `main` 上
+手动启动，提供变更前 `main` 的完整提交 SHA（须在当前 `main` 的第一父链上）。
+测试的是启动时固定的 `main` 提交，不执行尚未合入的投稿，也不代替 DFSC 实机验收。
+
+专项测试入口为 `package.json` 的 `test:<插件 id>`（`test:plugins` 是运行器，保留不作
+插件入口）。请把插件独有的测试放在 `tests/plugins/<插件 id>/`，只依赖本插件的资源
+和共享测试工具；新增或改动入口及其实际执行代码须由维护者单独检查确认。
+登记插件只决定可选范围，不授权运行。需要验证未合入版本时，应另行商定受控环境与测试范围。
+
+- 插件资源或专项测试路径有改动，或者登记、锁、原生清单、测试入口中的该插件条目有改动，只选对应插件。
+- 市场说明文档独自改动不跑专项；插件包里的 `SKILL.md` 等运行时文档仍算插件资源。
+- 校验工具、依赖及无法归属的改动选所有已登记的套件。没有入口和没有受影响的套件分别记录为跳过，不当作测试通过。
+- 单套默认限时 2 分钟，超时终止其进程树并报错；有失败或超时则专项回归失败。CI 作业另设 15 分钟上限。
+  运行环境不传入仓库密钥，检出不保留 Git 凭据；这不是沙箱，测试不得读取个人数据、调用外部服务或使用真实账户。
+
+在可信检出中可用下面的命令复现。`--base` 要求干净的检出；显式传 `--all` 才会
+跳过范围选择并跑全部已登记的套件。
+
+```sh
+npm run test:plugins -- --base <变更前的完整提交 SHA>
+```
 
 网络同步从 GitHub 的固定提交读取资源并检查 Git blob 哈希。私有上游可使用已有的 `GH_TOKEN` 或 `GITHUB_TOKEN`；凭据不写入仓库或 PR。离线模式只接受已有锁定记录对应的内容：
 

@@ -5,10 +5,11 @@
 // runner there, so behaviour (not a stub) is under test.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -29,10 +30,49 @@ async function run({ package: manifest = {}, plugins = [] }) {
     await writeFile(join(root, 'scripts', 'run-plugin-tests.mjs'), runnerSource);
     await writeFile(join(root, 'package.json'), JSON.stringify(manifest, null, 2));
     await writeFile(join(root, 'registry.json'), JSON.stringify(registry(...plugins), null, 2));
-    const result = spawnSync(process.execPath, [join(root, 'scripts', 'run-plugin-tests.mjs')], {
-      cwd: root, encoding: 'utf8', timeout: 120000,
-    });
-    return { code: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+    return runIn(root, ['--all']);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}
+
+function runIn(root, args) {
+  const result = spawnSync(process.execPath, [join(root, 'scripts', 'run-plugin-tests.mjs'), ...args], {
+    cwd: root, encoding: 'utf8', timeout: 30000, env: { ...process.env, DFSC_FIXTURE_SECRET: 'fixture-value' },
+  });
+  if (result.error) throw result.error;
+  return { code: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+}
+
+function report({ stdout }) {
+  return JSON.parse(stdout.trimEnd().split(/\r?\n/).at(-1));
+}
+
+const manifest = { scripts: { 'test:alpha': 'node -e "process.exit(0)"', 'test:beta': 'node -e "process.exit(0)"' } };
+
+async function withSnapshots(testCase) {
+  const root = await mkdtemp(join(tmpdir(), 'plugin-scope-'));
+  const git = (...args) => execFileSync('git', ['-c', 'core.hooksPath=.disabled-hooks',
+    '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', ...args], { cwd: root, encoding: 'utf8' }).trim();
+  const put = async (path, content) => {
+    const target = join(root, path);
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, typeof content === 'string' ? content : JSON.stringify(content));
+  };
+  const commit = () => {
+    git('add', '--all');
+    git('commit', '-qm', 'test fixture', '--no-gpg-sign');
+    return git('rev-parse', 'HEAD');
+  };
+  try {
+    git('init', '-q');
+    await put('scripts/run-plugin-tests.mjs', runnerSource);
+    await put('registry.json', registry('alpha', 'beta'));
+    await put('registry.lock.json', registry('alpha', 'beta'));
+    await put('.step-plugin/marketplace.json', { plugins: [{ name: 'alpha' }, { name: 'beta' }] });
+    await put('package.json', manifest);
+    const base = commit();
+    await testCase({ root, put, commit, base, git });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -67,6 +107,16 @@ test('only scripts of registered plugins are executed', async () => {
   assert.doesNotMatch(out.stdout, /fixtures|not-registered/);
 });
 
+test('marketplace ids with underscores work, but the runner name is reserved', async () => {
+  const out = await run({
+    package: { scripts: { 'test:alpha_team': 'node -e "process.exit(0)"', 'test:plugins': 'node -e "process.exit(8)"' } },
+    plugins: ['alpha_team', 'plugins'],
+  });
+  assert.equal(out.code, 0, out.stderr);
+  assert.deepEqual(report(out).ran.map(({ plugin }) => plugin), ['alpha_team']);
+  assert.deepEqual(report(out).skipped, [{ plugin: 'plugins', reason: 'no-suite' }]);
+});
+
 test('a failing suite fails the step and names the plugin', async () => {
   const out = await run({
     package: { scripts: { 'test:alpha': 'node -e "process.exit(3)"' } },
@@ -98,11 +148,93 @@ test('an unreadable registry fails instead of silently skipping', async () => {
     await writeFile(join(root, 'scripts', 'run-plugin-tests.mjs'), runnerSource);
     await writeFile(join(root, 'package.json'), '{"scripts":{}}');
     await writeFile(join(root, 'registry.json'), '{ not json');
-    const result = spawnSync(process.execPath, [join(root, 'scripts', 'run-plugin-tests.mjs')], {
-      cwd: root, encoding: 'utf8', timeout: 120000,
-    });
-    assert.notEqual(result.status, 0, 'an unreadable registry must not pass silently');
+    assert.notEqual(runIn(root, ['--all']).code, 0, 'an unreadable registry must not pass silently');
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('market documentation alone skips every configured suite', async () => withSnapshots(async ({ root, put, commit, base }) => {
+  await put('README.md', 'Marketplace notes');
+  await put('docs/plugins/alpha.md', 'Author attribution');
+  commit();
+  const out = runIn(root, ['--base', base]);
+  assert.equal(out.code, 0, out.stderr);
+  assert.deepEqual(report(out), {
+    scope: [], ran: [], skipped: [{ plugin: 'alpha', reason: 'unchanged' }, { plugin: 'beta', reason: 'unchanged' }],
+    failed: [], reason: 'no-affected-suites',
+  });
+}));
+
+test('runtime Markdown and owned tests select their plugin, even with spaces and non-ASCII paths', async () => withSnapshots(async ({ root, put, commit, base }) => {
+  let compare = base;
+  for (const path of ['plugins/alpha/skills/\u6280\u80fd a/SKILL.md', 'tests/plugins/alpha/fixture.mjs']) {
+    await put(path, 'Changed fixture');
+    const head = commit();
+    const out = report(runIn(root, ['--base', compare]));
+    assert.deepEqual(out.scope, ['alpha']);
+    assert.deepEqual(out.ran.map(({ plugin, status }) => [plugin, status]), [['alpha', 'passed']]);
+    compare = head;
+  }
+}));
+
+test('registry, lock, catalog and test entry changes are attributed per plugin', async () => withSnapshots(async ({ root, put, commit, base }) => {
+  let compare = base;
+  for (const [path, contents] of [
+    ['registry.json', { ...registry(), plugins: [{ id: 'alpha', description: 'new' }, { id: 'beta' }] }],
+    ['registry.lock.json', { ...registry(), plugins: [{ id: 'alpha', files: [] }, { id: 'beta' }] }],
+    ['.step-plugin/marketplace.json', { plugins: [{ name: 'alpha', description: 'new' }, { name: 'beta' }] }],
+    ['package.json', { scripts: { ...manifest.scripts, 'test:alpha': 'node -e "console.log(42)"' } }],
+  ]) {
+    await put(path, contents);
+    const head = commit();
+    const out = report(runIn(root, ['--base', compare]));
+    assert.deepEqual(out.scope, ['alpha'], path);
+    assert.deepEqual(out.ran.map(({ plugin }) => plugin), ['alpha'], path);
+    compare = head;
+  }
+}));
+
+test('shared tooling or scripts broaden the run to all registered suites', async () => withSnapshots(async ({ root, put, commit, base }) => {
+  await put('package.json', { scripts: { ...manifest.scripts, 'test:fixtures': 'unused' } });
+  const sharedScript = commit();
+  const fromSharedScript = report(runIn(root, ['--base', base]));
+  await put('scripts/shared.mjs', '// changed');
+  commit();
+  for (const out of [fromSharedScript, report(runIn(root, ['--base', sharedScript]))]) {
+    assert.equal(out.scope, 'all');
+    assert.deepEqual(out.ran.map(({ plugin }) => plugin), ['alpha', 'beta']);
+  }
+}));
+
+test('no implicit all execution; scoped runs reject non-history SHAs and dirty checkouts', async () => withSnapshots(async ({ root, put, base }) => {
+  for (const args of [[], ['--base', 'HEAD'], ['--base', 'a'.repeat(40)], ['--base', base, '--all']]) {
+    assert.equal(runIn(root, args).code, 1, args.join(' '));
+  }
+  await put('package.json', { scripts: { 'test:alpha': 'node -e "process.exit(8)"' } });
+  const out = runIn(root, ['--base', base]);
+  assert.equal(out.code, 1);
+  assert.match(out.stderr, /clean checkout/);
+}));
+
+test('timeout stops the process tree and a later suite still runs without unrelated env vars', async () => withSnapshots(async ({ root, put }) => {
+  await put('package.json', {
+    scripts: { 'test:alpha': 'node parent.mjs', 'test:beta': 'node -e "process.exit(Number(!!process.env.DFSC_FIXTURE_SECRET))"' },
+  });
+  await put('parent.mjs', `
+    import { spawn } from 'node:child_process';
+    spawn(process.execPath, ['child.mjs'], { stdio: 'inherit' });
+    setInterval(() => {}, 1000);
+  `);
+  await put('child.mjs', `
+    import { writeFileSync } from 'node:fs';
+    writeFileSync('started', '');
+    setTimeout(() => writeFileSync('leaked', ''), 1800);
+  `);
+  const out = runIn(root, ['--all', '--timeout-ms', '1200']);
+  assert.equal(out.code, 1, out.stderr);
+  assert.deepEqual(report(out).ran.map(({ plugin, status }) => [plugin, status]), [['alpha', 'timed-out'], ['beta', 'passed']]);
+  assert.equal(await readFile(join(root, 'started'), 'utf8'), '');
+  await delay(1900);
+  await assert.rejects(readFile(join(root, 'leaked')), { code: 'ENOENT' });
+}));

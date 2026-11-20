@@ -1,75 +1,171 @@
 #!/usr/bin/env node
-// Run the per-plugin test suites that this repository has registered.
-//
-// The community marketplace hosts plugins from many authors; each may ship its
-// own verification suite, exposed as a `test:<plugin-id>` npm script next to the
-// vendored resources. This runner executes exactly the ones registered in
-// `registry.json`, so:
-//
-//   - a repository with no plugin tests (before the first such PR merges) is a
-//     successful no-op instead of a missing-script failure;
-//   - helper scripts such as `test:fixtures` are never run implicitly, because
-//     their name does not match a reviewed registry entry;
-//   - a directory cannot add CI work by naming alone.
-//
-// Every selected suite runs so CI reports all failures at once. The commands
-// come from the reviewed package.json, the same trust boundary as `npm test`.
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual, parseArgs } from 'node:util';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const sha = /^[0-9a-f]{40}$/;
+const pluginId = /^[a-z0-9][a-z0-9_-]{0,79}$/;
+const catalogs = new Map([
+  ['registry.json', 'id'],
+  ['registry.lock.json', 'id'],
+  ['.step-plugin/marketplace.json', 'name'],
+]);
+
+function git(...args) {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+}
+
+function scriptId(name) {
+  const id = name.startsWith('test:') ? name.slice(5) : '';
+  return pluginId.test(id) && id !== 'plugins' ? id : null;
+}
+
+function catalogParts({ plugins, ...shared }, key) {
+  if (!Array.isArray(plugins)) throw new Error('Expected a plugins array in marketplace catalog.');
+  return [shared, new Map(plugins.map((entry) => [entry[key], entry]))];
+}
+
+function manifestParts({ scripts = {}, ...shared }, knownIds) {
+  const perPlugin = new Map();
+  const sharedScripts = new Map();
+  for (const [name, command] of Object.entries(scripts)) {
+    const id = scriptId(name);
+    if (knownIds.has(id)) perPlugin.set(id, command);
+    else sharedScripts.set(name, command);
+  }
+  return [{ ...shared, scripts: sharedScripts }, perPlugin];
+}
+
+function noteChangedEntries(affected, [oldShared, oldEntries], [newShared, newEntries]) {
+  if (!isDeepStrictEqual(oldShared, newShared)) return false;
+  for (const id of new Set([...oldEntries.keys(), ...newEntries.keys()])) {
+    if (!isDeepStrictEqual(oldEntries.get(id), newEntries.get(id))) affected.add(id);
+  }
+  return true;
+}
+
+function affectedPlugins(base) {
+  if (!sha.test(base) || !git('rev-list', '--first-parent', 'HEAD').split(/\s+/).includes(base)) {
+    throw new Error('--base must be a full SHA on the first-parent history of HEAD.');
+  }
+  if (git('status', '--porcelain', '--untracked-files=all')) {
+    throw new Error('--base requires a clean checkout so the executed files match HEAD.');
+  }
+  const paths = git('diff', '--no-renames', '--name-only', '-z', base, 'HEAD', '--').split('\0').filter(Boolean);
+  const affected = new Set();
+  const snapshots = (path) => [base, 'HEAD'].map((revision) => JSON.parse(git('show', `${revision}:${path}`)));
+
+  for (const path of paths) {
+    const scoped = /^(?:plugins|tests\/plugins)\/([^/]+)\//.exec(path);
+    if (scoped) {
+      affected.add(scoped[1]);
+    } else if (catalogs.has(path)) {
+      if (!noteChangedEntries(affected, ...snapshots(path).map((doc) => catalogParts(doc, catalogs.get(path))))) {
+        return null;
+      }
+    } else if (path === 'package.json') {
+      const knownIds = new Set(snapshots('registry.json').flatMap((doc) => doc.plugins.map(({ id }) => id)));
+      if (!noteChangedEntries(affected, ...snapshots(path).map((doc) => manifestParts(doc, knownIds)))) {
+        return null;
+      }
+    } else if (!/^(?:(?:README|CONTRIBUTING|AGENTS)\.md|docs\/.+\.md|\.github\/PULL_REQUEST_TEMPLATE\.md)$/.test(path)) {
+      // Unknown paths and shared code may affect every suite.
+      return null;
+    }
+  }
+  return affected;
+}
+
+function suiteEnvironment() {
+  const allowed = /^(?:path|pathext|systemroot|windir|comspec|tmp|temp|tmpdir|lang|lc_all)$/i;
+  return { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => allowed.test(name))), CI: 'true' };
+}
+
+function runSuite(command, timeout) {
+  const windows = process.platform === 'win32';
+  return new Promise((done, reject) => {
+    let timedOut = false;
+    let cleanupError;
+    const child = spawn(command, {
+      cwd: root, stdio: 'inherit', shell: true, detached: !windows, env: suiteEnvironment(),
+    });
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try {
+        if (windows) {
+          const taskkill = join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'taskkill.exe');
+          execFileSync(taskkill, ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', timeout: 5000 });
+        } else {
+          process.kill(-child.pid, 'SIGKILL');
+        }
+      } catch (error) {
+        if (error.code !== 'ESRCH' && child.exitCode === null && child.signalCode === null) {
+          cleanupError = error;
+          child.kill('SIGKILL');
+        }
+      }
+    }, timeout);
+    const finish = (status, code) => {
+      clearTimeout(timer);
+      if (cleanupError) reject(new Error('Could not terminate the timed-out process tree.'));
+      else done({ status, code });
+    };
+    child.once('error', () => finish('failed', null));
+    child.once('close', (code) => finish(timedOut ? 'timed-out' : code === 0 ? 'passed' : 'failed', code));
+  });
+}
 
 async function main() {
-  let manifest;
-  let registry;
-  try {
-    manifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
-    registry = JSON.parse(await readFile(join(root, 'registry.json'), 'utf8'));
-  } catch {
-    console.error('Plugin test run failed: package.json or registry.json is unreadable.');
-    process.exitCode = 1;
-    return;
+  const { values } = parseArgs({
+    options: {
+      base: { type: 'string' }, all: { type: 'boolean' },
+      'timeout-ms': { type: 'string', default: '120000' },
+    },
+  });
+  const timeout = Number(values['timeout-ms']);
+  if (Boolean(values.base) === Boolean(values.all) || !Number.isSafeInteger(timeout) || timeout < 1 || timeout > 300000) {
+    throw new Error('Select exactly one of --base <ancestor SHA> or --all; --timeout-ms must be 1-300000.');
+  }
+  const readJson = async (file) => JSON.parse(await readFile(join(root, file), 'utf8'));
+  const [manifest, registry] = await Promise.all([readJson('package.json'), readJson('registry.json')]);
+  if (!Array.isArray(registry?.plugins)) throw new Error('Invalid registry.json: expected a plugins array.');
+  const affected = values.all ? null : affectedPlugins(values.base);
+
+  const ran = [];
+  const skipped = [];
+  for (const { id } of registry.plugins) {
+    const name = `test:${id}`;
+    const command = manifest.scripts?.[name];
+    if (scriptId(name) !== id || typeof command !== 'string' || !command.trim()) {
+      skipped.push({ plugin: id, reason: 'no-suite' });
+    } else if (affected && !affected.has(id)) {
+      skipped.push({ plugin: id, reason: 'unchanged' });
+    } else {
+      console.log(`Running ${name} (timeout: ${timeout} ms)`);
+      try {
+        ran.push({ plugin: id, script: name, ...await runSuite(command, timeout) });
+      } catch (error) {
+        throw new Error(`${name}: ${error.message}`, { cause: error });
+      }
+    }
   }
 
-  const scripts = manifest?.scripts && typeof manifest.scripts === 'object' ? manifest.scripts : {};
-  const ids = Array.isArray(registry?.plugins)
-    ? registry.plugins.map((item) => item?.id).filter((id) => typeof id === 'string' && id)
-    : [];
-  const selected = ids.filter((id) => typeof scripts['test:' + id] === 'string'
-    && scripts['test:' + id].trim());
-
-  if (selected.length === 0) {
-    console.log(JSON.stringify({ ran: [], skipped: 'no plugin test scripts are registered' }));
-    return;
-  }
-
-  const results = [];
-  for (const id of selected) {
-    const name = 'test:' + id;
-    // Run the command directly rather than via `npm run`: spawning npm.cmd
-    // without a shell fails on Windows, and the command text here is already
-    // the reviewed script body.
-    const code = await new Promise((resolveCode) => {
-      const child = spawn(scripts[name], { cwd: root, stdio: 'inherit', shell: true, env: process.env });
-      child.on('error', () => resolveCode(1));
-      child.on('close', (exitCode) => resolveCode(typeof exitCode === 'number' ? exitCode : 1));
-    });
-    results.push({ plugin: id, script: name, code });
-  }
-
-  const failed = results.filter((result) => result.code !== 0);
-  console.log(JSON.stringify({ ran: results, failed: failed.map((result) => result.plugin) }));
+  const failed = ran.filter(({ status }) => status !== 'passed').map(({ plugin }) => plugin);
+  console.log(JSON.stringify({
+    scope: affected ? [...affected].sort() : 'all',
+    ran, skipped, failed,
+    ...(ran.length === 0 && { reason: skipped.some(({ reason }) => reason === 'unchanged') ? 'no-affected-suites' : 'no-registered-suites' }),
+  }));
   if (failed.length) {
-    console.error(`Plugin test failed: ${failed.map((result) => result.plugin).join(', ')}`);
+    console.error(`Plugin test failed: ${failed.join(', ')}`);
     process.exitCode = 1;
   }
 }
 
-main().catch(() => {
-  // Do not echo child output through the error path: it is author-controlled.
-  console.error('Plugin test run failed: inspect the failing plugin script output above.');
+main().catch((error) => {
+  console.error(`Plugin test run failed: ${error.message}`);
   process.exitCode = 1;
 });
