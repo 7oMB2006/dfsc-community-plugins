@@ -5,7 +5,7 @@
       "id": "agent-team",
       "source": {
         "repository": "Niangaol/agent-team",
-        "commit": "eca8cd122bd79ec129863c1deccdf5fab836012f",
+        "commit": "dc321b0f911b4f4eb5fbcdec4ae068408f2b8181",
         "path": "plugins/agent-team"
       },
       "files": [
