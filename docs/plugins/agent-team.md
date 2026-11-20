@@ -70,11 +70,10 @@
 
 ## 验证证据
 
-上游仓库的 `tests/` 提供两个可复现的检查：
+验证脚本随本市场仓库提供，可直接在仓库根运行：
 
 ```bash
-cd <仓库根>
-npm test
+npm run test:agent-team
 ```
 
 - `tests/two-session-state.mjs`：起两个真实的 `team-gate` stdio 子进程，通过 MCP JSON-RPC 驱动，覆盖
@@ -87,4 +86,8 @@ npm test
 
   对旧实现（无锁、整份覆盖）运行同一测试会在第 1 个场景失败，可复现复审指出的覆盖问题。
 
+- `tests/state-fault-tolerance.mjs`：四种容错场景——写入遇瞬时读错误必须失败且不覆盖、只读遇错误沿用缓存、文件被删后读取为空且可重建、损坏文件备份后从空写入。对修复前的实现跑，第 1 个场景即失败。
+
 - `tests/agent-tool-boundaries.mjs`：校验 12 个角色的工具白名单，锁住"纯只读角色无写工具/无 shell"与"有 shell 的角色不声称只读"。
+
+脚本内容与上游仓库 `Niangaol/agent-team` 根目录的同名文件一致，**不随插件分发**；测试对象是 `plugins/agent-team` 这个市场分发副本。

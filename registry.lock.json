@@ -5,7 +5,7 @@
       "id": "agent-team",
       "source": {
         "repository": "Niangaol/agent-team",
-        "commit": "15c145acf7e308f7996b01b2a20af9b080856fdf",
+        "commit": "eca8cd122bd79ec129863c1deccdf5fab836012f",
         "path": "plugins/agent-team"
       },
       "files": [
@@ -17,9 +17,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "72dccdeea48df975ca545afa7f70055d9d21013c",
-          "sha256": "fb386d49a9c35955d28afc72c28a9ff8e018dd435c4bb6db4e362622016efb0f",
-          "size": 7480
+          "gitBlobSha": "405e40b179732a3e45986c831db192b2d9cc701a",
+          "sha256": "f698b72256841aab625eeb8e47bd017315f56d57dd75fde2dbf4c2955fa24c87",
+          "size": 7192
         },
         {
           "path": "agents/analyst.md",
