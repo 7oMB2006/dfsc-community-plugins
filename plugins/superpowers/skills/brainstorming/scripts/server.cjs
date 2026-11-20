@@ -103,14 +103,14 @@ const SESSION_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
 const CONTENT_DIR = path.join(SESSION_DIR, 'content');
 const STATE_DIR = path.join(SESSION_DIR, 'state');
 const SUPERPOWERS_VERSION = readSuperpowersVersion();
+// 品牌 Logo 的远程地址只作记录：默认不渲染（见 brandMarkup 的 opt-in）。
 const SUPERPOWERS_BRAND_IMAGE_URL = 'https://primeradiant.com/brand/superpowers-visual-brainstorming-logo.png';
 const TELEMETRY_DISABLE_ENV_VARS = [
   'SUPERPOWERS_DISABLE_TELEMETRY',
   'DISABLE_TELEMETRY',
   'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC'
 ];
-const SUPERPOWERS_TELEMETRY_DISABLED = TELEMETRY_DISABLE_ENV_VARS.some(name => isTruthyEnv(process.env[name]));
-let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
+const SUPERPOWERS_TELEMETRY_DISABLED = TELEMETRY_DISABLE_ENV_VARS.some(name => isTruthyEnv(process.env[name]));let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 
 // Per-session secret key. The companion is reachable by any local browser tab
 // and, when bound to a non-loopback host, by any host that can route to it.
@@ -239,16 +239,22 @@ function escapeHtmlText(value) {
     .replace(/"/g, '&quot;');
 }
 
+// 品牌 Logo 默认不加载：页面渲染后浏览器会去 primeradiant.com 取图，这是本机
+// 之外的一次第三方请求（虽不包含会话内容）。改为显式 opt-in，默认只显示文字标志。
+// 需要 Logo 时设 BRAINSTORM_BRAND_LOGO=1。
+const SUPERPOWERS_BRAND_LOGO_ENABLED = isTruthyEnv(process.env.BRAINSTORM_BRAND_LOGO);
+
 function brandMarkup() {
   const version = escapeHtmlText(SUPERPOWERS_VERSION);
   const text = SUPERPOWERS_TELEMETRY_DISABLED
     ? 'Prime Radiant Superpowers v' + version
     : 'Superpowers v' + version;
-  const logo = SUPERPOWERS_TELEMETRY_DISABLED
-    ? ''
-    : '<img class="brand-logo" src="' + SUPERPOWERS_BRAND_IMAGE_URL + '?v=' + encodeURIComponent(SUPERPOWERS_VERSION) + '" alt="Prime Radiant" referrerpolicy="no-referrer" decoding="async">';
+  const logo = SUPERPOWERS_BRAND_LOGO_ENABLED && !SUPERPOWERS_TELEMETRY_DISABLED
+    ? '<img class="brand-logo" src="' + SUPERPOWERS_BRAND_IMAGE_URL + '?v=' + encodeURIComponent(SUPERPOWERS_VERSION) + '" alt="Prime Radiant" referrerpolicy="no-referrer" decoding="async">'
+    : '';
 
-  return '<div class="brand"><a href="https://github.com/obra/superpowers">' + logo + '<span class="brand-copy">' + text + '</span></a></div>';
+  // 链接只在用户点击时才跳转，不会自动发起请求。
+  return '<div class="brand"><a href="https://github.com/obra/superpowers" rel="noreferrer noopener">' + logo + '<span class="brand-copy">' + text + '</span></a></div>';
 }
 
 function renderBranding(html) {
