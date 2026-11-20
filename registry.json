@@ -40,7 +40,7 @@
       "description": "Superpowers 核心技能库（15 个技能）：TDD、系统化调试、计划编写与执行、子代理驱动开发、代码审查收发、Git worktree、验证收尾等；部分技能脚本需 bash，可视化伴侣可选依赖 Node.js。",
       "source": {
         "repository": "Niangaol/superpowers-dfsc",
-        "commit": "f827e45086d9bef1f8c41a3a104efa14c9d7c616",
+        "commit": "ae07d9903d15bf424c9ad5d62811e094670245cd",
         "path": "plugins/superpowers"
       },
       "license": "MIT",
