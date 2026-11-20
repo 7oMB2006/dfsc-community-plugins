@@ -253,7 +253,9 @@ async function teamWait(args, ctx) {
   const cursor = store.signalCursor(team);
 
   const done = () => {
-    const labels = store.signalLabels(team);
+    // 只认「本次等待开始之后」的信号。用全量标签会把上一轮的同名 label 当成
+    // 本轮已完成，直接返回 satisfied 而实际什么都没等到。
+    const labels = store.signalLabelsSince(team, cursor);
     if (mode === 'any') {
       if (expect.length > 0) return expect.some((l) => labels.has(l));
       return store.signalsSince(team, cursor).length > 0;
@@ -274,7 +276,8 @@ async function teamWait(args, ctx) {
     activeWaits.delete(waitId);
   }
 
-  const labels = store.signalLabels(team);
+  // pending 也必须基于本轮信号：用全量标签会把上一轮的同名 label 当成已完成。
+  const labels = store.signalLabelsSince(team, cursor);
   const satisfied = done();
   const pending = expect.filter((l) => !labels.has(l));
   const { stale, unreported } = staleInfo(store, team, pending, staleAfterMs);

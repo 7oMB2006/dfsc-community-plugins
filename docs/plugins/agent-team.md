@@ -90,5 +90,7 @@ npm run test:agent-team
 
 - `tests/agent-tool-boundaries.mjs`：校验 12 个角色的工具白名单，锁住"纯只读角色无写工具/无 shell"与"有 shell 的角色不声称只读"。
 - `tests/mcp-protocol.mjs`：协议层冒烟——`initialize` / 通知不产生响应 / `tools/list` 六个工具与 schema / `tools/call` / 非法 team 与未知工具被拒绝 / 未知方法返回 -32601 / 畸形输入不致命 / stdout 只含 JSON-RPC（日志混入 stdout 会让宿主的解析失败）。
+- `tests/wait-signal-scope.mjs`：验证 `team_wait` 只认本轮新信号——上一轮同名 label 的完成信号不会被算作本轮完成，`pending` 也基于本轮；`mode=any` 与 `reset` 同样不吃历史信号。
+- `tests/corrupt-recovery-locked.mjs`：验证损坏状态文件的恢复在持锁路径里完成——只读查询不改文件（含缓存建立后文件变坏的情况）、写入路径备份损坏文件、两个进程并发恢复不互相覆盖备份。
 
 脚本内容与上游仓库 `Niangaol/agent-team` 根目录的同名文件一致，**不随插件分发**；测试对象是 `plugins/agent-team` 这个市场分发副本。
