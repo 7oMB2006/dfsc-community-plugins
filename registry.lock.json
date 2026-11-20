@@ -5,7 +5,7 @@
       "id": "agent-team",
       "source": {
         "repository": "Niangaol/agent-team",
-        "commit": "8494f8033f11701d40ad7bd7f2a9245b3173f32b",
+        "commit": "6c2aad793450ce305a6d87ba0191a2d97493d651",
         "path": "plugins/agent-team"
       },
       "files": [
@@ -17,81 +17,81 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "af74234102e7a79e00f3d0c403435aefe0272f08",
-          "sha256": "0ae316b75879679ed70e6f70389909777e0d9524371590bb2254cb3b3f5720b4",
-          "size": 8001
+          "gitBlobSha": "2db649b8aba746130cf661cf2613c2005dc40679",
+          "sha256": "1bb827135bdfa6d48909089e9d64a265de16b117ca38b079cbd5a94228e68ebb",
+          "size": 6730
         },
         {
           "path": "agents/analyst.md",
-          "gitBlobSha": "dea38d8cc6604fcf89ea68d062c381d80f046515",
-          "sha256": "b6e48b8b7ac4d7c6b4d4e82d0ec4365138aa10b9869acc2579e4ca8dcaf10ed5",
-          "size": 2481
+          "gitBlobSha": "0fe990a7b2832d686744e387335f79fe975c8990",
+          "sha256": "3155a1ef534fc47585eb297220f4673e9c17af7d3c2c00ab49b5a2a066804e18",
+          "size": 2551
         },
         {
           "path": "agents/architect.md",
-          "gitBlobSha": "de573a7a4e04a97507070132fb95d97326109819",
-          "sha256": "88490a945f958f2ddf71cdfbc3fb9146dfa690c555f190827160426b16d7918f",
-          "size": 2455
+          "gitBlobSha": "996462948c4a48d48c6b58b4af03e5dcf9fa8fd4",
+          "sha256": "c1fd36a997cfdbb17ab26c393cef7a7e3aedc24dd706775e6f86e96ae3faa747",
+          "size": 2525
         },
         {
           "path": "agents/builder.md",
-          "gitBlobSha": "1522e3430a9b7177216160032abddfbcc070434f",
-          "sha256": "cb763d988d7936565c5d4d0fba5f99beb1c9d505ed28048b87e9a70a81e98eb5",
-          "size": 2615
+          "gitBlobSha": "0d072f1241b80ac70906578236a5a026c1e0cb57",
+          "sha256": "8a92506b975e4f4533872306d983d6b21e3ea7ba99cdd23fa379525427b86645",
+          "size": 2685
         },
         {
           "path": "agents/debugger.md",
-          "gitBlobSha": "bc28b6d137ce464c71345561b5da3b9de2725d01",
-          "sha256": "044cb516ca5c9feed25b622bb79a1160b832750ab11b0fb1deb0513f9d1f9f29",
-          "size": 2591
+          "gitBlobSha": "e922191aa3b56dd09556c75334eb417ca2a956dc",
+          "sha256": "2e04c57a4d604670e64019fa022aba8c5bfca32f25083db4cef5ac749c361a6c",
+          "size": 2661
         },
         {
           "path": "agents/docs-writer.md",
-          "gitBlobSha": "4c768bb6690eb3dca3a5b1c145002b35b4b4ecba",
-          "sha256": "a33c70a5b6d9bd1bbccb78508d33de7fd71df8fc1b0de2bfc69bdc056e226fdc",
-          "size": 2320
+          "gitBlobSha": "008f005c959c23f30760255e164cdcefbef765f1",
+          "sha256": "09d583d214f5518e0554ca8e44672965b1355d8bf88126edb9efbaf38a0036b1",
+          "size": 2390
         },
         {
           "path": "agents/perf-engineer.md",
-          "gitBlobSha": "8cfc88184631f827988b62a8d898a70b14dcfb8e",
-          "sha256": "38b782e9137478d91dfca58af9579f31c8aa3b0bc0522ee24b1d78e3bd5c049d",
-          "size": 2548
+          "gitBlobSha": "a9f869627f88a6878ab2e9cf044c0b94a301760a",
+          "sha256": "6e8d6f53649d9bda84b2b45656f93ea0c8fcb7a554f8f8801efa8349604ea6a9",
+          "size": 2618
         },
         {
           "path": "agents/release-engineer.md",
-          "gitBlobSha": "ad085c1f579463f41ae0dc55a06de05855a9a708",
-          "sha256": "a9dd5eee5c33ccf73642984e71f4468f004eebcf274a1d11f0d57a15692d3587",
-          "size": 2540
+          "gitBlobSha": "797bcc73bb826a9081ada0a09e9de81af145c3af",
+          "sha256": "a3e3f72ea227269ae0a544be98dc19c42f110858bf96afd7858f75b2e41aa4d5",
+          "size": 2610
         },
         {
           "path": "agents/reviewer.md",
-          "gitBlobSha": "d57dceabc4ab37b67fc37a23df8962cce64c6889",
-          "sha256": "ca990472978b109b12a9d1f258412958066071092df23d1e2405f2863a553097",
-          "size": 2496
+          "gitBlobSha": "e6c704284df98b3833ada8b285a717b2c32d1db6",
+          "sha256": "08531363a4502ebab0bbeb7280193cc339649dc9050f93bf780d4ff61b9c2ba3",
+          "size": 2566
         },
         {
           "path": "agents/scout.md",
-          "gitBlobSha": "ff5a558bde43a69e1e46bc2e469d9f6d0705a7a0",
-          "sha256": "f0e0917633691131a32f4f1ac6374190b68ca16abd99142c1eb1b712a5830365",
-          "size": 2318
+          "gitBlobSha": "2e6171720d084e6fba895898e66d61889cbd9829",
+          "sha256": "7c9d942af146b9b765326ab40b24d7e12e34df795bdc0fe2055ca61d353931f3",
+          "size": 2388
         },
         {
           "path": "agents/security-auditor.md",
-          "gitBlobSha": "2e1e836a1709d02415c6b418e5c93d83f42aeade",
-          "sha256": "cd30160758baf74c27967261e81a23e04b56db540c0ec92bec4caaf84d2d588e",
-          "size": 2715
+          "gitBlobSha": "4b945c1201b975f651ef74a8d6f17d4599e82d1d",
+          "sha256": "ef2482f652120105e8932ffdec38190804ae3aaf9789c9a2da4316072d4cbe7a",
+          "size": 2785
         },
         {
           "path": "agents/tester.md",
-          "gitBlobSha": "a1cbee3956e9616367117af2b9e22fb7fd9b961f",
-          "sha256": "74939d7fd19ed57aa96175f8022dbbc8fd7b94348e856356d9fba9c2b29aaf3c",
-          "size": 2507
+          "gitBlobSha": "673347f5dcddb2d86e98bb71647c06cff84cf7e2",
+          "sha256": "8ea860533be484ab2fcea740487b29e53530276ae237a89b59738ce0d748b727",
+          "size": 2577
         },
         {
           "path": "agents/ux-reviewer.md",
-          "gitBlobSha": "7d553c66241afd35c4bd89d1fe4cf725d560e068",
-          "sha256": "1abd460120c86c4c63cd98a26ab5464d521fcae7173032b4bb5c0e46fafb4c30",
-          "size": 2830
+          "gitBlobSha": "b79d32f0cff55ec220148b90664df605e3dafede",
+          "sha256": "d65e8470a4cfec1ee566b9a4794db3b19e4f6bb191bbfc4adcb73c10edfcb3b1",
+          "size": 2900
         },
         {
           "path": "commands/team-debug.md",
@@ -125,33 +125,33 @@
         },
         {
           "path": "server/state.mjs",
-          "gitBlobSha": "5b659da1a9a9699c0c3b47ca74a9cdb724b8b745",
-          "sha256": "e2de1bb852ab8c8220ee642550b55eff0f462af27460a2c80f5d11c54a6f5df0",
-          "size": 7236
+          "gitBlobSha": "5ee9bbf05dd4a14d0a0184a798464c8300a328d6",
+          "sha256": "e51ceed52f6376a2b064f1e0129d4d8909c4c9d31ccd058c8c6faadcdc53f803",
+          "size": 12604
         },
         {
           "path": "server/team-gate.mjs",
-          "gitBlobSha": "cd7c1c9f2cdb1ddece8c5c1ab481385373e7e5e0",
-          "sha256": "c3c444e03a36896907389aa1fd281edb09a1e153c38953cc1daab798ae94f425",
-          "size": 3401
+          "gitBlobSha": "71ab0bfdf63e891b8ad570bc24c9d4d59ff5d671",
+          "sha256": "2868d6f8085f3aa981af597ba6a386c4ee6b86366e9525e603d6ec52677e3eef",
+          "size": 3413
         },
         {
           "path": "server/tools.mjs",
-          "gitBlobSha": "83a03b8942b8ccce10c202e74ed34cb907884e7e",
-          "sha256": "30944c350b3e6dbb024dd9e15a0d329e4ddd867fdd5a41dd1f655affdead9d82",
-          "size": 16160
+          "gitBlobSha": "f0ae7a88382dd178907302778aa22cceffa190b2",
+          "sha256": "328df24c734195e72963f6ad4df2151f94ed2a91b8fdb2d0ebd21817ef17b963",
+          "size": 16380
         },
         {
           "path": "skills/team-playbook/SKILL.md",
-          "gitBlobSha": "f2b8f0f1cce97caeb779dd70add0284f1b867ee8",
-          "sha256": "7e27e27ea48e954fa5aafa8db512ffd420859d45ca7001432bb8cefcab4cb1d6",
-          "size": 6570
+          "gitBlobSha": "ce177c917aa4caa0e3f6cd83503d0f7ef25f4d0d",
+          "sha256": "e5a67895097d8ff7d1b13aa311f15ba91b3ae8e0aafd80eccce602c3764b04ef",
+          "size": 8034
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "b0d0ac408cee72ba3b1b5272da667706c5a9ed7e",
-          "sha256": "7d965ea4c90ece6473e8a47a971d8803316742637e831e08dc492c4d30bffcca",
-          "size": 689
+          "gitBlobSha": "64f6fefadf8b1b6670b5b9c87bf9e436fe051b54",
+          "sha256": "2164fce1d532f5dd24a07863c7191f49704d80a7f5e8db7208d3654bf13b814c",
+          "size": 710
         }
       ]
     },

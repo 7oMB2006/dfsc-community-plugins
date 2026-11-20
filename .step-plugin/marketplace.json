@@ -4,7 +4,7 @@
     {
       "name": "agent-team",
       "source": "./plugins/agent-team",
-      "description": "十二角色智能体团队（agents/skills/commands）+ team-gate A2A 协作门禁（六个 MCP 工具，团队隔离与状态持久化）；需 Node.js 18+ 运行 stdio MCP server。"
+      "description": "十二角色智能体团队（agents/skills/commands）+ team-gate A2A 协作门禁（六个 MCP 工具，按团队分组与多进程安全的状态持久化）；需 Node.js 18+ 运行 stdio MCP server。"
     },
     {
       "name": "bilibili-video-research",

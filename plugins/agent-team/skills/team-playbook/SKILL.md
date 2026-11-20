@@ -9,20 +9,26 @@ description: 智能体团队的编排手册。当任务涉及多角色分工（�
 
 ## 环节 → 角色映射
 
-| 工程环节 | 角色 | 输入 → 输出 | 工具边界 |
+| 工程环节 | 角色 | 输入 → 输出 | 工具边界（宿主强制） |
 | - | - | - | - |
 | 需求澄清 | analyst | 模糊需求 → 可判定的验收标准与影响面 | 只读 |
 | 代码调研 | scout | 问题 → 带证据的事实清单 | 只读 |
-| 缺陷定位 | debugger | 已复现缺陷 → 根因证据链与修复方向 | 只读 + 只读命令 |
-| 方案设计 | architect | 事实 → 编号执行步骤与完成标准 | 只读 + 只读命令 |
+| 缺陷定位 | debugger | 已复现缺陷 → 根因证据链与修复方向 | 只读 + 命令 |
+| 方案设计 | architect | 事实 → 编号执行步骤与完成标准 | 只读 + 命令 |
 | 编码实现 | builder | 方案 → 实际改动与验证结果 | 读写 |
 | 测试保障 | tester | 改动 → 基线与新用例、真实结果 | 读写（限测试） |
-| 功能审查 | reviewer | 最终 diff → 分级问题清单 | 只读 + 只读命令 |
-| 安全审计 | security-auditor | 改动 → 按可利用性分级的安全清单 | 只读 + 只读命令 |
-| 性能把关 | perf-engineer | 改动 → 带测量数字的性能结论 | 只读 + 只读命令 |
+| 功能审查 | reviewer | 最终 diff → 分级问题清单 | 只读 + 命令 |
+| 安全审计 | security-auditor | 改动 → 按可利用性分级的安全清单 | 只读 + 命令 |
+| 性能把关 | perf-engineer | 改动 → 带测量数字的性能结论 | 只读 + 命令 |
 | 界面审查 | ux-reviewer | UI 改动 → 状态/交互/可访问性清单 | 只读 |
 | 文档同步 | docs-writer | 代码事实 → 更新后的文档与 CHANGELOG | 写文档 |
 | 交付发布 | release-engineer | 待发布改动 → 构建结果与回滚方案 | 读写交付文件 |
+
+**工具边界是怎么生效的**：各角色 frontmatter 的 `tools:` 列表由宿主执行——派发子代理时宿主把这份列表作为工具白名单传下去，子进程只能看到并使用列表内的工具。所以「只读」是**真实的工具缺失**，不是提示词劝阻：analyst / scout / ux-reviewer 没有 `write_file`、`edit_file`、`run_command`，写不了文件也跑不了命令。
+
+注意两点：
+- 带 `run_command` 的角色（debugger / architect / reviewer / security-auditor / perf-engineer）拿到的是**完整 shell**，不是受限的只读命令集。「只读命令」是给它们的指令约束，靠模型遵守，**宿主不拦**。它们能运行 `rm`、`git checkout`、`npm install` 等任何命令，也可以借命令写文件。要求严格只读时，把这些角色的 `run_command` 从 `tools:` 里去掉，或改用不派发它们的流程。
+- builder / tester / docs-writer / release-engineer 拥有写工具，能改工作区文件。"tester 只许改测试""docs-writer 只写文档"同样是**提示词约束**，不是文件系统层面的限制。
 
 ## 五种编排模式
 
@@ -44,14 +50,15 @@ description: 智能体团队的编排手册。当任务涉及多角色分工（�
 
 信号是**必要任务完成的里程碑**，不是子智能体终止：
 
-- 子代理完成分配的必要任务后**立即**调用 `mcp__team-gate__agent_done`（label / status / summary / artifacts），**然后继续执行**后续工作（自检、补验证、收尾），不停止。
-- 主代理调用 `mcp__team-gate__team_wait` 主动暂停：`expect: [标签...]` 等全部指定标签，`mode: "any"` 等任意一个；超时会返回 pending 清单，可再次调用继续等。
+- 子代理完成分配的必要任务后**立即**调用 `agent-team__team-gate__agent_done`（label / status / summary / artifacts），**然后继续执行**后续工作（自检、补验证、收尾），不停止。
+- 主代理调用 `agent-team__team-gate__team_wait` 主动暂停：`expect: [标签...]` 等全部指定标签，`mode: "any"` 等任意一个；超时会返回 pending 清单，可再次调用继续等。
 - 同一子代理可分多个里程碑多次发信号（用不同 label），主代理用 `mode=any` 做渐进式汇总。
 - 收到信号≠子代理已停止：汇总时只认 signal 里的 status/summary，需要最终产物时确认子代理已收尾。
 
-## 团队隔离与状态恢复（team 参数，v2.0 起）
+## 团队分组与状态恢复（team 参数，v2.0 起）
 
-- 所有 team-gate 调用都接受 `team` 参数。**同一团队内**的 label、信号、消息互相可见；**不同团队完全隔离**。并发跑多个团队（如一个会话里同时 `/team-ship` 和 `/team-debug`）时，主代理为每个团队分一个团队名（如 `ship-1`、`fix-pay`），派发时写进任务文本。
+- 所有 team-gate 调用都接受 `team` 参数。**同一团队内**的 label、信号、消息互相可见；**不同团队按团队分组**。并发跑多个团队（如一个会话里同时 `/team-ship` 和 `/team-debug`）时，主代理为每个团队分一个团队名（如 `ship-1`、`fix-pay`），派发时写进任务文本。
+- 团队分组是**状态分区，不是安全边界**：所有团队的数据存在同一个状态文件里，能调用 team-gate 的进程（包括另一个会话的 MCP 进程）都能读到其他团队的在线名单、完成信号摘要与消息。不要把它当保密通道，跨团队只放协调信息，不放密钥或个人数据。
 - `team_wait` 的 `reset` 只清空**当前团队**，不再影响其他团队。
 - 状态持久化在 `server/state/teams.json`：MCP server 重启（应用重启、崩溃）后自动恢复，进行到一半的团队信号、在线状态、消息不丢。
 - **stale 检测**：子代理长时间不 `agent_report` 会被判定失联；`team_wait` 超时返回时在 `stale` 字段列出失联标签（含最后一次上报时间和任务），避免主代理干等。长任务中子代理应定期 `agent_report` 续期。

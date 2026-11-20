@@ -22,7 +22,7 @@ const TEAM_PARAM = {
   team: {
     type: 'string',
     description:
-      '团队标识：同一团队内的 label / 信号 / 消息互相可见，不同团队完全隔离。' +
+      '团队标识：同一团队内的 label / 信号 / 消息互相可见，按团队分组的状态分区。' +
       '使用主智能体派发时分配的团队名；省略时为 default。仅限字母数字 . _ - ，最长 64 字符。',
   },
 };
@@ -238,7 +238,7 @@ async function teamWait(args, ctx) {
   const { team, error } = teamOrError(args);
   if (error) return error;
   const { store, activeWaits } = ctx;
-  if (args.reset === true) store.resetTeam(team);
+  if (args.reset === true) await store.resetTeam(team);
 
   const mode = args.mode === 'any' ? 'any' : 'all';
   const expect = Array.isArray(args.expect)
@@ -248,13 +248,15 @@ async function teamWait(args, ctx) {
   const staleAfterMs = Number.isFinite(Number(args.staleAfterMs)) && Number(args.staleAfterMs) > 0
     ? Number(args.staleAfterMs)
     : STALE_DEFAULT_MS;
-  const started = store.team(team).signals.length;
+  // 其他会话的 MCP 进程也可能在写同一份状态文件，所以这里只认「本次等待开始后」的
+  // 新信号（信号序号游标），不把历史信号当成刚完成。
+  const cursor = store.signalCursor(team);
 
   const done = () => {
     const labels = store.signalLabels(team);
     if (mode === 'any') {
       if (expect.length > 0) return expect.some((l) => labels.has(l));
-      return store.team(team).signals.length > started;
+      return store.signalsSince(team, cursor).length > 0;
     }
     if (expect.length === 0) return false; // all 模式未给 expect：只能等超时并提示
     return expect.every((l) => labels.has(l));
@@ -285,9 +287,9 @@ async function teamWait(args, ctx) {
     pending,
     stale,
     unreported,
-    newSignals: store.team(team).signals.slice(started),
+    newSignals: store.signalsSince(team, cursor),
     roster: store.roster(team).map((p) => ({ label: p.label, role: p.role, task: p.task, status: p.status, updatedAt: p.updatedAt })),
-    recentSignals: store.team(team).signals.slice(-50),
+    recentSignals: store.recentSignals(team, 50),
     teams: store.listTeams(),
     waitedMs: Date.now() - t0,
     hint: satisfied
@@ -300,7 +302,7 @@ async function teamWait(args, ctx) {
   });
 }
 
-function agentDone(args, ctx) {
+async function agentDone(args, ctx) {
   const { team, error } = teamOrError(args);
   if (error) return error;
   const label = String(args.label ?? '').trim();
@@ -315,23 +317,23 @@ function agentDone(args, ctx) {
     artifacts: Array.isArray(args.artifacts) ? args.artifacts.slice(0, 100).map(String) : [],
     at: new Date().toISOString(),
   };
-  ctx.store.recordSignal(team, signal);
+  await ctx.store.recordSignal(team, signal);
   return textResult({
     ok: true,
     team,
     recorded: signal,
-    totalSignals: ctx.store.team(team).signals.length,
+    totalSignals: ctx.store.signalCount(team),
     hint: '任务完成信号已记录。主智能体的 team_wait 会在等待条件满足时立即返回；你可以继续执行后续工作，不要停止。',
   });
 }
 
-function agentReport(args, ctx) {
+async function agentReport(args, ctx) {
   const { team, error } = teamOrError(args);
   if (error) return error;
   const label = String(args.label ?? '').trim();
   if (!label) return textResult({ ok: false, error: 'label 必填' });
   const status = ['running', 'waiting', 'done', 'failed', 'blocked'].includes(args.status) ? args.status : 'running';
-  const presence = ctx.store.upsertPresence(team, {
+  const presence = await ctx.store.upsertPresence(team, {
     label,
     role: args.role === undefined ? undefined : String(args.role).slice(0, 60),
     task: args.task === undefined ? undefined : String(args.task).slice(0, 2000),
@@ -357,7 +359,7 @@ function teamStatus(args, ctx) {
     roster,
     stale,
     waits: [...ctx.activeWaits.values()].map((w) => ({ ...w })),
-    recentSignals: store.team(team).signals.slice(-20),
+    recentSignals: store.recentSignals(team),
     teams: store.listTeams(),
   };
   if (label) {
@@ -367,14 +369,14 @@ function teamStatus(args, ctx) {
   return textResult(base);
 }
 
-function agentSend(args, ctx) {
+async function agentSend(args, ctx) {
   const { team, error } = teamOrError(args);
   if (error) return error;
   const from = String(args.from ?? '').trim();
   const to = String(args.to ?? '').trim();
   const content = String(args.content ?? '').trim();
   if (!from || !to || !content) return textResult({ ok: false, error: 'from/to/content 均必填' });
-  const msg = ctx.store.addMessage(team, { from, to, content: content.slice(0, 8000) });
+  const msg = await ctx.store.addMessage(team, { from, to, content: content.slice(0, 8000) });
   return textResult({
     ok: true,
     team,
@@ -384,13 +386,13 @@ function agentSend(args, ctx) {
   });
 }
 
-function agentRecv(args, ctx) {
+async function agentRecv(args, ctx) {
   const { team, error } = teamOrError(args);
   if (error) return error;
   const label = String(args.label ?? '').trim();
   if (!label) return textResult({ ok: false, error: 'label 必填' });
   const mine = ctx.store.unreadFor(team, label);
-  if (args.markRead !== false) ctx.store.markRead(team, label, mine);
+  if (args.markRead !== false) await ctx.store.markRead(team, label, mine);
   return textResult({ ok: true, team, count: mine.length, unread: mine });
 }
 

@@ -3,7 +3,7 @@
  * team-gate — 智能体团队协作门禁（MCP stdio server，零依赖）
  *
  * 架构（三层，均无第三方依赖）：
- *   server/state.mjs    状态层：团队隔离 + 原子持久化（state/teams.json）
+ *   server/state.mjs    状态层：按团队分组 + 多进程安全持久化（state/teams.json）
  *   server/tools.mjs    工具层：六个工具的定义与实现（team_wait / agent_done /
  *                        agent_report / team_status / agent_send / agent_recv）
  *   server/team-gate.mjs 协议层（本文件）：MCP over stdio 的 JSON-RPC 2.0 收发
