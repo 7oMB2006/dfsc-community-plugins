@@ -63,8 +63,11 @@ export class TeamStore {
 
   /**
    * 解析状态文件内容。
+   *
    * 损坏的文件不能阻止 server 启动，也不能静默丢掉其他进程正在用的数据：
-   * 只有在能改名备份时才重命名，改不了就继续用空状态（下次写入会覆盖）。
+   * - 能用改名备份时：备份后返回空状态；
+   * - 改不了名时：抛出错误。读取路径会退回空状态（只读不影响别人），
+   *   但写入路径因此中止，不会用空状态覆盖原文件。
    */
   _parse(raw, { rename = true } = {}) {
     const now = new Date().toISOString();
@@ -73,14 +76,16 @@ export class TeamStore {
     try {
       parsed = JSON.parse(raw);
     } catch (err) {
-      // 损坏的状态文件不能阻止 server 启动，也不能静默丢掉别人正在用的文件：
-      // 只在能改名备份时重命名，改不了就继续用空状态（下次写入会覆盖）。
+      // 损坏的状态文件不能阻止 server 启动，也不能静默丢掉别人正在用的文件。
+      // 能改名备份就备份后从空状态启动；改不了名时，读取路径退回空状态，
+      // 但写入路径必须失败（见 _mutate），否则会用空状态覆盖掉原文件。
       if (rename) {
         try {
           fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`);
           this.log('状态文件损坏，已备份并从空状态启动');
-        } catch {
-          this.log('状态文件损坏且无法备份，从空状态启动');
+        } catch (renameErr) {
+          this.log('状态文件损坏且无法备份:', String(renameErr?.message ?? renameErr));
+          throw new Error(`状态文件损坏且无法备份，拒绝覆盖：${this.file}`);
         }
       }
       return state;
@@ -104,19 +109,37 @@ export class TeamStore {
     return state;
   }
 
-  /** 读磁盘的当前状态（绕过缓存）。文件不存在时返回空状态。 */
-  _readDisk() {
+  /** 读磁盘的当前状态（绕过缓存）。
+   *
+   * @param {{ forWrite?: boolean }} options 写入路径必须让错误冒出去；
+   *   只读路径容忍损坏文件（备份不了就返回空状态，不覆盖别人）。
+   */
+  _readDisk({ forWrite = false } = {}) {
     let raw;
     try {
       raw = fs.readFileSync(this.file, 'utf8');
-    } catch {
-      this._cache = this._parse('{}', { rename: false }); // 首次运行或状态被清
+    } catch (err) {
+      if (err?.code !== 'ENOENT') {
+        if (forWrite) throw err;
+        this.log('状态读取失败，按空状态处理:', String(err?.message ?? err));
+        this._cache = this._parse('{}', { rename: false });
+        this._cachedRaw = null;
+        return this._cache;
+      }
+      this._cache = this._parse('{}', { rename: false });
       this._cachedRaw = null;
       return this._cache;
     }
-    this._cache = this._parse(raw);
+    let state;
+    try {
+      state = this._parse(raw, { rename: forWrite });
+    } catch (err) {
+      if (forWrite) throw err;
+      state = this._parse('{}', { rename: false });
+    }
+    this._cache = state;
     this._cachedRaw = raw;
-    return this._cache;
+    return state;
   }
 
   /**
@@ -124,26 +147,30 @@ export class TeamStore {
    *
    * 优先用缓存，但**必须**检测其他进程的写入。不能用 mtime+size 做判据：
    * Windows 上 mtimeMs 精度约 1ms，同长度内容的两次写入可能落在同一毫秒，
-   * 会误判成「没变」而读到旧缓存。这里改为在每次读取时比对文件内容哈希，
+   * 会误判成「没变」而读到旧缓存。这里改为在每次读取时比对文件内容，
    * 状态文件很小（几十 KB 上限），代价可忽略且不受时钟精度影响。
    */
   _snapshot() {
-    if (this._cache) {
-      let raw;
-      try {
-        raw = fs.readFileSync(this.file, 'utf8');
-      } catch {
-        // 文件被删（手动清理/停用）：丢掉缓存，从空状态重新开始。
-        this._cache = null;
-        this._cachedRaw = null;
-        return this._readDisk();
+    if (!this._cache) return this._readDisk();
+    let raw;
+    try {
+      raw = fs.readFileSync(this.file, 'utf8');
+    } catch (err) {
+      if (err?.code !== 'ENOENT') {
+        // 读不到就不能假装是空状态：沿用上一次成功读到的缓存，
+        // 避免把一次瞬时故障显示成「什么数据都没有」。
+        this.log('状态读取失败，沿用缓存:', String(err?.message ?? err));
+        return this._cache;
       }
-      if (raw === this._cachedRaw) return this._cache;
-      this._cache = this._parse(raw);
-      this._cachedRaw = raw;
-      return this._cache;
+      // 文件确实被删（手动清理/停用）：丢掉缓存，从空状态重新开始。
+      this._cache = null;
+      this._cachedRaw = null;
+      return this._readDisk();
     }
-    return this._readDisk();
+    if (raw === this._cachedRaw) return this._cache;
+    this._cache = this._parse(raw);
+    this._cachedRaw = raw;
+    return this._cache;
   }
 
   _serialize(state) {
@@ -203,7 +230,7 @@ export class TeamStore {
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
     await this._acquire();
     try {
-      const state = this._readDisk();
+      const state = this._readDisk({ forWrite: true });
       const result = fn(state);
       const tmp = `${this.file}.${process.pid}.tmp`;
       const serialized = this._serialize(state);
