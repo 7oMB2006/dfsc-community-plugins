@@ -1,11 +1,12 @@
 /**
  * state.mjs — team-gate 状态层
  *
- * 职责：团队（team）隔离的状态存储 + 原子持久化。
+ * 职责：按团队分组的状态存储 + 多进程安全的持久化。
  *   - 每个 team 有独立的 signals / presence / messages，互不串扰
- *   - 状态落盘到 <插件目录>/state/teams.json（可用 TEAM_GATE_STATE_FILE 覆盖），
- *     MCP server 重启后恢复，进行到一半的团队不丢状态
- *   - 写入防抖 50ms + 临时文件原子替换 + 进程退出前同步落盘
+ *   - 状态落盘到 <插件目录>/state/teams.json（可用 TEAM_GATE_STATE_FILE 覆盖）
+ *   - 宿主可能为每个会话各起一个 MCP 进程，这些进程共用同一个状态文件：
+ *     写入一律经过状态文件锁 + 读-改-写，不同进程不会用旧快照覆盖对方
+ *   - 读取走内存缓存，文件变化（其他进程写过）时按 mtime/size 自动重读
  * 本层不感知 MCP 协议，也不含工具逻辑。
  */
 import fs from 'node:fs';
@@ -16,8 +17,11 @@ export const DEFAULT_TEAM = 'default';
 const MAX_SIGNALS = 200;
 const MAX_MESSAGES = 200;
 const MAX_TEAMS = 50;
-const FLUSH_DEBOUNCE_MS = 50;
+const LOCK_TIMEOUT_MS = 5000;
+const LOCK_STALE_MS = 15000;
+const LOCK_RETRY_MS = 5;
 const TEAM_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+const STATE_VERSION = 3;
 
 export function resolveStatePath() {
   if (process.env.TEAM_GATE_STATE_FILE?.trim()) return process.env.TEAM_GATE_STATE_FILE.trim();
@@ -40,123 +44,222 @@ function capList(list, max) {
   if (list.length > max) list.splice(0, list.length - max);
 }
 
+/** 等锁时让出事件循环：写入窗口是毫秒级，不阻塞同进程的其他 MCP 请求。 */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class TeamStore {
   constructor(file = resolveStatePath(), { log = () => {} } = {}) {
     this.file = file;
+    this.lockFile = `${file}.lock`;
     this.log = log;
-    /** @type {Map<string, {signals:any[],presence:Record<string,any>,messages:any[],createdAt:string,updatedAt:string}>} */
-    this.teams = new Map();
-    this.nextMessageId = 1;
-    this._timer = null;
-    this._load();
-    process.on('exit', () => this.flushNow());
+    /** @type {{nextMessageId:number,nextSignalId:number,teams:Map<string,any>}|null} */
+    this._cache = null;
+    this._cachedRaw = null;
   }
 
   // ---------- 持久化 ----------
 
-  _load() {
+  /**
+   * 解析状态文件内容。
+   * 损坏的文件不能阻止 server 启动，也不能静默丢掉其他进程正在用的数据：
+   * 只有在能改名备份时才重命名，改不了就继续用空状态（下次写入会覆盖）。
+   */
+  _parse(raw, { rename = true } = {}) {
+    const now = new Date().toISOString();
+    const state = { nextMessageId: 1, nextSignalId: 1, teams: new Map() };
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      // 损坏的状态文件不能阻止 server 启动，也不能静默丢掉别人正在用的文件：
+      // 只在能改名备份时重命名，改不了就继续用空状态（下次写入会覆盖）。
+      if (rename) {
+        try {
+          fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`);
+          this.log('状态文件损坏，已备份并从空状态启动');
+        } catch {
+          this.log('状态文件损坏且无法备份，从空状态启动');
+        }
+      }
+      return state;
+    }
+    const teams = parsed?.teams;
+    if (teams && typeof teams === 'object' && !Array.isArray(teams)) {
+      for (const [id, value] of Object.entries(teams)) {
+        if (!normalizeTeamId(id) || !value || typeof value !== 'object') continue;
+        const team = emptyTeam(value.createdAt ?? now);
+        team.updatedAt = value.updatedAt ?? team.createdAt;
+        if (Array.isArray(value.signals)) team.signals = value.signals.slice(-MAX_SIGNALS);
+        if (value.presence && typeof value.presence === 'object' && !Array.isArray(value.presence)) {
+          team.presence = value.presence;
+        }
+        if (Array.isArray(value.messages)) team.messages = value.messages.slice(-MAX_MESSAGES);
+        state.teams.set(id, team);
+      }
+    }
+    if (Number.isFinite(parsed?.nextMessageId)) state.nextMessageId = parsed.nextMessageId;
+    if (Number.isFinite(parsed?.nextSignalId)) state.nextSignalId = parsed.nextSignalId;
+    return state;
+  }
+
+  /** 读磁盘的当前状态（绕过缓存）。文件不存在时返回空状态。 */
+  _readDisk() {
     let raw;
     try {
       raw = fs.readFileSync(this.file, 'utf8');
     } catch {
-      return; // 首次运行或状态被清，从空开始
+      this._cache = this._parse('{}', { rename: false }); // 首次运行或状态被清
+      this._cachedRaw = null;
+      return this._cache;
     }
-    try {
-      const parsed = JSON.parse(raw);
-      const teams = parsed?.teams;
-      if (teams && typeof teams === 'object') {
-        for (const [id, value] of Object.entries(teams)) {
-          if (!normalizeTeamId(id) || !value || typeof value !== 'object') continue;
-          const team = emptyTeam(value.createdAt ?? new Date().toISOString());
-          team.updatedAt = value.updatedAt ?? team.createdAt;
-          if (Array.isArray(value.signals)) team.signals = value.signals.slice(-MAX_SIGNALS);
-          if (value.presence && typeof value.presence === 'object' && !Array.isArray(value.presence)) {
-            team.presence = value.presence;
-          }
-          if (Array.isArray(value.messages)) team.messages = value.messages.slice(-MAX_MESSAGES);
-          this.teams.set(id, team);
-        }
-      }
-      if (Number.isFinite(parsed?.nextMessageId)) this.nextMessageId = parsed.nextMessageId;
-      this.log(`状态已恢复：${this.teams.size} 个团队`);
-    } catch (err) {
-      // 损坏的状态文件不能阻止 server 启动：改名备份，从空开始
+    this._cache = this._parse(raw);
+    this._cachedRaw = raw;
+    return this._cache;
+  }
+
+  /**
+   * 取当前状态。
+   *
+   * 优先用缓存，但**必须**检测其他进程的写入。不能用 mtime+size 做判据：
+   * Windows 上 mtimeMs 精度约 1ms，同长度内容的两次写入可能落在同一毫秒，
+   * 会误判成「没变」而读到旧缓存。这里改为在每次读取时比对文件内容哈希，
+   * 状态文件很小（几十 KB 上限），代价可忽略且不受时钟精度影响。
+   */
+  _snapshot() {
+    if (this._cache) {
+      let raw;
       try {
-        fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`);
-        this.log('状态文件损坏，已备份并从空状态启动');
+        raw = fs.readFileSync(this.file, 'utf8');
       } catch {
-        this.log('状态文件损坏且无法备份，从空状态启动');
+        // 文件被删（手动清理/停用）：丢掉缓存，从空状态重新开始。
+        this._cache = null;
+        this._cachedRaw = null;
+        return this._readDisk();
+      }
+      if (raw === this._cachedRaw) return this._cache;
+      this._cache = this._parse(raw);
+      this._cachedRaw = raw;
+      return this._cache;
+    }
+    return this._readDisk();
+  }
+
+  _serialize(state) {
+    return JSON.stringify({
+      version: STATE_VERSION,
+      nextMessageId: state.nextMessageId,
+      nextSignalId: state.nextSignalId,
+      teams: Object.fromEntries(state.teams),
+    });
+  }
+
+  async _acquire() {
+    const deadline = Date.now() + LOCK_TIMEOUT_MS;
+    for (;;) {
+      try {
+        const fd = fs.openSync(this.lockFile, 'wx');
+        try {
+          fs.writeSync(fd, JSON.stringify({ pid: process.pid, at: Date.now() }));
+        } finally {
+          fs.closeSync(fd);
+        }
+        return;
+      } catch (err) {
+        if (err?.code !== 'EEXIST') throw err;
+        try {
+          const st = fs.statSync(this.lockFile);
+          if (Date.now() - st.mtimeMs > LOCK_STALE_MS) {
+            // 持锁进程崩溃或被杀：锁文件过期后可接管
+            fs.unlinkSync(this.lockFile);
+            continue;
+          }
+        } catch {
+          continue; // 锁刚好被释放，立刻重试
+        }
+        if (Date.now() >= deadline) {
+          throw new Error(`状态文件锁超时（${LOCK_TIMEOUT_MS}ms）：${this.lockFile}`);
+        }
+        await sleep(LOCK_RETRY_MS);
       }
     }
   }
 
-  _serialize() {
-    return JSON.stringify({ version: 2, nextMessageId: this.nextMessageId, teams: Object.fromEntries(this.teams) });
-  }
-
-  scheduleFlush() {
-    if (this._timer) return;
-    this._timer = setTimeout(() => {
-      this._timer = null;
-      this.flushNow();
-    }, FLUSH_DEBOUNCE_MS);
-    this._timer.unref?.();
-  }
-
-  flushNow() {
-    if (this._timer) {
-      clearTimeout(this._timer);
-      this._timer = null;
-    }
-    const tmp = `${this.file}.tmp`;
+  _release() {
     try {
-      fs.mkdirSync(path.dirname(this.file), { recursive: true });
-      fs.writeFileSync(tmp, this._serialize());
-      fs.renameSync(tmp, this.file); // 同目录原子替换
-      return true;
-    } catch (err) {
-      this.log('状态落盘失败:', String(err?.message ?? err));
-      try { fs.unlinkSync(tmp); } catch { /* 忽略 */ }
-      return false;
+      fs.unlinkSync(this.lockFile);
+    } catch {
+      /* 已被接管或已删，忽略 */
+    }
+  }
+
+  /**
+   * 加锁读-改-写：fn 拿到磁盘上的最新状态，就地修改；返回 fn 的返回值。
+   * 每次写入都基于磁盘最新内容，不会用本进程的旧快照覆盖其他进程的写入。
+   * 等锁时让出事件循环，同进程的其他 MCP 请求不会被卡住。
+   */
+  async _mutate(fn) {
+    fs.mkdirSync(path.dirname(this.file), { recursive: true });
+    await this._acquire();
+    try {
+      const state = this._readDisk();
+      const result = fn(state);
+      const tmp = `${this.file}.${process.pid}.tmp`;
+      const serialized = this._serialize(state);
+      try {
+        fs.writeFileSync(tmp, serialized);
+        fs.renameSync(tmp, this.file); // 同目录原子替换
+      } catch (err) {
+        this.log('状态落盘失败:', String(err?.message ?? err));
+        try { fs.unlinkSync(tmp); } catch { /* 忽略 */ }
+        throw err;
+      }
+      // 刚写的内容就是磁盘内容：同步缓存，避免紧接着的读取重复解析。
+      this._cachedRaw = serialized;
+      return result;
+    } finally {
+      this._release();
     }
   }
 
   // ---------- 团队管理 ----------
 
   team(id) {
-    let team = this.teams.get(id);
-    if (!team) {
-      this._evictIfNeeded();
-      team = emptyTeam(new Date().toISOString());
-      this.teams.set(id, team);
-    }
-    return team;
+    return this._snapshot().teams.get(id) ?? emptyTeam(new Date().toISOString());
   }
 
-  _evictIfNeeded() {
-    if (this.teams.size < MAX_TEAMS) return;
-    const oldest = [...this.teams.entries()].sort((a, b) => String(a[1].updatedAt).localeCompare(String(b[1].updatedAt)))[0];
+  _evictIfNeeded(state) {
+    if (state.teams.size < MAX_TEAMS) return;
+    const oldest = [...state.teams.entries()].sort((a, b) => String(a[1].updatedAt).localeCompare(String(b[1].updatedAt)))[0];
     if (oldest) {
-      this.teams.delete(oldest[0]);
+      state.teams.delete(oldest[0]);
       this.log(`团队数超过 ${MAX_TEAMS}，淘汰最久未更新的团队 ${oldest[0]}`);
     }
   }
 
-  _touch(id) {
-    this.team(id).updatedAt = new Date().toISOString();
-    this.scheduleFlush();
+  _teamFor(state, id) {
+    let team = state.teams.get(id);
+    if (!team) {
+      this._evictIfNeeded(state);
+      team = emptyTeam(new Date().toISOString());
+      state.teams.set(id, team);
+    }
+    team.updatedAt = new Date().toISOString();
+    return team;
   }
 
   resetTeam(id) {
-    const team = this.team(id);
-    team.signals = [];
-    team.presence = {};
-    team.messages = [];
-    this._touch(id);
+    return this._mutate((state) => {
+      const team = this._teamFor(state, id);
+      team.signals = [];
+      team.presence = {};
+      team.messages = [];
+    });
   }
 
   listTeams() {
-    return [...this.teams.entries()]
+    return [...this._snapshot().teams.entries()]
       .map(([id, t]) => ({
         id,
         onlineCount: Object.keys(t.presence).length,
@@ -170,64 +273,103 @@ export class TeamStore {
   // ---------- 信号 ----------
 
   recordSignal(id, signal) {
-    const team = this.team(id);
-    team.signals.push(signal);
-    capList(team.signals, MAX_SIGNALS);
-    const p = team.presence[signal.label];
-    if (p) {
-      p.status = signal.status === 'success' ? 'done' : signal.status === 'failure' ? 'failed' : 'blocked';
-      p.updatedAt = signal.at;
-    }
-    this._touch(id);
+    return this._mutate((state) => {
+      const team = this._teamFor(state, id);
+      const seq = state.nextSignalId++;
+      const stored = { ...signal, seq };
+      team.signals.push(stored);
+      capList(team.signals, MAX_SIGNALS);
+      const p = team.presence[signal.label];
+      if (p) {
+        p.status = signal.status === 'success' ? 'done' : signal.status === 'failure' ? 'failed' : 'blocked';
+        p.updatedAt = signal.at;
+      }
+      return stored;
+    });
+  }
+
+  /** 当前最大的信号序号；team_wait 用它区分「本次等待之后的新信号」。 */
+  signalCursor(id) {
+    const signals = this._snapshot().teams.get(id)?.signals ?? [];
+    return signals.reduce((max, s) => (Number.isFinite(s?.seq) && s.seq > max ? s.seq : max), 0);
+  }
+
+  signalsSince(id, cursor) {
+    const signals = this._snapshot().teams.get(id)?.signals ?? [];
+    // 老版本写入的信号没有 seq：没有游标时全部算新信号。
+    return cursor === 0 ? signals.slice() : signals.filter((s) => Number.isFinite(s?.seq) && s.seq > cursor);
   }
 
   signalLabels(id) {
-    return new Set(this.team(id).signals.map((s) => s.label));
+    return new Set((this._snapshot().teams.get(id)?.signals ?? []).map((s) => s.label));
+  }
+
+  recentSignals(id, limit = 20) {
+    const signals = this._snapshot().teams.get(id)?.signals ?? [];
+    return limit > 0 ? signals.slice(-limit) : signals.slice();
+  }
+
+  signalCount(id) {
+    return (this._snapshot().teams.get(id)?.signals ?? []).length;
   }
 
   // ---------- 在线状态 ----------
 
   upsertPresence(id, { label, role, task, status }) {
-    const team = this.team(id);
-    const prev = team.presence[label];
-    const now = new Date().toISOString();
-    team.presence[label] = {
-      label,
-      role: role ?? prev?.role ?? 'agent',
-      task: task ?? prev?.task ?? '',
-      status,
-      joinedAt: prev?.joinedAt ?? now,
-      updatedAt: now,
-    };
-    this._touch(id);
-    return team.presence[label];
+    return this._mutate((state) => {
+      const team = this._teamFor(state, id);
+      const prev = team.presence[label];
+      const now = new Date().toISOString();
+      team.presence[label] = {
+        label,
+        role: role ?? prev?.role ?? 'agent',
+        task: task ?? prev?.task ?? '',
+        status,
+        joinedAt: prev?.joinedAt ?? now,
+        updatedAt: now,
+      };
+      return team.presence[label];
+    });
   }
 
   roster(id) {
-    return Object.values(this.team(id).presence).sort((a, b) => a.joinedAt.localeCompare(b.joinedAt));
+    return Object.values(this._snapshot().teams.get(id)?.presence ?? {})
+      .sort((a, b) => String(a.joinedAt).localeCompare(String(b.joinedAt)));
   }
 
   presenceOf(id, label) {
-    return this.team(id).presence[label] ?? null;
+    return this._snapshot().teams.get(id)?.presence?.[label] ?? null;
   }
 
   // ---------- 消息 ----------
 
   addMessage(id, { from, to, content }) {
-    const team = this.team(id);
-    const msg = { id: this.nextMessageId++, from, to, content, at: new Date().toISOString(), readBy: [] };
-    team.messages.push(msg);
-    capList(team.messages, MAX_MESSAGES);
-    this._touch(id);
-    return msg;
+    return this._mutate((state) => {
+      const team = this._teamFor(state, id);
+      const msg = { id: state.nextMessageId++, from, to, content, at: new Date().toISOString(), readBy: [] };
+      team.messages.push(msg);
+      capList(team.messages, MAX_MESSAGES);
+      return msg;
+    });
   }
 
   unreadFor(id, label) {
-    return this.team(id).messages.filter((m) => (m.to === label || m.to === '*') && !m.readBy.includes(label));
+    const messages = this._snapshot().teams.get(id)?.messages ?? [];
+    return messages.filter((m) => (m.to === label || m.to === '*') && !m.readBy.includes(label));
   }
 
   markRead(id, label, msgs) {
-    for (const m of msgs) if (!m.readBy.includes(label)) m.readBy.push(label);
-    if (msgs.length) this._touch(id);
+    if (!msgs.length) return 0;
+    const ids = new Set(msgs.map((m) => m.id));
+    return this._mutate((state) => {
+      const team = this._teamFor(state, id);
+      let changed = 0;
+      for (const m of team.messages) {
+        if (!ids.has(m.id) || m.readBy.includes(label)) continue;
+        m.readBy.push(label);
+        changed += 1;
+      }
+      return changed;
+    });
   }
 }
