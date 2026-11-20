@@ -62,32 +62,20 @@ export class TeamStore {
   // ---------- 持久化 ----------
 
   /**
-   * 解析状态文件内容。
+   * 解析状态文件内容。**只解析，不碰文件**。
    *
-   * 损坏的文件不能阻止 server 启动，也不能静默丢掉其他进程正在用的数据：
-   * - 能用改名备份时：备份后返回空状态；
-   * - 改不了名时：抛出错误。读取路径会退回空状态（只读不影响别人），
-   *   但写入路径因此中止，不会用空状态覆盖原文件。
+   * 损坏文件的备份/改名是写操作，必须在持锁的写入路径里做（见 _mutate）。
+   * 早期版本在解析时顺带 rename，只读查询也会改文件、且在锁外操作，
+   * 两个进程同时判损坏会互相覆盖备份。
    */
-  _parse(raw, { rename = true } = {}) {
+  _parse(raw) {
     const now = new Date().toISOString();
-    const state = { nextMessageId: 1, nextSignalId: 1, teams: new Map() };
+    const state = { nextMessageId: 1, nextSignalId: 1, teams: new Map(), corrupt: false };
     let parsed;
     try {
       parsed = JSON.parse(raw);
-    } catch (err) {
-      // 损坏的状态文件不能阻止 server 启动，也不能静默丢掉别人正在用的文件。
-      // 能改名备份就备份后从空状态启动；改不了名时，读取路径退回空状态，
-      // 但写入路径必须失败（见 _mutate），否则会用空状态覆盖掉原文件。
-      if (rename) {
-        try {
-          fs.renameSync(this.file, `${this.file}.corrupt-${Date.now()}`);
-          this.log('状态文件损坏，已备份并从空状态启动');
-        } catch (renameErr) {
-          this.log('状态文件损坏且无法备份:', String(renameErr?.message ?? renameErr));
-          throw new Error(`状态文件损坏且无法备份，拒绝覆盖：${this.file}`);
-        }
-      }
+    } catch {
+      state.corrupt = true;
       return state;
     }
     const teams = parsed?.teams;
@@ -111,31 +99,26 @@ export class TeamStore {
 
   /** 读磁盘的当前状态（绕过缓存）。
    *
-   * @param {{ forWrite?: boolean }} options 写入路径必须让错误冒出去；
-   *   只读路径容忍损坏文件（备份不了就返回空状态，不覆盖别人）。
+   * 只读路径：读取失败或文件损坏都返回空状态，**不做任何文件改动**。
+   * 写入路径不经过这里，而是由 _mutate 在持锁状态下读原文并处理损坏备份。
    */
-  _readDisk({ forWrite = false } = {}) {
+  _readDisk() {
     let raw;
     try {
       raw = fs.readFileSync(this.file, 'utf8');
     } catch (err) {
       if (err?.code !== 'ENOENT') {
-        if (forWrite) throw err;
         this.log('状态读取失败，按空状态处理:', String(err?.message ?? err));
-        this._cache = this._parse('{}', { rename: false });
-        this._cachedRaw = null;
-        return this._cache;
       }
-      this._cache = this._parse('{}', { rename: false });
+      this._cache = this._parse('{}');
       this._cachedRaw = null;
       return this._cache;
     }
-    let state;
-    try {
-      state = this._parse(raw, { rename: forWrite });
-    } catch (err) {
-      if (forWrite) throw err;
-      state = this._parse('{}', { rename: false });
+    const state = this._parse(raw);
+    if (state.corrupt) {
+      // 只读路径只把损坏状态当成空来看；备份与恢复由 _mutate 在锁内完成。
+      this.log('状态文件损坏（只读路径不做修复）');
+      state.corrupt = false;
     }
     this._cache = state;
     this._cachedRaw = raw;
@@ -230,7 +213,18 @@ export class TeamStore {
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
     await this._acquire();
     try {
-      const state = this._readDisk({ forWrite: true });
+      // 损坏文件的备份必须在锁内做：两个进程同时判损坏时，锁外的 rename 会
+      // 互相覆盖备份，甚至把刚备份的空状态再当成损坏文件递归处理。
+      const raw = this._readRawForWrite();
+      let state;
+      if (raw.corrupt) {
+        const backup = `${this.file}.corrupt-${Date.now()}`;
+        fs.renameSync(this.file, backup);
+        this.log(`状态文件损坏，已备份到 ${backup}`);
+        state = this._parse('{}');
+      } else {
+        state = raw.state;
+      }
       const result = fn(state);
       const tmp = `${this.file}.${process.pid}.tmp`;
       const serialized = this._serialize(state);
@@ -242,12 +236,28 @@ export class TeamStore {
         try { fs.unlinkSync(tmp); } catch { /* 忽略 */ }
         throw err;
       }
-      // 刚写的内容就是磁盘内容：同步缓存，避免紧接着的读取重复解析。
+      // 刚写的内容就是磁盘内容：同步缓存，避免紧接着的读取重复解析，
+      // 也避免本进程的下一次读取把自己刚写的状态当成"外部写入"。
+      this._cache = state;
       this._cachedRaw = serialized;
       return result;
     } finally {
       this._release();
     }
+  }
+
+  /** 持锁状态下取磁盘内容：返回 { state } 或 { corrupt: true }。读错误照常抛出。 */
+  _readRawForWrite() {
+    let raw;
+    try {
+      raw = fs.readFileSync(this.file, 'utf8');
+    } catch (err) {
+      if (err?.code !== 'ENOENT') throw err;
+      return { state: this._parse('{}') };
+    }
+    const state = this._parse(raw);
+    if (state.corrupt) return { corrupt: true };
+    return { state };
   }
 
   // ---------- 团队管理 ----------
@@ -329,6 +339,16 @@ export class TeamStore {
 
   signalLabels(id) {
     return new Set((this._snapshot().teams.get(id)?.signals ?? []).map((s) => s.label));
+  }
+
+  /**
+   * 只统计「游标之后」的信号标签。
+   *
+   * team_wait 必须用它而不是 signalLabels：后者包含历史信号，同一个 label 在上一轮
+   * 发过之后，本轮刚一调用就会被判为已完成，把旧结果算成本轮完成。
+   */
+  signalLabelsSince(id, cursor) {
+    return new Set(this.signalsSince(id, cursor).map((s) => s.label));
   }
 
   recentSignals(id, limit = 20) {

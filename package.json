@@ -2,11 +2,13 @@
   "name": "dfsc-community-marketplace-checks",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs tests/run-plugin-tests.test.mjs",
     "test:plugins": "node scripts/run-plugin-tests.mjs",
-    "test:agent-team": "node tests/two-session-state.mjs && node tests/state-fault-tolerance.mjs && node tests/agent-tool-boundaries.mjs && node tests/mcp-protocol.mjs",
+    "test:agent-team": "node tests/two-session-state.mjs && node tests/state-fault-tolerance.mjs && node tests/agent-tool-boundaries.mjs && node tests/mcp-protocol.mjs && node tests/wait-signal-scope.mjs && node tests/corrupt-recovery-locked.mjs",
     "check:metadata": "node scripts/check-plugin-metadata.mjs",
     "check:themes": "node scripts/check-theme-pack.mjs"
   },
