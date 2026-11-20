@@ -40,7 +40,7 @@
       "description": "十二角色智能体团队（agents/skills/commands）+ team-gate A2A 协作门禁（六个 MCP 工具，按团队分组与多进程安全的状态持久化）；需 Node.js 18+ 运行 stdio MCP server。",
       "source": {
         "repository": "Niangaol/agent-team",
-        "commit": "15c145acf7e308f7996b01b2a20af9b080856fdf",
+        "commit": "eca8cd122bd79ec129863c1deccdf5fab836012f",
         "path": "plugins/agent-team"
       },
       "license": "MIT",
