@@ -1,6 +1,15 @@
 # Superpowers
 
-这是 DFSC 社区市场中的 `superpowers` 资源插件，资源版本 **7.0.2**，许可证 **MIT**（上游 [obra/superpowers](https://github.com/obra/superpowers)，作者 Jesse Vincent；本市场副本由 Niangaol 打包适配，不修改技能内容）。
+这是 DFSC 社区市场中的 `superpowers` 资源插件，资源版本 **7.0.2**，许可证 **MIT**（上游 [obra/superpowers](https://github.com/obra/superpowers)，作者 Jesse Vincent；本市场副本由 Niangaol 打包适配）。
+
+## 相对上游的改动
+
+技能文档（各 `SKILL.md` 与其 `references/`、`prompts/`、`templates/`）保持上游原文。**唯一的代码改动**是可视化伴侣的脚本 `skills/brainstorming/scripts/server.cjs`：
+
+- 品牌 Logo 改为显式 opt-in（`BRAINSTORM_BRAND_LOGO=1`），默认只渲染文字标志。上游默认会从 `primeradiant.com` 加载一张 Logo 图片（查询串带版本号，用于粗算使用人数，不含项目内容或提示词）。
+- 品牌区块的外链补 `rel="noreferrer noopener"`。
+
+除此之外还排除了上游各平台适配层、Claude Code 的 `hooks/`、维护脚本、测试与设计文档（见「依赖与生效方式」）。逐字节对照可用 `git diff` 查看上游 `22f0b463` 与本仓库固定提交之间的差异。
 
 ## 安装后提供什么
 
@@ -20,7 +29,7 @@
 ## 依赖与生效方式
 
 - **Bash**：部分技能自带 POSIX shell 脚本（如 SDD 工作区、任务简报、评审包、brainstorming 启动脚本），需要系统提供 `bash`/`sh`。
-- **Node.js（可选）**：仅 `brainstorming` 的可视化伴侣使用，会启动本机 `node` 进程（`server.cjs`）并在 `127.0.0.1` 随机高位端口监听（带令牌校验与闲置超时）；不启用可视化伴侣时不需要。
+- **Node.js（可选）**：仅 `brainstorming` 的可视化伴侣使用，会启动本机 `node` 进程（`server.cjs`）。**默认只绑定 `127.0.0.1` 并监听随机高位端口**（带令牌校验与闲置超时）；不启用可视化伴侣时不需要。绑定地址可被显式覆盖：`start-server.sh --host <地址>`（对应环境变量 `BRAINSTORM_HOST`），用于远程/容器环境从外部访问；不传时就是回环地址。
 - 安装后按宿主提示重载会话；技能通过 `step.plugin.json` 的 `skills` 声明加载，用 `/skill:<名称>` 或按技能说明调用。
 - 上游的 Claude Code `hooks/` 未包含在本副本内（DFSC 无文件式 hooks），`using-superpowers` 的会话启动自动提示不会出现，可在项目 `AGENTS.md` 中写入指引。
 
@@ -29,12 +38,12 @@
 - **默认无第三方请求。** 本副本把可视化伴侣的品牌 Logo 改为显式 opt-in：默认只渲染文字标志。上游默认会从 `primeradiant.com` 加载一张 Logo 图片（查询串带 Superpowers 版本号，用于粗算使用人数，不含项目内容或提示词）；本副本默认不加载。
 - 需要该 Logo 时设 `BRAINSTORM_BRAND_LOGO=1`；`SUPERPOWERS_DISABLE_TELEMETRY` / `DISABLE_TELEMETRY` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 任一为真时不加载。关闭方式就是把 `BRAINSTORM_BRAND_LOGO` 去掉或设为 `0`。
 - 页面内保留一个指向 `github.com/obra/superpowers` 的普通链接，只在用户点击时跳转，不自动请求。
-- 可视化伴侣的 WebSocket 与静态资源只连本机回环地址。
+- 可视化伴侣的 WebSocket 与静态资源只连本机回环地址（默认绑定 `127.0.0.1`；若用 `--host` 改绑到非回环地址，页面与 WebSocket 会随该地址走，届时由使用者自行承担暴露面）。
 
 ## 权限与数据范围
 
 - 技能本身不联网；脚本仅操作当前项目目录与临时目录。
-- 可视化伴侣在本机回环地址监听，不上传数据；会话文件默认写入系统临时目录，可用 `--project-dir` 落到项目内。
+- 可视化伴侣默认在本机回环地址监听，不上传数据；会话文件默认写入系统临时目录，可用 `--project-dir` 落到项目内。
 
 ### `diagnosing-superpowers` 会读写什么
 
