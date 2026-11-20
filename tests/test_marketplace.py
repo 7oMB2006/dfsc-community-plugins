@@ -28,6 +28,11 @@ def hashes(path, data):
             'gitBlobSha': hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()}
 
 
+def hashes_fixture(data):
+    """Lock rows for a fixture bundle, in the same order the market stores them."""
+    return [hashes(path, content) for path, content in sorted(data.items())]
+
+
 class MarketplaceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='marketplace-中文-')
@@ -630,6 +635,114 @@ class MarketplaceTests(unittest.TestCase):
             data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
             with self.subTest(size=len(text)), self.assertRaises(m.MarketError):
                 m.plugin_manifest(data, 'alpha-plugin')
+
+    # --- executable bits -------------------------------------------------
+    # Windows Git defaults to core.fileMode=false, so copying scripts into the
+    # market used to publish them as 100644 regardless of the source mode.
+    # These tests pin the behaviour that the reviewed mode is recorded in the
+    # Git index instead of relying on working-copy permissions.
+
+    def git(self, *args):
+        import subprocess
+        return subprocess.run(('git', '-C', str(self.root)) + args, check=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    def make_git_repo(self):
+        import subprocess
+        subprocess.run(('git', '-C', str(self.root), 'init', '-q'), check=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.git('config', 'user.email', 'fixture@example.invalid')
+        self.git('config', 'user.name', 'Fixture')
+        self.git('add', '-A')
+        self.git('commit', '-qm', 'fixture baseline')
+
+    def index_mode(self, path):
+        line = self.git('ls-files', '-s', '--', path).stdout.strip()
+        return line.split(None, 1)[0] if line else None
+
+    def test_record_omits_mode_for_plain_files(self):
+        row = m.record('commands/help.md', b'Fixture command\n')
+        self.assertNotIn('mode', row)
+        self.assertEqual(row['size'], len(b'Fixture command\n'))
+
+    def test_record_marks_executables_and_rejects_other_modes(self):
+        row = m.record('scripts/run', b'#!/bin/sh\n', '100755')
+        self.assertEqual(row['mode'], '100755')
+        for bad in ('100664', '120000', '040000', None, ''):
+            with self.subTest(mode=bad), self.assertRaises(m.MarketError):
+                m.record('scripts/run', b'x', bad)
+
+    def test_lock_accepts_absent_and_executable_modes_only(self):
+        row = m.record('scripts/extra-run', b'#!/bin/sh\n')
+        for mode in ('100644', '100755', None):
+            locked = copy.deepcopy(row)
+            if mode is not None:
+                locked['mode'] = mode
+            self.lock['plugins'][1]['files'] = [copy.deepcopy(existing)
+                                                for existing in hashes_fixture(self.raw['alpha-plugin'])]
+            self.lock['plugins'][1]['files'].append(locked)
+            self.save()
+            m.lockfile(self.root)  # must not raise
+        locked = copy.deepcopy(row)
+        locked['mode'] = '100664'
+        self.lock['plugins'][1]['files'] = [copy.deepcopy(existing)
+                                            for existing in hashes_fixture(self.raw['alpha-plugin'])]
+        self.lock['plugins'][1]['files'].append(locked)
+        self.save()
+        with self.assertRaisesRegex(m.MarketError, 'Invalid resource mode'):
+            m.lockfile(self.root)
+
+    def test_index_modes_returns_none_outside_a_git_work_tree(self):
+        self.assertIsNone(m.index_modes(self.root, ['registry.json']))
+
+    def test_sync_records_executable_bit_in_the_git_index(self):
+        self.make_git_repo()
+        data = dict(self.raw['alpha-plugin'])
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        fetch = self.api(data)
+        self.assertNotIn('mode', hashes('scripts/run', data['scripts/run']))
+        # Patch the source tree entry so the script is advertised as executable.
+        original_api = self.api
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+        m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        locked = next(p for p in json.loads((self.root / 'registry.lock.json').read_text('utf-8'))['plugins']
+                      if p['id'] == 'alpha-plugin')
+        row = next(r for r in locked['files'] if r['path'] == 'scripts/run')
+        self.assertEqual(row['mode'], '100755')
+        self.assertEqual(self.index_mode('plugins/alpha-plugin/scripts/run'), '100755')
+        # Plain files stay plain, and validate() accepts the result.
+        self.assertEqual(self.index_mode('plugins/alpha-plugin/commands/help.md'), '100644')
+        m.validate(self.root)
+
+    def test_validate_rejects_a_vendored_mode_that_differs_from_the_lock(self):
+        self.make_git_repo()
+        data = dict(self.raw['alpha-plugin'])
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        original_api = self.api
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+        m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        m.validate(self.root)
+        self.git('update-index', '--chmod=-x', '--', 'plugins/alpha-plugin/scripts/run')
+        with self.assertRaisesRegex(m.MarketError, 'Vendored executable bit differs'):
+            m.validate(self.root)
 
 
 if __name__ == '__main__':
