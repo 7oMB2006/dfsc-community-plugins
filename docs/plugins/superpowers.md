@@ -96,6 +96,6 @@
 | macOS / Linux 工作区 | 可执行位正常，脚本可直接执行 |
 | **Windows 工作区** | Git 不还原权限位，`spawn` 直接执行会 `ENOENT`；必须写成 `bash <脚本>` |
 
-技能文档里的调用本来就统一写成 `bash scripts/xxx`（19 处，均不用裸 `./scripts/xxx`），因此在 Windows 上按文档调用不受影响。
+技能文档里的调用本来就统一写成 `bash scripts/xxx`（随包 Markdown 里共 18 处，全部显式带 `bash`，没有裸 `./scripts/xxx`），因此在 Windows 上按文档调用不受影响。
 
-**补测口径**：用市场分发的 `plugins/superpowers` 目录（导出成独立安装副本）跑，不只跑源仓库工作区。`tests/market-installed-scripts.mjs` 覆盖 10 个脚本的安装副本与 7 条真实流程：`task-start`、`task-brief`、`sdd-workspace`、`sdd-repo`、`review-package`、`task-done`、`find-polluter.sh`。
+**补测口径**：用市场分发的 `plugins/superpowers` 目录（导出成独立安装副本）跑，不只跑源仓库工作区。`tests/market-installed-scripts.mjs` 覆盖 10 个脚本的安装副本与 7 条真实流程：`task-start`、`task-brief`、`sdd-workspace`、`sdd-repo`、`review-package`、`task-done`、`find-polluter.sh`。该脚本位于上游仓库根目录的 `tests/`，**不随插件分发**。

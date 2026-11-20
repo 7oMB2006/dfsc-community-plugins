@@ -293,7 +293,7 @@
       "id": "superpowers",
       "source": {
         "repository": "Niangaol/superpowers-dfsc",
-        "commit": "d5716520f0533db56507f1a0e0dc0916e3c342b7",
+        "commit": "ed20fd7505c88b4982ac5cdfada76783a3ba9555",
         "path": "plugins/superpowers"
       },
       "files": [
@@ -311,9 +311,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "a9bca6dbe377b11eaf9bc0fd8ada28422b6f0c6f",
-          "sha256": "cf7269caaab8770972c7471ce50ff50346d097566089b6c054513447f6d968f6",
-          "size": 7877
+          "gitBlobSha": "2771180872c423764aac5a1aef7f8a145158b2c8",
+          "sha256": "a6846c8cb33f959afcfa408e5edc60f6afdd5799aa4e2b2e3e3bbcd8f3918661",
+          "size": 7998
         },
         {
           "path": "dfsc.plugin.json",
