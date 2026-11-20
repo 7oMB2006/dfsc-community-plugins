@@ -293,7 +293,7 @@
       "id": "superpowers",
       "source": {
         "repository": "Niangaol/superpowers-dfsc",
-        "commit": "f827e45086d9bef1f8c41a3a104efa14c9d7c616",
+        "commit": "ae07d9903d15bf424c9ad5d62811e094670245cd",
         "path": "plugins/superpowers"
       },
       "files": [
@@ -317,9 +317,9 @@
         },
         {
           "path": "dfsc.plugin.json",
-          "gitBlobSha": "b87ffe87e939a5289e32554a9cee4f94a04216ff",
-          "sha256": "7fd5b14becbc6b75b02c85fa02dac65dfe56fa3709f196e0f6f8f8837b7ff14d",
-          "size": 906
+          "gitBlobSha": "c1c506c8d4315e8e9442a619ac4b779369836099",
+          "sha256": "36d9e8d28f48ccfa2dcffb4396000804c81cbff0c0a4f335e0d7e33d4db8bbfe",
+          "size": 927
         },
         {
           "path": "skills/brainstorming/SKILL.md",

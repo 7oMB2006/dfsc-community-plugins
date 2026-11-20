@@ -10,7 +10,7 @@
     "external": [
       {
         "name": "Bash",
-        "description": "部分技能的工作区与评审脚本以 POSIX shell 编写，需要系统提供 bash/sh；Windows 需 WSL 或 Git Bash。",
+        "description": "部分技能的工作区与评审脚本以 POSIX shell 编写，需要系统提供 bash/sh（Windows 下用 Git Bash 实测；WSL 未验证）。",
         "url": "https://www.gnu.org/software/bash/"
       },
       {
