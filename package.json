@@ -5,7 +5,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs",
-    "test:agent-team": "node tests/two-session-state.mjs && node tests/state-fault-tolerance.mjs && node tests/agent-tool-boundaries.mjs",
+    "test:agent-team": "node tests/two-session-state.mjs && node tests/state-fault-tolerance.mjs && node tests/agent-tool-boundaries.mjs && node tests/mcp-protocol.mjs",
     "check:metadata": "node scripts/check-plugin-metadata.mjs",
     "check:themes": "node scripts/check-theme-pack.mjs"
   },
