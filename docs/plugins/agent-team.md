@@ -89,5 +89,6 @@ npm run test:agent-team
 - `tests/state-fault-tolerance.mjs`：四种容错场景——写入遇瞬时读错误必须失败且不覆盖、只读遇错误沿用缓存、文件被删后读取为空且可重建、损坏文件备份后从空写入。对修复前的实现跑，第 1 个场景即失败。
 
 - `tests/agent-tool-boundaries.mjs`：校验 12 个角色的工具白名单，锁住"纯只读角色无写工具/无 shell"与"有 shell 的角色不声称只读"。
+- `tests/mcp-protocol.mjs`：协议层冒烟——`initialize` / 通知不产生响应 / `tools/list` 六个工具与 schema / `tools/call` / 非法 team 与未知工具被拒绝 / 未知方法返回 -32601 / 畸形输入不致命 / stdout 只含 JSON-RPC（日志混入 stdout 会让宿主的解析失败）。
 
 脚本内容与上游仓库 `Niangaol/agent-team` 根目录的同名文件一致，**不随插件分发**；测试对象是 `plugins/agent-team` 这个市场分发副本。
