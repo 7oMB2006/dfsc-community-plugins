@@ -293,7 +293,13 @@ python3 -m unittest discover -s tests -v
 npm ci --ignore-scripts
 node scripts/check-plugin-metadata.mjs
 node --test tests/plugin-metadata.test.mjs
+npm run test:plugins
 ```
+
+`npm run test:plugins` 会运行 `registry.json` 中已登记插件对应的 `test:<插件 id>`
+脚本，CI 用它补跑各插件自带的验证。没有登记任何插件测试时它是成功的空操作；
+不匹配已登记 id 的脚本（如 `test:fixtures`）不会被执行。
+插件作者把自己的验证套件挂在这个命名下，就会随插件收录一起进 CI。
 
 网络同步从 GitHub 的固定提交读取资源并检查 Git blob 哈希。私有上游可使用已有的 `GH_TOKEN` 或 `GITHUB_TOKEN`；凭据不写入仓库或 PR。离线模式只接受已有锁定记录对应的内容：
 
