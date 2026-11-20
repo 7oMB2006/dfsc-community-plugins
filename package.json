@@ -5,6 +5,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs",
+    "test:superpowers": "node tests/no-third-party-assets.mjs && node tests/market-installed-scripts.mjs",
     "check:metadata": "node scripts/check-plugin-metadata.mjs",
     "check:themes": "node scripts/check-theme-pack.mjs"
   },

@@ -96,6 +96,24 @@
 | macOS / Linux 工作区 | 可执行位正常，脚本可直接执行 |
 | **Windows 工作区** | Git 不还原权限位，`spawn` 直接执行会 `ENOENT`；必须写成 `bash <脚本>` |
 
-技能文档里的调用本来就统一写成 `bash scripts/xxx`（随包 Markdown 里共 18 处，全部显式带 `bash`，没有裸 `./scripts/xxx`），因此在 Windows 上按文档调用不受影响。
+技能文档里的调用方式（实测统计）：
 
-**补测口径**：用市场分发的 `plugins/superpowers` 目录（导出成独立安装副本）跑，不只跑源仓库工作区。`tests/market-installed-scripts.mjs` 覆盖 10 个脚本的安装副本与 7 条真实流程：`task-start`、`task-brief`、`sdd-workspace`、`sdd-repo`、`review-package`、`task-done`、`find-polluter.sh`。该脚本位于上游仓库根目录的 `tests/`，**不随插件分发**。
+- **18 处**写成 `bash .../scripts/<脚本>`，显式指定解释器，**不依赖可执行位**。
+- **1 处**是 `systematic-debugging/root-cause-tracing.md:104` 的 `bash ./find-polluter.sh ...`——同样带 `bash`，但需先 `cd` 到 `systematic-debugging/` 目录。
+- **2 处**是 `writing-skills/references/flowcharts.md` 的 `node ./render-graphs.js ...`——靠 `node` 运行，**不使用执行位**（该文件虽标 100755，执行位对实际用法没有作用）。
+
+因此在 Windows 上按文档调用不受影响：所有写法都显式指定了解释器（`bash` 或 `node`），没有依赖裸 `./script` 直接执行。
+
+在 POSIX 平台上，10 个脚本的可执行位已按源仓库保留（见下节），`./start-server.sh` 这类直接执行也可用。
+
+**补测口径**：用市场分发的 `plugins/superpowers` 目录（导出成独立安装副本）跑，不只跑源仓库工作区。两个验证脚本随本市场仓库提供，审核者可直接复现：
+
+```bash
+npm run test:superpowers
+# = node tests/no-third-party-assets.mjs && node tests/market-installed-scripts.mjs
+```
+
+- `tests/no-third-party-assets.mjs`：真实启动 `server.cjs`，走 bootstrap → 内容页两步请求，检查默认配置下没有任何第三方资源请求。
+- `tests/market-installed-scripts.mjs`：把 `plugins/superpowers` 导出成独立安装副本，在临时 Git 仓库里实跑 10 个脚本的检查与 7 条真实流程：`task-start`、`task-brief`、`sdd-workspace`、`sdd-repo`、`review-package`、`task-done`、`find-polluter.sh`。
+
+注意：Windows 下该脚本把 `executable` 记为 `null`（Git 不还原权限位，`spawn` 直接执行会 ENOENT），统一用 `bash <脚本>` 调用；可执行位本身在 Git 索引与 POSIX 平台上验证。脚本内容与上游仓库根目录的同名文件一致，但**不随插件分发**（只在仓库 `tests/` 中）。
