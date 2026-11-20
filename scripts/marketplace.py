@@ -225,14 +225,19 @@ def index_modes(root, names):
     if probe.returncode != 0:
         return None
     # `git -C <dir>` walks upward, so a plain directory nested inside some other
-    # repository would look like a work tree. Only accept the directory that is
-    # itself the repository root.
+    # repository would resolve to that outer repo. Only accept the directory that
+    # is itself the repository root: staging paths of a temp fixture into an
+    # unrelated repository is never what a caller wants.
     try:
         toplevel = Path(probe.stdout.strip()).resolve()
     except OSError:
         return None
     if toplevel != Path(root).resolve():
         return None
+    # A work tree needs `.git` of its own; a submodule-like nesting resolves
+    # differently and is not a market checkout either.
+    require((Path(root) / '.git').exists() or (Path(root) / '.git').is_file(),
+            'Git root reported without a .git entry')
     result = subprocess.run(
         ['git', '-C', str(root), 'ls-files', '-s', '--', *sorted(names)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
