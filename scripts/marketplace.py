@@ -239,27 +239,44 @@ def index_modes(root, names):
     require((Path(root) / '.git').exists() or (Path(root) / '.git').is_file(),
             'Git root reported without a .git entry')
     result = subprocess.run(
-        ['git', '-C', str(root), 'ls-files', '-s', '--', *sorted(names)],
+        ['git', '-C', str(root), 'ls-files', '-s', '-z', '--', *sorted(names)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
     require(result.returncode == 0, 'Unable to read Git index modes')
     modes = {}
-    for line in result.stdout.splitlines():
-        parts = line.split(None, 3)
+    # `-z` keeps paths verbatim: without it Git quotes non-ASCII paths
+    # (`"plugins/\350\204\232..."`), and Chinese paths would never match.
+    for entry in result.stdout.split('\0'):
+        if not entry:
+            continue
+        parts = entry.split(None, 3)
         require(len(parts) == 4, 'Unexpected git ls-files output')
         modes[parts[3].strip()] = parts[0]
     return modes
 
 
 def apply_index_modes(root, rows):
-    """Make Git record the reviewed executable bit for every staged path."""
+    """Make Git record the reviewed executable bit for every staged path.
+
+    Returns ``{'previous': {path: mode}, 'added': [path, ...]}``:
+
+    - ``previous`` maps every path whose mode changed to its old mode, so a
+      caller that fails later can restore the index with
+      :func:`restore_index_modes`;
+    - ``added`` lists paths this call introduced to the index (they had no
+      entry before), so the caller can unstaged them again on rollback.
+
+    Returns ``{'previous': {}, 'added': []}`` when nothing changed, or when
+    `root` is not a Git work tree.
+    """
     wanted = {row['path']: source_mode(row.get('mode', '100644')) for row in rows}
     require(wanted, 'Empty resource inventory')
     present = index_modes(root, wanted)
     if present is None:
         # Not a Git work tree (offline fixtures, exported tarball): the lock
         # still records the modes, but there is no index to set them in.
-        return []
+        return {'previous': {}, 'added': []}
     missing = sorted(path for path in wanted if path not in present)
+    added = list(missing)
     if missing:
         # Untracked files carry no index mode yet; stage them by content only.
         # `--chmod` below then sets the reviewed bit, so the working copy's
@@ -269,24 +286,71 @@ def apply_index_modes(root, rows):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
         require(result.returncode == 0, 'Unable to stage vendored resources: ' + ', '.join(missing))
         present = index_modes(root, wanted)
+    # Remember what we are about to overwrite, before touching the index.
+    previous = {}
     changed = []
     for path, mode in sorted(wanted.items()):
         require(path in present, 'Staged resource missing from the Git index: ' + path)
         if present[path] != mode:
+            previous[path] = present[path]
             changed.append(path)
     # Batch by target state so this stays two git calls regardless of file count.
+    try:
+        for mode, flag in (('100755', '+x'), ('100644', '-x')):
+            targets = [path for path in changed if wanted[path] == mode]
+            if not targets:
+                continue
+            result = subprocess.run(
+                ['git', '-C', str(root), 'update-index', '--chmod=' + flag, '--', *sorted(targets)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
+            require(result.returncode == 0, 'Unable to set Git index mode for: ' + ', '.join(sorted(targets)))
+        if changed:
+            verify = index_modes(root, wanted)
+            require(verify == wanted, 'Git index modes still differ from the reviewed lock')
+    except Exception:
+        # A partially applied batch must not be left behind.
+        restore_index_modes(root, {'previous': previous, 'added': added})
+        raise
+    return {'previous': previous, 'added': added}
+
+
+def restore_index_modes(root, restore):
+    """Undo an :func:`apply_index_modes` call.
+
+    ``restore`` is the value that call returned. Both halves matter:
+
+    - modes are put back to their previous values, so a half-updated index does
+      not keep claiming executable bits for files that were rolled back;
+    - paths this call newly staged are unstaged again, so a failed sync does not
+      leave a phantom entry for a file that no longer exists.
+
+    Errors are raised rather than swallowed: a half-restored index must be
+    visible, not silent.
+    """
+    previous = dict(restore.get('previous') or {})
+    added = list(restore.get('added') or [])
+    if not previous and not added:
+        return []
+    require(index_modes(root, previous or {'__probe__': '100644'}) is not None,
+            'Cannot restore Git index modes outside a Git work tree')
     for mode, flag in (('100755', '+x'), ('100644', '-x')):
-        targets = [path for path in changed if wanted[path] == mode]
+        targets = sorted(path for path, value in previous.items() if value == mode)
         if not targets:
             continue
         result = subprocess.run(
-            ['git', '-C', str(root), 'update-index', '--chmod=' + flag, '--', *sorted(targets)],
+            ['git', '-C', str(root), 'update-index', '--chmod=' + flag, '--', *targets],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
-        require(result.returncode == 0, 'Unable to set Git index mode for: ' + ', '.join(sorted(targets)))
-    if changed:
-        verify = index_modes(root, wanted)
-        require(verify == wanted, 'Git index modes still differ from the reviewed lock')
-    return sorted(changed)
+        require(result.returncode == 0, 'Unable to restore Git index mode for: ' + ', '.join(targets))
+    if previous:
+        current = index_modes(root, previous)
+        require(current == previous, 'Git index modes were not fully restored')
+    if added:
+        # `--ignore-unmatch` keeps this safe when the file was already gone.
+        result = subprocess.run(
+            ['git', '-C', str(root), 'rm', '--cached', '--quiet', '--ignore-unmatch', '--', *sorted(added)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
+        require(result.returncode == 0, 'Unable to unstage rolled-back resources: ' + ', '.join(sorted(added)))
+    return sorted(previous) + sorted(added)
 
 
 def inventory(directory):
@@ -651,6 +715,7 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
                 pending.write_bytes(data)
                 updates.append((plain(root, name), pending))
             changed = []
+            index_before = {'previous': {}, 'added': []}
             try:
                 for index, (active, pending) in enumerate(updates):
                     active.parent.mkdir(parents=True, exist_ok=True)
@@ -668,9 +733,13 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
                         for name, (_, file_modes) in prepared.items()
                         for path, mode in file_modes.items()]
                 if rows:
-                    apply_index_modes(root, rows)
+                    index_before = apply_index_modes(root, rows)
                 outcome = validate(root)
             except Exception:
+                # Roll the index back first: the files below are about to be
+                # restored from their backups, so the index must not keep
+                # claiming modes for a package that no longer exists.
+                restore_index_modes(root, index_before)
                 for active, backup, had_previous in reversed(changed):
                     if active.is_dir():
                         shutil.rmtree(active)

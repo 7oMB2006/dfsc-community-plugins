@@ -699,7 +699,8 @@ class MarketplaceTests(unittest.TestCase):
         # A fixture directory living inside some other checkout must not have its
         # paths staged into that outer repository.
         self.assertIsNone(m.index_modes(self.root, ['registry.json']))
-        self.assertEqual(m.apply_index_modes(self.root, [{'path': 'registry.json', 'mode': '100755'}]), [])
+        self.assertEqual(m.apply_index_modes(self.root, [{'path': 'registry.json', 'mode': '100755'}]),
+                         {'previous': {}, 'added': []})
 
     def test_sync_records_executable_bit_in_the_git_index(self):
         self.make_git_repo()
@@ -749,6 +750,129 @@ class MarketplaceTests(unittest.TestCase):
         self.git('update-index', '--chmod=-x', '--', 'plugins/alpha-plugin/scripts/run')
         with self.assertRaisesRegex(m.MarketError, 'Vendored executable bit differs'):
             m.validate(self.root)
+
+
+    # --- 索引回滚与中文路径 ---------------------------------------------
+
+    def test_restore_index_modes_puts_the_previous_bits_back(self):
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        self.assertEqual(self.index_mode(path), '100644')
+        restore = m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertEqual(restore['previous'], {path: '100644'})
+        self.assertEqual(restore['added'], [])
+        self.assertEqual(self.index_mode(path), '100755')
+        m.restore_index_modes(self.root, restore)
+        self.assertEqual(self.index_mode(path), '100644', '回滚后索引应恢复原模式')
+
+    def test_restore_index_modes_is_a_noop_for_an_empty_map(self):
+        self.make_git_repo()
+        self.assertEqual(m.restore_index_modes(self.root, {'previous': {}, 'added': []}), [])
+
+    def test_restore_index_modes_refuses_outside_a_git_work_tree(self):
+        with self.assertRaisesRegex(m.MarketError, 'outside a Git work tree'):
+            m.restore_index_modes(self.root, {'previous': {'registry.json': '100644'}, 'added': []})
+
+    def test_apply_index_modes_rolls_back_a_partially_applied_batch(self):
+        """正向应用只成功了一半时，已经改掉的模式必须被撤回。"""
+        self.make_git_repo()
+        script = 'plugins/alpha-plugin/commands/help.md'
+        plain = 'plugins/alpha-plugin/README.md'
+        self.assertEqual(self.index_mode(script), '100644')
+        self.assertEqual(self.index_mode(plain), '100644')
+        original_run = m.subprocess.run
+        state = {'calls': 0}
+
+        def flaky_run(argv, **kwargs):
+            if 'update-index' in argv and state['calls'] == 0:
+                state['calls'] += 1
+                # 只对第一个文件生效，第二个文件留在 100644：模拟「只应用了一半」
+                return original_run(
+                    ['git', '-C', str(self.root), 'update-index', '--chmod=+x', '--', script],
+                    stdout=m.subprocess.PIPE, stderr=m.subprocess.PIPE, check=False,
+                    text=True, encoding='utf-8')
+            if 'update-index' in argv:
+                state['calls'] += 1
+            return original_run(argv, **kwargs)
+
+        with patch.object(m.subprocess, 'run', flaky_run), \
+                self.assertRaisesRegex(m.MarketError, 'still differ from the reviewed lock'):
+            m.apply_index_modes(self.root, [
+                {'path': script, 'mode': '100755'},
+                {'path': plain, 'mode': '100755'},
+            ])
+        self.assertEqual(self.index_mode(script), '100644', '失败后已应用的那一半也必须回滚')
+        self.assertEqual(self.index_mode(plain), '100644')
+        self.assertGreater(state['calls'], 1, '回滚本身应当也调用过 update-index')
+
+    def test_sync_rolls_the_index_back_when_final_validation_fails(self):
+        """同步在写完索引后失败时，索引不能留下新包的模式。"""
+        self.make_git_repo()
+        data = dict(self.raw['alpha-plugin'])
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        original_api = self.api
+
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+
+        def failing_validate(root):
+            raise m.MarketError('synthetic post-index validation failure')
+
+        with patch.object(m, 'validate', failing_validate), \
+                self.assertRaisesRegex(m.MarketError, 'post-index validation failure'):
+            m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        self.assertIsNone(self.index_mode('plugins/alpha-plugin/scripts/run'),
+                          '同步失败回滚后，索引不应留下新包的可执行位')
+
+    def test_chinese_paths_survive_mode_round_trip(self):
+        """中文路径在索引读写里必须按原样往返，不能被转义或截断。"""
+        self.make_git_repo()
+        chinese = 'plugins/alpha-plugin/脚本/构建.sh'
+        target = self.root / 'plugins/alpha-plugin/脚本/构建.sh'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('#!/bin/sh\necho 中文路径\n', encoding='utf-8')
+        self.git('add', '-A')
+        self.git('commit', '-qm', 'chinese path fixture')
+        self.assertEqual(self.index_mode(chinese), '100644')
+
+        restore = m.apply_index_modes(self.root, [{'path': chinese, 'mode': '100755'}])
+        self.assertEqual(restore['previous'], {chinese: '100644'})
+        self.assertEqual(self.index_mode(chinese), '100755', '中文路径的可执行位应写入索引')
+        self.assertEqual(m.index_modes(self.root, [chinese]), {chinese: '100755'},
+                         '读取时路径应保持中文原样')
+
+        m.restore_index_modes(self.root, restore)
+        self.assertEqual(self.index_mode(chinese), '100644')
+
+    def test_chinese_market_root_directory(self):
+        """仓库根目录含中文时，git -C 与路径比较仍要工作。"""
+        import subprocess
+        chinese_root = self.root / '中文市场'
+        chinese_root.mkdir()
+        for args in (('init', '-q'), ('config', 'user.email', 'fixture@example.invalid'),
+                     ('config', 'user.name', 'Fixture')):
+            subprocess.run(('git',) + args, cwd=chinese_root, check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        target = chinese_root / '脚本' / '运行.sh'
+        target.parent.mkdir(parents=True)
+        target.write_text('#!/bin/sh\n', encoding='utf-8')
+        subprocess.run(('git', 'add', '-A'), cwd=chinese_root, check=True)
+        subprocess.run(('git', 'commit', '-qm', '中文根'), cwd=chinese_root, check=True)
+
+        restore = m.apply_index_modes(chinese_root, [{'path': '脚本/运行.sh', 'mode': '100755'}])
+        self.assertEqual(restore['previous'], {'脚本/运行.sh': '100644'})
+        line = subprocess.run(('git', 'ls-files', '-s', '--', '脚本/运行.sh'), cwd=chinese_root,
+                              check=True, stdout=subprocess.PIPE, text=True, encoding='utf-8').stdout
+        self.assertTrue(line.startswith('100755'), f'中文根目录下的模式未生效：{line!r}')
 
 
 if __name__ == '__main__':
