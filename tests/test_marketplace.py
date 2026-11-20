@@ -695,6 +695,12 @@ class MarketplaceTests(unittest.TestCase):
     def test_index_modes_returns_none_outside_a_git_work_tree(self):
         self.assertIsNone(m.index_modes(self.root, ['registry.json']))
 
+    def test_apply_index_modes_never_stages_into_an_enclosing_repository(self):
+        # A fixture directory living inside some other checkout must not have its
+        # paths staged into that outer repository.
+        self.assertIsNone(m.index_modes(self.root, ['registry.json']))
+        self.assertEqual(m.apply_index_modes(self.root, [{'path': 'registry.json', 'mode': '100755'}]), [])
+
     def test_sync_records_executable_bit_in_the_git_index(self):
         self.make_git_repo()
         data = dict(self.raw['alpha-plugin'])
