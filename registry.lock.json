@@ -293,7 +293,7 @@
       "id": "superpowers",
       "source": {
         "repository": "Niangaol/superpowers-dfsc",
-        "commit": "d0e3a3006da372c5b521bbd37c87fc2d1202860f",
+        "commit": "d5716520f0533db56507f1a0e0dc0916e3c342b7",
         "path": "plugins/superpowers"
       },
       "files": [
@@ -311,9 +311,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "c5bb59fdaf17ba154e803c549cd71a73ef36c24b",
-          "sha256": "79f29f50c735862d2e304ea547b4c9aa67d9db6909ff6fb7b5ea922d7bcbc3e7",
-          "size": 14847
+          "gitBlobSha": "a9bca6dbe377b11eaf9bc0fd8ada28422b6f0c6f",
+          "sha256": "cf7269caaab8770972c7471ce50ff50346d097566089b6c054513447f6d968f6",
+          "size": 7877
         },
         {
           "path": "dfsc.plugin.json",
@@ -347,21 +347,23 @@
         },
         {
           "path": "skills/brainstorming/scripts/server.cjs",
-          "gitBlobSha": "fdc796122583f5d6687d9582eb265c2fa0cb7781",
-          "sha256": "763abf96510e0b892a1141397b31aa82ef900cf87ed34dde94bc8782baf4a7ca",
-          "size": 25699
+          "gitBlobSha": "5d535b0a9b81e228e50bd301937a296f6f914ab4",
+          "sha256": "20c0a7b103ab3e2d316dc82d78d6d4bfe18502e2b188cf93851eb2375c18ec88",
+          "size": 26286
         },
         {
           "path": "skills/brainstorming/scripts/start-server.sh",
           "gitBlobSha": "f6d538a47b14aed925a856e34411ba8258ec54c9",
           "sha256": "314dd68dc00e8dd94c7491aca8a5f004c7fddffc161e2b07482f29f48d13659a",
-          "size": 7315
+          "size": 7315,
+          "mode": "100755"
         },
         {
           "path": "skills/brainstorming/scripts/stop-server.sh",
           "gitBlobSha": "7cacfe9440043f7a46eac555cd835fad0769c425",
           "sha256": "0b5ccbbd57f62d3ed88993f7940b5ee0e5c0fc9b21c550c623da4f6292e47daf",
-          "size": 3263
+          "size": 3263,
+          "mode": "100755"
         },
         {
           "path": "skills/brainstorming/visual-companion.md",
@@ -505,13 +507,15 @@
           "path": "skills/executing-plans/scripts/task-done",
           "gitBlobSha": "d6400b40f4404586ab7557747ae64be83cd02998",
           "sha256": "ac0b5ebafc7d471507b7e94d88da77a11f187ba277c8d48fefaf8ff3e4fee50e",
-          "size": 1900
+          "size": 1900,
+          "mode": "100755"
         },
         {
           "path": "skills/executing-plans/scripts/task-start",
           "gitBlobSha": "04f1c6588be8d4fca7e9f83b20d01d0b0a165d97",
           "sha256": "4ae7ce3b6777c3240af786197836a6b4bbf3b0ee831c25f147c149ea8db54a21",
-          "size": 1185
+          "size": 1185,
+          "mode": "100755"
         },
         {
           "path": "skills/finishing-a-development-branch/SKILL.md",
@@ -601,25 +605,29 @@
           "path": "skills/subagent-driven-development/scripts/review-package",
           "gitBlobSha": "04c2b918c6289b49e716fe1faa0afc98a4e465f9",
           "sha256": "aed7c6e09fc660417d28898ed975e84651cb9f18f4675141cd475edfb7037f3d",
-          "size": 2444
+          "size": 2444,
+          "mode": "100755"
         },
         {
           "path": "skills/subagent-driven-development/scripts/sdd-repo",
           "gitBlobSha": "b1756b975cf7df470bd4f8b8a0ed9e24f3d64c5f",
           "sha256": "6f8256a776968d394bae679572e41ce572fd45c72074b98f9a8eb8b4f160e06f",
-          "size": 2356
+          "size": 2356,
+          "mode": "100755"
         },
         {
           "path": "skills/subagent-driven-development/scripts/sdd-workspace",
           "gitBlobSha": "ca3ac3b087fed24e460a249b6686910ea4ef5a95",
           "sha256": "de3af5252fa595fc2000ba05cf69e06187d5c8aae9d283cced4c167ad1813061",
-          "size": 4823
+          "size": 4823,
+          "mode": "100755"
         },
         {
           "path": "skills/subagent-driven-development/scripts/task-brief",
           "gitBlobSha": "a490211ad85b3236de038df27261395ac107befc",
           "sha256": "0f244a12e146393c552ba62069d3eedcc85cb3f76de67b01f4e11219e5ebbcd8",
-          "size": 4769
+          "size": 4769,
+          "mode": "100755"
         },
         {
           "path": "skills/subagent-driven-development/task-reviewer-prompt.md",
@@ -655,7 +663,8 @@
           "path": "skills/systematic-debugging/find-polluter.sh",
           "gitBlobSha": "985f5d08ccf8a3f2d40739cfcaf4413bb24bf1cb",
           "sha256": "dd7b8f13c4cc2a24b33ff87b18da9248f3e1c80a085c3316224f69ff0fa5c43c",
-          "size": 1986
+          "size": 1986,
+          "mode": "100755"
         },
         {
           "path": "skills/systematic-debugging/root-cause-tracing.md",
@@ -799,7 +808,8 @@
           "path": "skills/writing-skills/render-graphs.js",
           "gitBlobSha": "59e74b54e8538ff0a358d05c770479b3eb8484aa",
           "sha256": "c7f412cc629461c4d10287e668731874c0497707023e3e3f74a5355eb2cee196",
-          "size": 4968
+          "size": 4968,
+          "mode": "100755"
         },
         {
           "path": "step.plugin.json",
