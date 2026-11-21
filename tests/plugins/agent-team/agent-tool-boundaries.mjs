@@ -17,7 +17,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const agentsDir = resolve(here, '../plugins/agent-team/agents');
+const agentsDir = resolve(here, '../../../plugins/agent-team/agents');
 
 /** 纯提示约束的角色：不得有写工具或 shell。 */
 const NO_WRITE_NO_SHELL = ['analyst', 'scout', 'ux-reviewer'];

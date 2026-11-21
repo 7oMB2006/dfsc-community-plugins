@@ -25,7 +25,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const entry = resolve(here, '../plugins/agent-team/server/team-gate.mjs');
+const entry = resolve(here, '../../../plugins/agent-team/server/team-gate.mjs');
 
 /** 一个真实的 stdio MCP 进程，按换行分隔的 JSON-RPC 2.0 通信。 */
 class Session {
