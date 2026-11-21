@@ -26,7 +26,7 @@ import { promisify } from 'node:util';
 
 const run = promisify(execFile);
 const here = dirname(fileURLToPath(import.meta.url));
-const bundledRoot = resolve(here, '../plugins/superpowers');
+const bundledRoot = resolve(here, '../../../plugins/superpowers');
 const sourceRoot = process.env.SUPERPOWERS_PLUGIN_ROOT
   ? resolve(process.env.SUPERPOWERS_PLUGIN_ROOT)
   : bundledRoot;
