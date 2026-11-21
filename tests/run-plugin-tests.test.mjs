@@ -36,8 +36,8 @@ async function run({ package: manifest = {}, plugins = [] }) {
   }
 }
 
-function runIn(root, args) {
-  const result = spawnSync(process.execPath, [join(root, 'scripts', 'run-plugin-tests.mjs'), ...args], {
+function runIn(root, args, entry = join(root, 'scripts', 'run-plugin-tests.mjs')) {
+  const result = spawnSync(process.execPath, [entry, ...args], {
     cwd: root, encoding: 'utf8', timeout: 30000, env: { ...process.env, DFSC_FIXTURE_SECRET: 'fixture-value' },
   });
   if (result.error) throw result.error;
@@ -215,6 +215,56 @@ test('no implicit all execution; scoped runs reject non-history SHAs and dirty c
   const out = runIn(root, ['--base', base]);
   assert.equal(out.code, 1);
   assert.match(out.stderr, /clean checkout/);
+}));
+
+function checkOutMerge(git, base, head) {
+  const merge = git('commit-tree', `${head}^{tree}`, '-p', base, '-p', head, '-m', 'PR merge fixture');
+  git('checkout', '--quiet', '--detach', merge);
+  return merge;
+}
+
+function runReviewed(root, base, head) {
+  return runIn(root, ['--checkout', root, '--base', base, '--pr-head', head], runner);
+}
+
+test('reviewed merge runs only the affected suite against candidate code and detects a regression', async () => withSnapshots(async ({ root, put, commit, git }) => {
+  await put('tests/plugins/alpha/suite.mjs', 'import "../../../plugins/alpha/state.mjs";');
+  await put('plugins/alpha/state.mjs', 'process.exit(0);');
+  await put('package.json', { scripts: { ...manifest.scripts, 'test:alpha': 'node tests/plugins/alpha/suite.mjs' } });
+  const base = commit();
+  await put('plugins/alpha/state.mjs', 'process.exit(4);');
+  const head = commit();
+  const merge = checkOutMerge(git, base, head);
+  git('clone', '--quiet', '--no-local', '--depth', '2', '.', 'shallow');
+  const out = runReviewed(join(root, 'shallow'), base, head);
+  assert.equal(out.code, 1, out.stderr);
+  assert.match(out.stdout, new RegExp(`Testing merge ${merge} .*PR head ${head}`));
+  assert.deepEqual(report(out).ran.map(({ plugin, status, code }) => [plugin, status, code]), [['alpha', 'failed', 4]]);
+  assert.deepEqual(report(out).skipped, [{ plugin: 'beta', reason: 'unchanged' }]);
+}));
+
+test('reviewed PR mode rejects the raw head or a merge with different parents before running commands', async () => withSnapshots(async ({ root, put, commit, base, git }) => {
+  await put('package.json', { scripts: { ...manifest.scripts, 'test:alpha': 'node -e "console.log(123456789)"' } });
+  const head = commit();
+  const raw = runReviewed(root, base, head);
+  assert.equal(raw.code, 1);
+  assert.match(raw.stderr, /merge snapshot does not match/);
+  checkOutMerge(git, base, head);
+  for (const [main, reviewed] of [[head, head], [base, base]]) {
+    const stale = runReviewed(root, main, reviewed);
+    assert.equal(stale.code, 1);
+    assert.match(stale.stderr, /No suites ran/);
+    assert.doesNotMatch(stale.stdout, /123456789|Running test:/);
+  }
+}));
+
+test('reviewed PR uses the trusted runner and does not load the candidate runner', async () => withSnapshots(async ({ root, put, commit, base, git }) => {
+  await put('scripts/run-plugin-tests.mjs', 'throw new Error("candidate runner was loaded");');
+  const head = commit();
+  checkOutMerge(git, base, head);
+  const out = runReviewed(root, base, head);
+  assert.equal(out.code, 0, out.stderr);
+  assert.deepEqual(report(out).ran.map(({ plugin, status }) => [plugin, status]), [['alpha', 'passed'], ['beta', 'passed']]);
 }));
 
 test('timeout stops the process tree and a later suite still runs without unrelated env vars', async () => withSnapshots(async ({ root, put }) => {

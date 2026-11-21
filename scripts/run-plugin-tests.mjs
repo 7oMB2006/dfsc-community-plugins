@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual, parseArgs } from 'node:util';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const runnerRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sha = /^[0-9a-f]{40}$/;
 const pluginId = /^[a-z0-9][a-z0-9_-]{0,79}$/;
 const catalogs = new Map([
@@ -14,7 +14,7 @@ const catalogs = new Map([
   ['.step-plugin/marketplace.json', 'name'],
 ]);
 
-function git(...args) {
+function git(root, ...args) {
   return execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 }
 
@@ -47,16 +47,28 @@ function noteChangedEntries(affected, [oldShared, oldEntries], [newShared, newEn
   return true;
 }
 
-function affectedPlugins(base) {
-  if (!sha.test(base) || !git('rev-list', '--first-parent', 'HEAD').split(/\s+/).includes(base)) {
+function verifyComparison(root, base, prHead) {
+  if (!sha.test(base)) throw new Error('--base must be a full SHA.');
+  if (prHead) {
+    // Read the raw parent headers; a depth-one checkout may hide parents in history commands.
+    const head = git(root, 'cat-file', 'commit', 'HEAD').split('\n\n', 1)[0];
+    const parents = [...head.matchAll(/^parent ([0-9a-f]{40})$/gm)].map((match) => match[1]);
+    if (!isDeepStrictEqual(parents, [base, prHead])) {
+      throw new Error('PR merge snapshot does not match main and the reviewed PR head. No suites ran.');
+    }
+    console.log(`Testing merge ${git(root, 'rev-parse', 'HEAD').trim()} (main ${base}, PR head ${prHead})`);
+  } else if (!git(root, 'rev-list', '--first-parent', 'HEAD').split(/\s+/).includes(base)) {
     throw new Error('--base must be a full SHA on the first-parent history of HEAD.');
   }
-  if (git('status', '--porcelain', '--untracked-files=all')) {
+  if (git(root, 'status', '--porcelain', '--untracked-files=all')) {
     throw new Error('--base requires a clean checkout so the executed files match HEAD.');
   }
-  const paths = git('diff', '--no-renames', '--name-only', '-z', base, 'HEAD', '--').split('\0').filter(Boolean);
+}
+
+function affectedPlugins(root, base) {
+  const paths = git(root, 'diff', '--no-renames', '--name-only', '-z', base, 'HEAD', '--').split('\0').filter(Boolean);
   const affected = new Set();
-  const snapshots = (path) => [base, 'HEAD'].map((revision) => JSON.parse(git('show', `${revision}:${path}`)));
+  const snapshots = (path) => [base, 'HEAD'].map((revision) => JSON.parse(git(root, 'show', `${revision}:${path}`)));
 
   for (const path of paths) {
     const scoped = /^(?:plugins|tests\/plugins)\/([^/]+)\//.exec(path);
@@ -84,7 +96,7 @@ function suiteEnvironment() {
   return { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => allowed.test(name))), CI: 'true' };
 }
 
-function runSuite(command, timeout) {
+function runSuite(root, command, timeout) {
   const windows = process.platform === 'win32';
   return new Promise((done, reject) => {
     let timedOut = false;
@@ -122,6 +134,7 @@ async function main() {
   const { values } = parseArgs({
     options: {
       base: { type: 'string' }, all: { type: 'boolean' },
+      checkout: { type: 'string' }, 'pr-head': { type: 'string' },
       'timeout-ms': { type: 'string', default: '120000' },
     },
   });
@@ -129,10 +142,16 @@ async function main() {
   if (Boolean(values.base) === Boolean(values.all) || !Number.isSafeInteger(timeout) || timeout < 1 || timeout > 300000) {
     throw new Error('Select exactly one of --base <ancestor SHA> or --all; --timeout-ms must be 1-300000.');
   }
+  const prHead = values['pr-head'];
+  if ((values.checkout !== undefined || prHead !== undefined) && (!values.checkout || !values.base || !sha.test(prHead ?? ''))) {
+    throw new Error('PR mode requires --checkout <path>, --base <main SHA> and --pr-head <reviewed SHA>.');
+  }
+  const root = values.checkout ? resolve(values.checkout) : runnerRoot;
+  if (values.base) verifyComparison(root, values.base, prHead);
   const readJson = async (file) => JSON.parse(await readFile(join(root, file), 'utf8'));
   const [manifest, registry] = await Promise.all([readJson('package.json'), readJson('registry.json')]);
   if (!Array.isArray(registry?.plugins)) throw new Error('Invalid registry.json: expected a plugins array.');
-  const affected = values.all ? null : affectedPlugins(values.base);
+  const affected = values.all ? null : affectedPlugins(root, values.base);
 
   const ran = [];
   const skipped = [];
@@ -146,7 +165,7 @@ async function main() {
     } else {
       console.log(`Running ${name} (timeout: ${timeout} ms)`);
       try {
-        ran.push({ plugin: id, script: name, ...await runSuite(command, timeout) });
+        ran.push({ plugin: id, script: name, ...await runSuite(root, command, timeout) });
       } catch (error) {
         throw new Error(`${name}: ${error.message}`, { cause: error });
       }
