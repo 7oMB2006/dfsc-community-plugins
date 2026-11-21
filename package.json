@@ -4,7 +4,8 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
-    "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs",
+    "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs tests/run-plugin-tests.test.mjs",
+    "test:plugins": "node scripts/run-plugin-tests.mjs",
     "check:metadata": "node scripts/check-plugin-metadata.mjs",
     "check:themes": "node scripts/check-theme-pack.mjs"
   },
