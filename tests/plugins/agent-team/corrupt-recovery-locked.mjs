@@ -20,7 +20,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const entry = resolve(here, '../plugins/agent-team/server/team-gate.mjs');
+const entry = resolve(here, '../../../plugins/agent-team/server/team-gate.mjs');
 const BROKEN = '{ this is definitely not json';
 
 function startSession(stateFile) {

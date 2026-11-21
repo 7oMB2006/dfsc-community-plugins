@@ -76,7 +76,7 @@
 npm run test:agent-team
 ```
 
-- `tests/two-session-state.mjs`：起两个真实的 `team-gate` stdio 子进程，通过 MCP JSON-RPC 驱动，覆盖
+- `tests/plugins/agent-team/two-session-state.mjs`：起两个真实的 `team-gate` stdio 子进程，通过 MCP JSON-RPC 驱动，覆盖
   1. 两个进程交替写不同团队，互不覆盖
   2. 跨进程读到同一份最新状态
   3. 同团队 20 条并发广播不丢消息、消息 id 不重复
@@ -86,11 +86,11 @@ npm run test:agent-team
 
   对旧实现（无锁、整份覆盖）运行同一测试会在第 1 个场景失败，可复现复审指出的覆盖问题。
 
-- `tests/state-fault-tolerance.mjs`：四种容错场景——写入遇瞬时读错误必须失败且不覆盖、只读遇错误沿用缓存、文件被删后读取为空且可重建、损坏文件备份后从空写入。对修复前的实现跑，第 1 个场景即失败。
+- `tests/plugins/agent-team/state-fault-tolerance.mjs`：四种容错场景——写入遇瞬时读错误必须失败且不覆盖、只读遇错误沿用缓存、文件被删后读取为空且可重建、损坏文件备份后从空写入。对修复前的实现跑，第 1 个场景即失败。
 
-- `tests/agent-tool-boundaries.mjs`：校验 12 个角色的工具白名单，锁住"纯只读角色无写工具/无 shell"与"有 shell 的角色不声称只读"。
-- `tests/mcp-protocol.mjs`：协议层冒烟——`initialize` / 通知不产生响应 / `tools/list` 六个工具与 schema / `tools/call` / 非法 team 与未知工具被拒绝 / 未知方法返回 -32601 / 畸形输入不致命 / stdout 只含 JSON-RPC（日志混入 stdout 会让宿主的解析失败）。
-- `tests/wait-signal-scope.mjs`：验证 `team_wait` 只认本轮新信号——上一轮同名 label 的完成信号不会被算作本轮完成，`pending` 也基于本轮；`mode=any` 与 `reset` 同样不吃历史信号。
-- `tests/corrupt-recovery-locked.mjs`：验证损坏状态文件的恢复在持锁路径里完成——只读查询不改文件（含缓存建立后文件变坏的情况）、写入路径备份损坏文件、两个进程并发恢复不互相覆盖备份。
+- `tests/plugins/agent-team/agent-tool-boundaries.mjs`：校验 12 个角色的工具白名单，锁住"纯只读角色无写工具/无 shell"与"有 shell 的角色不声称只读"。
+- `tests/plugins/agent-team/mcp-protocol.mjs`：协议层冒烟——`initialize` / 通知不产生响应 / `tools/list` 六个工具与 schema / `tools/call` / 非法 team 与未知工具被拒绝 / 未知方法返回 -32601 / 畸形输入不致命 / stdout 只含 JSON-RPC（日志混入 stdout 会让宿主的解析失败）。
+- `tests/plugins/agent-team/wait-signal-scope.mjs`：验证 `team_wait` 只认本轮新信号——上一轮同名 label 的完成信号不会被算作本轮完成，`pending` 也基于本轮；`mode=any` 与 `reset` 同样不吃历史信号。
+- `tests/plugins/agent-team/corrupt-recovery-locked.mjs`：验证损坏状态文件的恢复在持锁路径里完成——只读查询不改文件（含缓存建立后文件变坏的情况）、写入路径备份损坏文件、两个进程并发恢复不互相覆盖备份。
 
-脚本内容与上游仓库 `Niangaol/agent-team` 根目录的同名文件一致，**不随插件分发**；测试对象是 `plugins/agent-team` 这个市场分发副本。
+脚本内容与上游仓库 `Niangaol/agent-team` 根目录的同名文件一致，**不随插件分发**；测试对象是 `plugins/agent-team` 这个市场分发副本。按市场约定放在 `tests/plugins/agent-team/`，只依赖本插件资源与共享测试工具。

@@ -23,7 +23,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const { TeamStore } = await import(
-  pathToFileURL(resolve(here, '../plugins/agent-team/server/state.mjs')).href);
+  pathToFileURL(resolve(here, '../../../plugins/agent-team/server/state.mjs')).href);
 
 const realReadFileSync = fs.readFileSync;
 

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs",
-    "test:agent-team": "node tests/two-session-state.mjs && node tests/state-fault-tolerance.mjs && node tests/agent-tool-boundaries.mjs && node tests/mcp-protocol.mjs && node tests/wait-signal-scope.mjs && node tests/corrupt-recovery-locked.mjs",
+    "test:agent-team": "node tests/plugins/agent-team/two-session-state.mjs && node tests/plugins/agent-team/state-fault-tolerance.mjs && node tests/plugins/agent-team/agent-tool-boundaries.mjs && node tests/plugins/agent-team/mcp-protocol.mjs && node tests/plugins/agent-team/wait-signal-scope.mjs && node tests/plugins/agent-team/corrupt-recovery-locked.mjs",
     "check:metadata": "node scripts/check-plugin-metadata.mjs",
     "check:themes": "node scripts/check-theme-pack.mjs"
   },
