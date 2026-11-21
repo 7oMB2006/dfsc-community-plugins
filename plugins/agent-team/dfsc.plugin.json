@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "authors": [{ "name": "Niangaol" }],
+  "maintainers": [{ "name": "Niangaol" }],
+  "license": "MIT",
+  "categories": ["automation", "development"],
+  "keywords": ["多智能体", "团队协作", "A2A", "编排", "team-gate"],
+  "requirements": {
+    "dfsc": ">=0.4.0",
+    "external": [
+      {
+        "name": "Node.js",
+        "description": "team-gate 是 stdio MCP server，需要 Node.js 18 或更高版本运行时；插件不附带 Node.js，需系统另行准备。",
+        "url": "https://nodejs.org/"
+      }
+    ]
+  },
+  "documentation": { "readme": "README.md" }
+}
