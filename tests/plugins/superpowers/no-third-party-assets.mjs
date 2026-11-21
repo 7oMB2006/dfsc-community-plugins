@@ -19,7 +19,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const skillDir = resolve(here, '../plugins/superpowers/skills/brainstorming');
+const skillDir = resolve(here, '../../../plugins/superpowers/skills/brainstorming');
 
 function get(port, pathname, cookie) {
   return new Promise((resolvePromise, rejectPromise) => {

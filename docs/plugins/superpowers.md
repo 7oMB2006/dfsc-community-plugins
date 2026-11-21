@@ -119,10 +119,10 @@
 
 ```bash
 npm run test:superpowers
-# = node tests/no-third-party-assets.mjs && node tests/market-installed-scripts.mjs
+# = node tests/plugins/superpowers/no-third-party-assets.mjs && node tests/plugins/superpowers/market-installed-scripts.mjs
 ```
 
-- `tests/no-third-party-assets.mjs`：真实启动 `server.cjs`，走 bootstrap → 内容页两步请求，检查默认配置下没有任何第三方资源请求。
-- `tests/market-installed-scripts.mjs`：把 `plugins/superpowers` 导出成独立安装副本，在临时 Git 仓库里实跑 10 个脚本的检查与 7 条真实流程：`task-start`、`task-brief`、`sdd-workspace`、`sdd-repo`、`review-package`、`task-done`、`find-polluter.sh`。
+- `tests/plugins/superpowers/no-third-party-assets.mjs`：真实启动 `server.cjs`，走 bootstrap → 内容页两步请求，检查默认配置下没有任何第三方资源请求。
+- `tests/plugins/superpowers/market-installed-scripts.mjs`：把 `plugins/superpowers` 导出成独立安装副本，在临时 Git 仓库里实跑 10 个脚本的检查与 7 条真实流程：`task-start`、`task-brief`、`sdd-workspace`、`sdd-repo`、`review-package`、`task-done`、`find-polluter.sh`。
 
 注意：Windows 下该脚本把 `executable` 记为 `null`（Git 不还原权限位，`spawn` 直接执行会 ENOENT），统一用 `bash <脚本>` 调用；可执行位本身在 Git 索引与 POSIX 平台上验证。脚本内容与上游仓库根目录的同名文件一致，但**不随插件分发**（只在仓库 `tests/` 中）。
