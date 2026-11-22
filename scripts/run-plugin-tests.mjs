@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync, spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual, parseArgs } from 'node:util';
 
@@ -15,7 +15,12 @@ const catalogs = new Map([
 ]);
 
 function git(root, ...args) {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+  const executable = process.env.DFSC_PLUGIN_TEST_GIT;
+  if (executable && !isAbsolute(executable)) throw new Error('DFSC_PLUGIN_TEST_GIT must be an absolute path.');
+  // Windows may search the spawn cwd for executables before PATH.
+  return execFileSync(executable || 'git', ['-C', root, ...args], {
+    cwd: runnerRoot, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+  });
 }
 
 function scriptId(name) {

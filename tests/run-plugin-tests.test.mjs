@@ -36,8 +36,8 @@ async function run({ package: manifest = {}, plugins = [] }) {
   }
 }
 
-function runIn(root, args, entry = join(root, 'scripts', 'run-plugin-tests.mjs')) {
-  const result = spawnSync(process.execPath, [entry, ...args], {
+function runIn(root, args, entry = join(root, 'scripts', 'run-plugin-tests.mjs'), nodeOptions = []) {
+  const result = spawnSync(process.execPath, [...nodeOptions, entry, ...args], {
     cwd: root, encoding: 'utf8', timeout: 30000, env: { ...process.env, DFSC_FIXTURE_SECRET: 'fixture-value' },
   });
   if (result.error) throw result.error;
@@ -238,8 +238,8 @@ function checkOutMerge(git, base, head) {
   return merge;
 }
 
-function runReviewed(root, base, head) {
-  return runIn(root, ['--checkout', root, '--base', base, '--pr-head', head], runner);
+function runReviewed(root, base, head, nodeOptions) {
+  return runIn(root, ['--checkout', root, '--base', base, '--pr-head', head], runner, nodeOptions);
 }
 
 test('reviewed merge runs only the affected suite against candidate code and detects a regression', async () => withSnapshots(async ({ root, put, commit, git }) => {
@@ -281,6 +281,34 @@ test('reviewed PR uses the trusted runner and does not load the candidate runner
   const out = runReviewed(root, base, head);
   assert.equal(out.code, 0, out.stderr);
   assert.deepEqual(report(out).ran.map(({ plugin, status }) => [plugin, status]), [['alpha', 'passed'], ['beta', 'passed']]);
+}));
+
+test('reviewed PR starts Git from the trusted directory, not the candidate', async () => withSnapshots(async ({ root, put, commit, base, git }) => {
+  await put('README.md', 'Documentation-only candidate');
+  const head = commit();
+  checkOutMerge(git, base, head);
+  const trustedRoot = resolve(here, '..');
+
+  for (const configuredGit of ['', join(trustedRoot, 'fixture-git')]) {
+    // Inspect how Git is launched without placing an executable in the candidate.
+    const probe = `
+      import assert from 'node:assert/strict';
+      import childProcess from 'node:child_process';
+      import { syncBuiltinESMExports } from 'node:module';
+      process.env.DFSC_PLUGIN_TEST_GIT = ${JSON.stringify(configuredGit)};
+      const { execFileSync } = childProcess;
+      childProcess.execFileSync = (file, args, options) => {
+        assert.equal(options.cwd, ${JSON.stringify(trustedRoot)}, 'Git must start outside the candidate');
+        assert.deepEqual(args.slice(0, 2), ['-C', ${JSON.stringify(root)}]);
+        assert.equal(file, ${JSON.stringify(configuredGit || 'git')});
+        return execFileSync('git', args, options);
+      };
+      syncBuiltinESMExports();
+    `;
+    const out = runReviewed(root, base, head, ['--import', `data:text/javascript,${encodeURIComponent(probe)}`]);
+    assert.equal(out.code, 0, out.stderr);
+    assert.equal(report(out).reason, 'no-affected-suites');
+  }
 }));
 
 test('timeout stops the process tree and a later suite still runs without unrelated env vars', async () => withSnapshots(async ({ root, put }) => {

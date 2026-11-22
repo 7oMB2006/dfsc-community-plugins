@@ -58,6 +58,10 @@ jobs:
           node-version: '22'
       - name: Run scoped suites against the verified merge snapshot
         shell: pwsh
+        working-directory: marketplace-ci
         env:
           PLUGIN_PR_HEAD: ${{ inputs.head }}
-        run: node marketplace-ci/scripts/run-plugin-tests.mjs --checkout candidate --base "$env:GITHUB_SHA" --pr-head "$env:PLUGIN_PR_HEAD"
+        run: |
+          $git = Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1
+          $env:DFSC_PLUGIN_TEST_GIT = $git.Path
+          node scripts/run-plugin-tests.mjs --checkout ../candidate --base "$env:GITHUB_SHA" --pr-head "$env:PLUGIN_PR_HEAD"
