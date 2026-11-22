@@ -1,0 +1,67 @@
+name: Validate plugin PR suites
+run-name: Plugin suites for PR ${{ inputs.pr }} at ${{ inputs.head }}
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Open marketplace PR number targeting main
+        required: true
+        type: string
+      head:
+        description: Full PR head SHA reviewed by the maintainer
+        required: true
+        type: string
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  plugin-pr-tests:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Verify the reviewed PR snapshot
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLUGIN_PR: ${{ inputs.pr }}
+          PLUGIN_PR_HEAD: ${{ inputs.head }}
+        run: |
+          if ($env:PLUGIN_PR -cnotmatch '\A[1-9][0-9]{0,9}\z' -or $env:PLUGIN_PR_HEAD -cnotmatch '\A[0-9a-f]{40}\z') {
+            throw 'Supply a PR number and a full lowercase SHA.'
+          }
+          $raw = gh api "repos/$env:GITHUB_REPOSITORY/pulls/$env:PLUGIN_PR"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not read the PR.' }
+          $pr = ($raw -join "`n") | ConvertFrom-Json
+          if ($pr.state -cne 'open' -or $pr.base.ref -cne 'main' -or $pr.base.sha -cne $env:GITHUB_SHA -or $pr.head.sha -cne $env:PLUGIN_PR_HEAD) {
+            throw 'PR is closed, targets a different base, or its reviewed snapshot changed. Recheck before dispatching.'
+          }
+      - name: Check out trusted runner
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: marketplace-ci
+          persist-credentials: false
+      - name: Check out the PR merge snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ inputs.pr }}/merge
+          path: candidate
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run scoped suites against the verified merge snapshot
+        shell: pwsh
+        working-directory: marketplace-ci
+        env:
+          PLUGIN_PR_HEAD: ${{ inputs.head }}
+        run: |
+          $git = Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1
+          $env:DFSC_PLUGIN_TEST_GIT = $git.Path
+          node scripts/run-plugin-tests.mjs --checkout ../candidate --base "$env:GITHUB_SHA" --pr-head "$env:PLUGIN_PR_HEAD"
