@@ -56,7 +56,7 @@ function verifyComparison(root, base, prHead) {
     if (!isDeepStrictEqual(parents, [base, prHead])) {
       throw new Error('PR merge snapshot does not match main and the reviewed PR head. No suites ran.');
     }
-    console.log(`Testing merge ${git(root, 'rev-parse', 'HEAD').trim()} (main ${base}, PR head ${prHead})`);
+    console.error(`Testing merge ${git(root, 'rev-parse', 'HEAD').trim()} (main ${base}, PR head ${prHead})`);
   } else if (!git(root, 'rev-list', '--first-parent', 'HEAD').split(/\s+/).includes(base)) {
     throw new Error('--base must be a full SHA on the first-parent history of HEAD.');
   }
@@ -102,14 +102,17 @@ function runSuite(root, command, timeout) {
     let timedOut = false;
     let cleanupError;
     const child = spawn(command, {
-      cwd: root, stdio: 'inherit', shell: true, detached: !windows, env: suiteEnvironment(),
+      // Keep stdout exclusively for the JSON report, even if a suite omits a newline.
+      cwd: root, stdio: ['ignore', process.stderr, process.stderr], shell: true, detached: !windows, env: suiteEnvironment(),
     });
     const timer = setTimeout(() => {
       timedOut = true;
       try {
         if (windows) {
           const taskkill = join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'taskkill.exe');
-          execFileSync(taskkill, ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', timeout: 5000 });
+          execFileSync(taskkill, ['/PID', String(child.pid), '/T', '/F'], {
+            stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', timeout: 5000,
+          });
         } else {
           process.kill(-child.pid, 'SIGKILL');
         }
@@ -122,8 +125,12 @@ function runSuite(root, command, timeout) {
     }, timeout);
     const finish = (status, code) => {
       clearTimeout(timer);
-      if (cleanupError) reject(new Error('Could not terminate the timed-out process tree.'));
-      else done({ status, code });
+      if (cleanupError) {
+        const detail = cleanupError.code ?? `exit ${cleanupError.status}`;
+        const diagnostic = cleanupError.stderr?.trim();
+        reject(new Error(`Could not terminate the timed-out process tree (${detail}).${diagnostic ? ` ${diagnostic}` : ''}`,
+          { cause: cleanupError }));
+      } else done({ status, code });
     };
     child.once('error', () => finish('failed', null));
     child.once('close', (code) => finish(timedOut ? 'timed-out' : code === 0 ? 'passed' : 'failed', code));
@@ -163,7 +170,7 @@ async function main() {
     } else if (affected && !affected.has(id)) {
       skipped.push({ plugin: id, reason: 'unchanged' });
     } else {
-      console.log(`Running ${name} (timeout: ${timeout} ms)`);
+      console.error(`Running ${name} (timeout: ${timeout} ms)`);
       try {
         ran.push({ plugin: id, script: name, ...await runSuite(root, command, timeout) });
       } catch (error) {

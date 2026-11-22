@@ -44,8 +44,12 @@ function runIn(root, args, entry = join(root, 'scripts', 'run-plugin-tests.mjs')
   return { code: result.status, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
 }
 
-function report({ stdout }) {
-  return JSON.parse(stdout.trimEnd().split(/\r?\n/).at(-1));
+function report({ stdout, stderr }) {
+  try {
+    return JSON.parse(stdout);
+  } catch (error) {
+    throw new Error(`Missing or invalid runner report\nstdout: ${stdout}\nstderr: ${stderr}`, { cause: error });
+  }
 }
 
 const manifest = { scripts: { 'test:alpha': 'node -e "process.exit(0)"', 'test:beta': 'node -e "process.exit(0)"' } };
@@ -139,6 +143,17 @@ test('multiple plugins are all run and reported individually', async () => {
   assert.notEqual(out.code, 0);
   assert.match(out.stdout, /"plugin":"alpha"[^}]*"code":1/, 'alpha failure must be recorded');
   assert.match(out.stdout, /"plugin":"beta"[^}]*"code":0/, 'beta must still run');
+});
+
+test('a suite can log without a newline while stdout stays a single JSON report', async () => {
+  const out = await run({
+    package: { scripts: { 'test:alpha': 'node -e "process.stdout.write(\'partial suite log\')"' } },
+    plugins: ['alpha'],
+  });
+  assert.equal(out.code, 0, out.stderr);
+  assert.deepEqual(report(out).ran.map(({ plugin, status }) => [plugin, status]), [['alpha', 'passed']]);
+  assert.match(out.stderr, /Running test:alpha/);
+  assert.match(out.stderr, /partial suite log/);
 });
 
 test('an unreadable registry fails instead of silently skipping', async () => {
@@ -238,7 +253,7 @@ test('reviewed merge runs only the affected suite against candidate code and det
   git('clone', '--quiet', '--no-local', '--depth', '2', '.', 'shallow');
   const out = runReviewed(join(root, 'shallow'), base, head);
   assert.equal(out.code, 1, out.stderr);
-  assert.match(out.stdout, new RegExp(`Testing merge ${merge} .*PR head ${head}`));
+  assert.match(out.stderr, new RegExp(`Testing merge ${merge} .*PR head ${head}`));
   assert.deepEqual(report(out).ran.map(({ plugin, status, code }) => [plugin, status, code]), [['alpha', 'failed', 4]]);
   assert.deepEqual(report(out).skipped, [{ plugin: 'beta', reason: 'unchanged' }]);
 }));
@@ -254,7 +269,8 @@ test('reviewed PR mode rejects the raw head or a merge with different parents be
     const stale = runReviewed(root, main, reviewed);
     assert.equal(stale.code, 1);
     assert.match(stale.stderr, /No suites ran/);
-    assert.doesNotMatch(stale.stdout, /123456789|Running test:/);
+    assert.equal(stale.stdout, '');
+    assert.doesNotMatch(stale.stderr, /123456789|Running test:/);
   }
 }));
 
@@ -273,18 +289,32 @@ test('timeout stops the process tree and a later suite still runs without unrela
   });
   await put('parent.mjs', `
     import { spawn } from 'node:child_process';
-    spawn(process.execPath, ['child.mjs'], { stdio: 'inherit' });
-    setInterval(() => {}, 1000);
+    spawn(process.execPath, ['child.mjs'], { stdio: 'ignore' });
+    process.stdout.write('started suite without newline');
+    setTimeout(() => {}, 12000);
   `);
   await put('child.mjs', `
-    import { writeFileSync } from 'node:fs';
+    import { existsSync, writeFileSync } from 'node:fs';
     writeFileSync('started', '');
-    setTimeout(() => writeFileSync('leaked', ''), 1800);
+    const probe = setInterval(() => {
+      if (existsSync('probe')) {
+        writeFileSync('leaked', '');
+        clearInterval(probe);
+      }
+    }, 25);
+    setTimeout(() => clearInterval(probe), 12000).unref();
   `);
-  const out = runIn(root, ['--all', '--timeout-ms', '1200']);
+  let out;
+  try {
+    out = runIn(root, ['--all', '--timeout-ms', '1600']);
+  } finally {
+    // Ask any surviving grandchild to prove that it was still running after cleanup.
+    await put('probe', '');
+  }
   assert.equal(out.code, 1, out.stderr);
   assert.deepEqual(report(out).ran.map(({ plugin, status }) => [plugin, status]), [['alpha', 'timed-out'], ['beta', 'passed']]);
+  assert.match(out.stderr, /started suite without newline/);
   assert.equal(await readFile(join(root, 'started'), 'utf8'), '');
-  await delay(1900);
+  await delay(800);
   await assert.rejects(readFile(join(root, 'leaked')), { code: 'ENOENT' });
 }));
