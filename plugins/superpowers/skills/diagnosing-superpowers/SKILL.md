@@ -46,12 +46,16 @@ Create a todo per step. Steps 5–7 run only on their stated condition.
    actually proves and preserve the supporting case; a symlink alias is not a
    redundant copy.
 5. **GitHub issues** — when report §7 says possible or likely, or your
-   partner asks. Search open and closed issues for the symptoms per
-   `references/github-issues.md`. Show matches and suggest adding the
-   report to the closest. If none match, fill `templates/issue.md`, write
-   it to the workspace, show the exact text, and create the issue only
-   after approval. `gh` cannot attach files; if a bundle exists, give
-   your partner its path to attach in the browser.
+   partner asks. Diagnosis stays local by default: searching is a network
+   call, and a symptom query can carry a project name, an error string, or
+   a file path off this machine. Draft the search terms, redact them per
+   `references/redaction-policy.md`, show your partner the exact query and
+   say it goes to GitHub, and search only after they confirm. Then search
+   open and closed issues per `references/github-issues.md`. Show matches
+   and suggest adding the report to the closest. If none match, fill
+   `templates/issue.md`, write it to the workspace, show the exact text,
+   and create the issue only after approval. `gh` cannot attach files; if a
+   bundle exists, give your partner its path to attach in the browser.
 6. **Export** — only when your partner asks for a bundle; never build one
    unprompted. If the intake goal was a bug report, say once that a
    scrubbed bundle is available on request, then wait. Ask the redaction
@@ -101,6 +105,9 @@ yourself in step 3 and which findings to lead with in the verdict.
 - **Approval gates.** No archive before your partner has seen the scrub
   log and file list. No issue or comment before they approve the exact
   text, and none with a placeholder summary.
+- **Network needs a yes.** Local reading is the default; a search is not.
+  Before any issue search, show the exact redacted query and say it leaves
+  this machine, then wait for confirmation. Partner silence is not a yes.
 - **Intake before analysis.** Nothing in steps 2–7 starts until your
   partner has answered. If they are away, write the questions and stop.
   A statement you reconstructed for them is not an answer. An
@@ -118,3 +125,4 @@ yourself in step 3 and which findings to lead with in the verdict.
 | "They want a bug report, so I'll build the bundle now" | The bundle is their session data, packaged. Build it only when they ask for it. |
 | "Small, targeted edit, no restructuring needed" | Not your call, however small. Report the evidence; the triager decides. |
 | "The price per token is well known" | Numbers you did not compute from the transcript are invented. Cite or drop. |
+| "Searching is read-only, so it needs no confirmation" | A query is content leaving the machine. Show the redacted terms and wait. |

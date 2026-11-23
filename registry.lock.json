@@ -305,7 +305,7 @@
       "id": "superpowers",
       "source": {
         "repository": "Niangaol/superpowers-dfsc",
-        "commit": "c55dd16ebe4ab1f0c0079f2284e37f09d83e5608",
+        "commit": "35a21133a6702e3cade167030ee74be0bad5417e",
         "path": "plugins/superpowers"
       },
       "files": [
@@ -323,9 +323,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "0d9c1554390c38d853ea903e313bf0c72a6e693c",
-          "sha256": "e300c954ced22c4411cd6972a30081aadd15d6c3a7c0ebc8ad1cfdaa11758f41",
-          "size": 10543
+          "gitBlobSha": "104d2d8eae518e4b44664ae6b58a7e53833acacc",
+          "sha256": "a786dc39119bdb2ae40913b8a6f7d4e1f10f91d82da0da14f4c5ab0930ed7c7d",
+          "size": 10721
         },
         {
           "path": "dfsc.plugin.json",
@@ -385,9 +385,9 @@
         },
         {
           "path": "skills/diagnosing-superpowers/SKILL.md",
-          "gitBlobSha": "dda2692d528574c410b118a6de545d6afc7eb047",
-          "sha256": "3143de8695c5a2d63e8b1675f33837578076f464deb127c2ebdd0b46fceef886",
-          "size": 6941
+          "gitBlobSha": "d2ba50e4b1b538a0d3b8b43845ad7bd485dd7a94",
+          "sha256": "989e223bbe30f95ad5b4469ad6b31d1b95b55aec65f6ff5031485f2e56d5018d",
+          "size": 7628
         },
         {
           "path": "skills/diagnosing-superpowers/prompts/analyst-common.md",
@@ -463,9 +463,9 @@
         },
         {
           "path": "skills/diagnosing-superpowers/references/github-issues.md",
-          "gitBlobSha": "de787f7b7c10566e0cbb0dc9fb060a0f4714b32a",
-          "sha256": "d26ef9197b4a6ae5159ae6d11abd162bcc624d95fc7ccf508e07b68f916a1b19",
-          "size": 1636
+          "gitBlobSha": "3dd23c26c08732e2292227f0f220f71aa72ac9c1",
+          "sha256": "5e018c82eff303f8a2a01a26afb6527f1fe169312e4c2d646bdca78f25893d94",
+          "size": 1836
         },
         {
           "path": "skills/diagnosing-superpowers/references/redaction-policy.md",

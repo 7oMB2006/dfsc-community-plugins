@@ -1,5 +1,9 @@
 # GitHub issues
 
+Searching is a network call, not part of local diagnosis. Redact the terms
+per `redaction-policy.md`, show your partner the exact query and say it goes
+to GitHub, and run nothing until they confirm.
+
 Use `gh` when it is installed and authenticated; it handles auth, rate
 limits, and JSON. Fall back to the public API with curl, then to a URL
 your partner opens.
