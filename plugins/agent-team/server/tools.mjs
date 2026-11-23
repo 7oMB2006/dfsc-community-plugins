@@ -17,6 +17,7 @@ const WAIT_MIN_MS = 1000;
 const WAIT_MAX_MS = 300000;
 const WAIT_DEFAULT_MS = 90000;
 const STALE_DEFAULT_MS = 300000;
+const ROUND_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
 
 const TEAM_PARAM = {
   team: {
@@ -57,6 +58,13 @@ export const TOOLS = [
           type: 'number',
           description: `判定子智能体失联的毫秒数（依据其最后一次 agent_report），默认 ${STALE_DEFAULT_MS}。超时返回时会在 stale 字段列出失联标签，避免干等。`,
         },
+        round: {
+          type: 'string',
+          description:
+            '本轮任务标识，派发时确定并把同一个值写进派发文本，回报（agent_done）与等待（team_wait）都用它。' +
+            '给了 round 就只认这一轮的信号：子代理先回报、主代理后等待也不会丢，超时后继续等也能看到间隔期到达的结果。' +
+            '省略时退回序号游标语义（只认本次等待开始后到达的信号），上一轮旧结果仍不会被算成本轮完成。',
+        },
         reset: {
           type: 'boolean',
           description: 'true 时先清空本团队的信号、在线状态与消息，再开始等待（新团队任务开始时使用）。只影响当前 team。',
@@ -93,6 +101,10 @@ export const TOOLS = [
           items: { type: 'string' },
           description: '产出物路径或关键位置清单，如修改的文件、报告路径。',
         },
+        round: {
+          type: 'string',
+          description: '本轮任务标识，与派发时写进任务文本的 round 一致；主智能体用同一个 round 等待即可。',
+        },
       },
       required: ['label'],
     },
@@ -114,6 +126,10 @@ export const TOOLS = [
           type: 'string',
           enum: ['running', 'waiting', 'done', 'failed', 'blocked'],
           description: 'running=执行中（默认）；waiting=等待其他 agent 或外部输入；done/failed/blocked 一般由 agent_done 维护。',
+        },
+        round: {
+          type: 'string',
+          description: '本轮任务标识，与派发时写进任务文本的 round 一致。带上它便于主智能体核对同轮标签。',
         },
       },
       required: ['label'],
@@ -189,6 +205,21 @@ function clampTimeout(v) {
   return Math.min(Math.max(n, WAIT_MIN_MS), WAIT_MAX_MS);
 }
 
+/**
+ * 轮次标识：派发时确定，回报与等待共用同一个值。
+ *
+ * 省略时为 null，表示退回序号游标语义（只认等待开始后的新信号）。
+ */
+function normalizeRound(raw) {
+  if (raw === undefined || raw === null) return { value: null };
+  const value = String(raw).trim();
+  if (!value) return { value: null };
+  if (!ROUND_ID_RE.test(value)) {
+    return { value: null, error: 'round 参数非法：仅限字母数字 . _ - : ，最长 80 字符' };
+  }
+  return { value };
+}
+
 function teamOrError(args) {
   const team = normalizeTeamId(args.team);
   if (team === null) {
@@ -248,17 +279,28 @@ async function teamWait(args, ctx) {
   const staleAfterMs = Number.isFinite(Number(args.staleAfterMs)) && Number(args.staleAfterMs) > 0
     ? Number(args.staleAfterMs)
     : STALE_DEFAULT_MS;
-  // 其他会话的 MCP 进程也可能在写同一份状态文件，所以这里只认「本次等待开始后」的
-  // 新信号（信号序号游标），不把历史信号当成刚完成。
-  const cursor = store.signalCursor(team);
+  const round = normalizeRound(args.round);
+  if (round.error) return textResult({ ok: false, error: round.error });
+  const roundId = round.value;
+
+  // 给了 round 就只认「这一轮」的信号：轮次由派发时确定，回报和等待认同一个 id，
+  // 因此「先回报、后等待」不会丢，超时后继续等也不会漏。
+  //
+  // 没给 round 时退回序号游标：只认本次等待开始之后到达的信号。它能挡住上一轮的旧
+  // 结果，但认不出「本轮先回报、主代理后等待」那种顺序 —— 那种情况请用 round。
+  const cursor = roundId === null ? store.signalCursor(team) : 0;
+  const currentLabels = () => (roundId === null
+    ? store.signalLabelsSince(team, cursor)
+    : store.signalLabelsInRound(team, roundId));
+  const currentSignals = () => (roundId === null
+    ? store.signalsSince(team, cursor)
+    : store.signalsInRound(team, roundId));
 
   const done = () => {
-    // 只认「本次等待开始之后」的信号。用全量标签会把上一轮的同名 label 当成
-    // 本轮已完成，直接返回 satisfied 而实际什么都没等到。
-    const labels = store.signalLabelsSince(team, cursor);
+    const labels = currentLabels();
     if (mode === 'any') {
       if (expect.length > 0) return expect.some((l) => labels.has(l));
-      return store.signalsSince(team, cursor).length > 0;
+      return currentSignals().length > 0;
     }
     if (expect.length === 0) return false; // all 模式未给 expect：只能等超时并提示
     return expect.every((l) => labels.has(l));
@@ -277,7 +319,7 @@ async function teamWait(args, ctx) {
   }
 
   // pending 也必须基于本轮信号：用全量标签会把上一轮的同名 label 当成已完成。
-  const labels = store.signalLabelsSince(team, cursor);
+  const labels = currentLabels();
   const satisfied = done();
   const pending = expect.filter((l) => !labels.has(l));
   const { stale, unreported } = staleInfo(store, team, pending, staleAfterMs);
@@ -286,11 +328,12 @@ async function teamWait(args, ctx) {
     team,
     status: satisfied ? 'satisfied' : 'timeout',
     mode,
+    round: roundId,
     expect,
     pending,
     stale,
     unreported,
-    newSignals: store.signalsSince(team, cursor),
+    newSignals: currentSignals(),
     roster: store.roster(team).map((p) => ({ label: p.label, role: p.role, task: p.task, status: p.status, updatedAt: p.updatedAt })),
     recentSignals: store.recentSignals(team, 50),
     teams: store.listTeams(),
@@ -313,9 +356,12 @@ async function agentDone(args, ctx) {
     return textResult({ ok: false, error: 'label 必填：使用主智能体派发任务时分配的标签' });
   }
   const status = ['success', 'failure', 'blocked'].includes(args.status) ? args.status : 'success';
+  const round = normalizeRound(args.round);
+  if (round.error) return textResult({ ok: false, error: round.error });
   const signal = {
     label,
     status,
+    round: round.value,
     summary: String(args.summary ?? '').slice(0, 8000),
     artifacts: Array.isArray(args.artifacts) ? args.artifacts.slice(0, 100).map(String) : [],
     at: new Date().toISOString(),
@@ -326,7 +372,9 @@ async function agentDone(args, ctx) {
     team,
     recorded: signal,
     totalSignals: ctx.store.signalCount(team),
-    hint: '任务完成信号已记录。主智能体的 team_wait 会在等待条件满足时立即返回；你可以继续执行后续工作，不要停止。',
+    hint: round.value === null
+      ? '任务完成信号已记录。主智能体的 team_wait 会在等待条件满足时立即返回；你可以继续执行后续工作，不要停止。'
+      : `任务完成信号已记录（round=${round.value}）。主智能体用同一个 round 等待时，即使早于其 team_wait 到达也会被认到；你可以继续执行后续工作，不要停止。`,
   });
 }
 

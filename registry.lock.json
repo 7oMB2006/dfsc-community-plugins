@@ -5,7 +5,7 @@
       "id": "agent-team",
       "source": {
         "repository": "Niangaol/agent-team",
-        "commit": "add8e75702da590905730253b7a20d9b93c4ca69",
+        "commit": "403acd3c784f957f67eb9cc497da4e8e8c692b7c",
         "path": "plugins/agent-team"
       },
       "files": [
@@ -125,9 +125,9 @@
         },
         {
           "path": "server/state.mjs",
-          "gitBlobSha": "9b4e0bbd72732bf4eca50efc23967b2527daa2be",
-          "sha256": "298dff99792233f2660af836c6a72deedcf68e26689e79add8a904c496c21b27",
-          "size": 14437
+          "gitBlobSha": "ce32ae62fc829756c5e768a10cec91638b470b6a",
+          "sha256": "ba5dde415f4e3f2d76bb2be6754100a704790ac8ec64894fcc6e89ccf87c8a7e",
+          "size": 15154
         },
         {
           "path": "server/team-gate.mjs",
@@ -137,9 +137,9 @@
         },
         {
           "path": "server/tools.mjs",
-          "gitBlobSha": "beb6f34dc6c00aede76ef63b19dc0cce47afdfef",
-          "sha256": "a87ddf0b82015fbab384a0b518e19ac637081f7e7f40bba2d4b403e3b24041ac",
-          "size": 16701
+          "gitBlobSha": "4a4bc47ece1a3354d49b397392f6e0364518dab7",
+          "sha256": "3a6ece08608a7cd5a44c285596435f0e2cc963e1a40b2e2e62c1f4ad892986cd",
+          "size": 19045
         },
         {
           "path": "skills/team-playbook/SKILL.md",

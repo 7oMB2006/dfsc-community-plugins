@@ -351,6 +351,23 @@ export class TeamStore {
     return new Set(this.signalsSince(id, cursor).map((s) => s.label));
   }
 
+  /**
+   * 指定轮次的信号。
+   *
+   * 游标只能回答「等待开始之后到达了什么」，无法回答「这条信号属于本轮吗」：
+   * 子代理先回报、主代理后等待时，那条信号已经在游标之前，会被当成上一轮丢掉；
+   * 等待超时后再次等待也会漏掉间隔期到达的信号。轮次标识由派发时确定，
+   * 回报与等待认同一个 round，两个方向都不丢。
+   */
+  signalsInRound(id, round) {
+    const signals = this._snapshot().teams.get(id)?.signals ?? [];
+    return signals.filter((s) => s?.round === round);
+  }
+
+  signalLabelsInRound(id, round) {
+    return new Set(this.signalsInRound(id, round).map((s) => s.label));
+  }
+
   recentSignals(id, limit = 20) {
     const signals = this._snapshot().teams.get(id)?.signals ?? [];
     return limit > 0 ? signals.slice(-limit) : signals.slice();
