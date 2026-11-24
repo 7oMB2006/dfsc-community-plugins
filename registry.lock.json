@@ -244,6 +244,118 @@
       ]
     },
     {
+      "id": "memory-hub",
+      "source": {
+        "repository": "Niangaol/dfsc-memory-hub",
+        "commit": "723ba6d3973562976983711b2daabf25bcb706db",
+        "path": "plugins/memory-hub"
+      },
+      "files": [
+        {
+          "path": "CHANGELOG.md",
+          "gitBlobSha": "c86bbb8eff399b7dcd013c283325ef477d13adf5",
+          "sha256": "1bf4d00a0b3618fc23343b52db03a8d2ac7de9fd282e7ca01ff823bf01d457ee",
+          "size": 7668
+        },
+        {
+          "path": "README.md",
+          "gitBlobSha": "1997090c40fb40c734ba28637989532485260413",
+          "sha256": "1162bee5308f5d6960478c8d73dd088d389e78ad86b06c3810ae8ff5f01479a6",
+          "size": 8436
+        },
+        {
+          "path": "commands/memory.md",
+          "gitBlobSha": "d7c65b1b7ab242540b3ca8b88e474874687a0795",
+          "sha256": "79a4f6fc580b05cee9e0a583b750611b1d26c3dc1cf95aec4bd0e9f51e9b1ab1",
+          "size": 1790
+        },
+        {
+          "path": "commands/remember.md",
+          "gitBlobSha": "a573db952de039f0575d57ea2c14c4bd90d0a632",
+          "sha256": "97c7d432530f60cf91bfbfb4fe3f97b159c1a9ef828a6412f20a80e16b07c503",
+          "size": 920
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "a8af82328ed15f0d21590381fcba211024e140b0",
+          "sha256": "defd384a3327eb5f2766ff2e1840bfd1d458178a9d34d3d74bcfcf97ee18b2ea",
+          "size": 702
+        },
+        {
+          "path": "icon.png",
+          "gitBlobSha": "9bb6e8ca41cdb99e21863d190459fdda7e8353c9",
+          "sha256": "d05fc0ea1b53bf4183b69c7c35759c161b96ecd216adedf66730080477202d6f",
+          "size": 7860
+        },
+        {
+          "path": "server/digest.mjs",
+          "gitBlobSha": "946d8ef221c0e234e969da298b62768ff689ad1e",
+          "sha256": "0b162c490c5093b4265bc7d97099fc0a73ca2ec8df68a256e3b6089aad099d9a",
+          "size": 5754
+        },
+        {
+          "path": "server/evolve.mjs",
+          "gitBlobSha": "ca7dd01659ef5cb3f1b4042cf9a2366097cb3bb8",
+          "sha256": "d993f9e239a175c81db2c578a3fbd8f665751ba24eb08b6bb4060eb3416a4e40",
+          "size": 9475
+        },
+        {
+          "path": "server/json-store.mjs",
+          "gitBlobSha": "3f4df4cf934f13085121aa99175b706e0c5d3809",
+          "sha256": "468f776000721ffc0b4a519471691b9074f796b73d5cc2975cf811761a186627",
+          "size": 7688
+        },
+        {
+          "path": "server/memory-hub.mjs",
+          "gitBlobSha": "db621871f8ce51081cca30262d90fe5110d63449",
+          "sha256": "9cc960b193c21da129d04be8e6a18d2543b48b7d7eaea6301ab69e9d3c10050b",
+          "size": 6493
+        },
+        {
+          "path": "server/project.mjs",
+          "gitBlobSha": "e02590e9660f7a185c853c8ce9a45ab25293d5b8",
+          "sha256": "59fee3d14c8b9c468e9b2e405dffff40c9014f8a1e44da9c69b5df98bf202782",
+          "size": 3779
+        },
+        {
+          "path": "server/store.mjs",
+          "gitBlobSha": "873bc6ecd27a56cf4eae49904b5f7c44121035f2",
+          "sha256": "a627f5693a12ec344d95f56a4db1b8734407e64c81ac0623144b4f2d44fd34ad",
+          "size": 23843
+        },
+        {
+          "path": "server/text.mjs",
+          "gitBlobSha": "fb89ab95f9a7767d08ea8a364f68a51f9781ec85",
+          "sha256": "6c69b44d3c2cfcc72469e6ac23e42cf7d5e54360d6fc882aedc4669283ad64d2",
+          "size": 6729
+        },
+        {
+          "path": "server/tools.mjs",
+          "gitBlobSha": "2414c891884f8e48cd5de94e56a5344036c79a70",
+          "sha256": "bf665ab0fbbb35ec43a07d3f3270d41f37949175bc26c908a7e1d46285506bf3",
+          "size": 9111
+        },
+        {
+          "path": "skills/memory-curate/SKILL.md",
+          "gitBlobSha": "c1a150f0b8a82b750ffd8c44b9065d884d0ce65e",
+          "sha256": "267ca438a21e4925c99f1f272b155db109a8f5ebb6063501400ae0e13b755080",
+          "size": 4798
+        },
+        {
+          "path": "skills/memory-recall/SKILL.md",
+          "gitBlobSha": "deb537a834ae2baea428addcfd38a0b8d0d86cb4",
+          "sha256": "8645a06c4f5c296b88fe3cc6ef242aebfbeb74b735b59b6347fd1bd13aaff939",
+          "size": 3658
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "18694e69b8465868a9b106d7311e7cc10fbdc7f4",
+          "sha256": "b2cd7027f13896b3347d27f3ea7d56b866bc0c5e82b5e304b09a18135498794e",
+          "size": 646
+        }
+      ]
+    },
+    {
       "id": "stellar-cruise",
       "source": {
         "repository": "7oMB2006/desktop-for-step-code",

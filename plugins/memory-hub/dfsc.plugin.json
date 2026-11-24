@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "authors": [
+    {
+      "name": "Niangaol"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "Niangaol"
+    }
+  ],
+  "license": "MIT",
+  "categories": [
+    "knowledge",
+    "development"
+  ],
+  "keywords": [
+    "长期记忆",
+    "项目上下文",
+    "自进化",
+    "memory",
+    "跨会话"
+  ],
+  "documentation": {
+    "readme": "README.md",
+    "changelog": "CHANGELOG.md"
+  },
+  "requirements": {
+    "dfsc": ">=0.4.0",
+    "external": [
+      {
+        "name": "Node.js",
+        "description": "记忆服务是 stdio MCP server，需要 Node.js 18 或更高版本运行时；插件不附带 Node.js。",
+        "url": "https://nodejs.org/"
+      }
+    ]
+  }
+}

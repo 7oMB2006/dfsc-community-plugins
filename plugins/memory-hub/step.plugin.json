@@ -1,0 +1,24 @@
+{
+  "id": "memory-hub",
+  "name": "记忆中枢",
+  "description": "按项目分库的本地长期记忆：retain / recall / reflect / memory_edit 四个工具，写入自动合并、召回自动强化、长期未用自动归档；纯本地 JSON，不联网、不调用模型。",
+  "version": "0.2.0",
+  "icon": "icon.png",
+  "repository": "https://github.com/Niangaol/dfsc-memory-hub",
+  "skills": [
+    "skills"
+  ],
+  "commands": [
+    "commands"
+  ],
+  "mcpServers": {
+    "memory": {
+      "command": "node",
+      "args": [
+        "server/memory-hub.mjs"
+      ],
+      "startup_timeout_sec": 30,
+      "tool_timeout_sec": 60
+    }
+  }
+}
