@@ -133,9 +133,14 @@ MCP 进程的工作目录被宿主锚定到插件目录，拿不到用户项目�
   `scripts/verify-native.mjs` 已备好，指向真正的 DFSC 构建即可运行。
 - 同样未验证：其他 Node 版本与平台、长时间运行、多机（数据只在本机）。
 
-验证命令：
+验证命令（在上游仓库根目录执行；市场分发副本只含 `plugins/memory-hub`，
+不含 `tests/` 与 `scripts/`）：
 
 ```bash
 node --test tests/*.test.mjs
 node scripts/smoke.mjs
+node scripts/eval.mjs
 ```
+
+市场侧另有独立验证脚本，按市场约定放在社区仓库的
+`tests/plugins/memory-hub/`，以 `test:memory-hub` 为入口。
