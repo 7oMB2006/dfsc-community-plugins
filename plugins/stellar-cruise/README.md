@@ -2,19 +2,20 @@
 
 **双龙星海，落在日常工作里。**
 
-星辰巡航是 DFSC 的声明式动态主题包，首版 `0.1.0`。
+星辰巡航是 DFSC 的声明式动态主题包。`0.2.0` 补全作者、兼容要求和包内文档，
+沿用 `0.1.0` 的场景、配色、图标和封面。
 金色与青白色的星辰双龙、航行中的鸭车和流彩航道组成背景；
 石墨阅读面板与铅笔细线用于侧栏、输入区、检查器和设置。
 进入会话后，星海会降低亮度、速度和视差，让文字仍是阅读主角。
 
-![星辰巡航主题封面](https://raw.githubusercontent.com/7oMB2006/desktop-for-step-code/d7b19917a315c00c41cd8a22e2dcfe6d6d5b862e/theme-marketplace/plugins/stellar-cruise/cover.png)
+[查看主题封面原图](https://github.com/7oMB2006/desktop-for-step-code/blob/35a6346ec7bcaf14af0541074276fb376fb8e90f/theme-marketplace/plugins/stellar-cruise/cover.png)。封面和场景数据均在安装包内，使用主题时不需要加载在线图片。
 
 ## 兼容性
 
-需要包含 [DFSC #210](https://github.com/7oMB2006/desktop-for-step-code/pull/210)
-主题宿主的客户端，同时支持 `DFSC theme schema 1` 与 `stellar-v1`。
-#210 已合入 `main`，但不代表所有公开安装包已经包含它。
-仅有插件市场入口、仅看见 `0.6.0` 版本号，都不能证明主题可以启用。
+声明的客户端范围为 `^1.0.0`，最低正式版为 DFSC 1.0.0；
+使用 `DFSC theme schema 1` 和宿主自带的 `stellar-v1`。原版 1.0.0 可调动态和亮度，
+短推进清单显示任务星图，但不能单独关闭。星图开关、托盘等增强属于客户端，
+不随主题安装，也不是本包的前置条件。集成场景未开放个人图片替换。
 
 旧客户端可能安装了资源却不显示外观入口，此时需要升级到包含主题宿主的构建；
 不要通过修改配置或执行插件脚本绕过兼容性限制。
@@ -43,7 +44,7 @@ Git 市场来源的获取仍需本机 Git 与网络；这不是主题运行时�
 作者声明分类为 `themes`，关键词为「星辰巡航」「动态主题」「星海」「石墨」「铅笔细线」。
 分类和关键词来自来源中的 `dfsc.plugin.json`，市场原样复制并锁定。
 
-包内仅分发主题元数据、数值点云场景、PNG 图标和封面。
+包内仅分发主题元数据、数值点云场景、PNG 图标和封面，以及使用说明和更新记录。
 主进程校验这些文件后，由客户端自带的 `stellar-v1` 渲染器展示。
 主题不包含或执行自带 JavaScript、HTML、shader 或安装入口，
 不获得 Node.js、文件系统、网络、凭据或任意 IPC 访问权限。
@@ -52,8 +53,8 @@ Git 市场来源的获取仍需本机 Git 与网络；这不是主题运行时�
 ## 来源与素材
 
 来源为 `7oMB2006/desktop-for-step-code` 的
-`theme-marketplace/plugins/stellar-cruise`，固定到 #210 的合并提交
-`d7b19917a315c00c41cd8a22e2dcfe6d6d5b862e`。
+`theme-marketplace/plugins/stellar-cruise`，本次资源更新见
+[来源 PR #274](https://github.com/7oMB2006/desktop-for-step-code/pull/274)。
 完整来源与逐文件 Git blob、SHA-256、字节数见市场根目录
 `registry.json` 和 `registry.lock.json`。市场资源由同步工具生成，
 本说明作为维护者审核的 README 覆盖，不手动修改来源资产。
@@ -70,9 +71,8 @@ DFSC 宿主代码的 MIT 许可与主题美术的授权范围应分别理解；
 
 ## 验证范围
 
-原生验收使用包含 #210 的 Windows x64 预览包，源码提交为
-`25fbbd58df9a240424304735d1e3495af24dfefb`，不修改真实用户档案。
-市场生成副本的原生安装结果、实际预览和验证命令记录在
+0.2.0 的来源包在 Windows x64 正式版 DFSC 1.0.0（`007dce6d`）上以隔离档案验收，
+没有修改真实用户档案。历次原生安装结果和复验说明见
 [市场验证记录](https://github.com/7oMB2006/dfsc-community-plugins/blob/main/docs/verification.md)。
 社区市场的静态哈希校验不代替客户端原生加载或真实用户体验验收。
-未以本次投稿宣称 macOS/Linux 主题体验、长期性能、安装升级或付费模型已经验证。
+本次不声称已验证 macOS/Linux、长期性能或真实模型服务。
