@@ -1,5 +1,27 @@
 # 市场验证记录
 
+## 星辰巡航主题 0.2.0（2026-11-25）
+
+来源为[资源 PR #274](https://github.com/7oMB2006/desktop-for-step-code/pull/274)，提交
+`35a6346ec7bcaf14af0541074276fb376fb8e90f`。仅同步 `stellar-cruise`；
+市场登记与来源锁中的其他条目未变。8 个源文件逐项核对 Git blob、字节数、
+SHA-256 与普通文件模式。安装副本除 README 按规则使用市场指南外，其余与来源逐字节一致。
+`scene.json`、`dfsc.theme.json`、图标和封面与 0.1.0 相同。
+
+使用 Windows x64 正式版 DFSC 1.0.0（`007dce6d`）及隔离档案，从本地生成的
+`dfsc-community` 市场安装 0.2.0，没有改真实档案或线上市场。验证了安装不自动切换外观，
+实际安装数据与市场文件相符，市场 README 和更新记录可通过宿主读取，双龙场景和封面可加载；
+关闭动效、亮度改为 65% 后重启，两项设置与首帧主题保持；卸载回到原版深色。
+原版客户端没有独立星图开关；不以配套宿主 PR 的功能作为本条目能力。
+
+复验：在配套宿主 PR #273 的 `Desktop/` 目录运行 `node scripts/verify-theme-pack-electron.mjs test-results/market-stock --stock-v1.0.0`，
+将 `DESKTOP_VERIFY_EXE` 指向正式版程序，`DESKTOP_THEME_MARKETPLACE` 指向本市场检出目录。
+该 PR 仅提供此复验脚本，不是用户安装主题的依赖。没有在本轮用最终市场副本复测已有安装的升级、
+macOS/Linux、个人图片切换、隐藏暂停、长时间性能或真实模型调用。
+
+市场清单校验通过；Python 40 项通过、1 项跳过；Node 49 项通过、1 项跳过（均为 Windows 符号链接权限）。
+展示元数据零提醒；主题专项零错误，仅保留既有 schema 1 一体化背景提醒。
+
 ## 自定义背景市场退役（2026-11-13）
 
 基础图片背景已随宿主 #240 内置，本次在社区市场撤下 `custom-background`，

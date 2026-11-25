@@ -59,7 +59,7 @@ Git 来源需要本机可用的 Git。公开 Git 源可直接访问；私有 Git
 | --- | --- | --- | --- |
 | [Hermes x DFSC](docs/plugins/hermes-engineering-bridge.md) | 0.3.0 | 顶栏状态面板、四步连接引导、随包指南与工程证据资源 | 需支持所选协议的 DFSC 构建、Hermes 与独立 companion 0.2.0；通用模式不依赖飞书 |
 | [BVR 视频研究](docs/plugins/bilibili-video-research.md) | 0.1.0 | 视频研究 MCP、技能与 `/bvr` | 单独安装 BVR 本体与 Node.js 24+；跟随账户及图形配置另需 BVR 新宿主 |
-| [星辰巡航](docs/plugins/stellar-cruise.md) | 0.1.0 | 双龙星海动态主题、石墨阅读面板与铅笔细线 | 需包含 DFSC #210、支持 `stellar-v1` 的客户端；安装后在「外观」手动启用 |
+| [星辰巡航](docs/plugins/stellar-cruise.md) | 0.2.0 | 双龙星海动态主题、石墨阅读面板与铅笔细线 | DFSC 1.x；Windows x64 正式版 1.0.0 已验证。安装后在「外观」手动启用 |
 
 工程桥的独立项目继续在 [7oMB2006/hermes-engineering-bridge](https://github.com/7oMB2006/hermes-engineering-bridge) 维护。本市场收录其中的 DFSC 资源目录；市场安装不会自动安装 Hermes companion、创建飞书机器人或授予工程权限。宿主安装器和 companion 按各自指南单独取得与安装。
 
@@ -72,7 +72,7 @@ BVR 继续在 [7oMB2006/Bilibili-Video-Research](https://github.com/7oMB2006/Bil
 
 星辰巡航的完整介绍与预览见[主题说明](docs/plugins/stellar-cruise.md)。
 它是声明式主题资源，不提供技能、MCP 或任意插件前端。
-仅有插件市场或相同的 `0.6.0` 版本号不代表支持主题；宿主能力需单独核对。
+原版 DFSC 1.0.0 可调动态和亮度，不能单独关闭短清单星图；该开关需要客户端更新。
 安装不会自动切换外观，卸载正在使用的主题会回退到「原版深色」。
 
 基础自定义背景已随宿主 #240 内置于「设置 → 外观」，

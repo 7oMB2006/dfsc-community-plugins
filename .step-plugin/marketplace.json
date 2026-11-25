@@ -14,7 +14,7 @@
     {
       "name": "stellar-cruise",
       "source": "./plugins/stellar-cruise",
-      "description": "星辰巡航动态主题：双龙星海与石墨阅读面板；需包含 DFSC #210 主题宿主的客户端，安装后在外观中手动启用。"
+      "description": "星辰巡航动态主题：双龙星海与石墨阅读面板；适用于 DFSC 1.x，安装后在「设置 → 外观」手动启用。"
     }
   ]
 }
