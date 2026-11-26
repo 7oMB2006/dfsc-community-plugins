@@ -395,10 +395,20 @@ def restore_index_modes(root, restore):
         current = index_entries(root, previous)
         require(current == previous, 'Git index entries were not fully restored')
     if added:
-        # `--ignore-unmatch` keeps this safe when the file was already gone.
+        # Drop only the index entry; the working copy is untouched (rollback
+        # restores the files themselves from their backups).
+        #
+        # `git rm --cached` refuses this and says so: "staged content different
+        # from both the file and the HEAD". That is exactly the state after a
+        # failed sync — the entry points at the staged bytes, while the working
+        # copy (and HEAD) hold something else. On Linux core.fileMode=true adds a
+        # second trigger: the restored 644 entry differs from a 755 file. Neither
+        # is an error for a rollback, so use the index-only primitive.
+        payload = ''.join(f'{path}\0' for path in sorted(added))
         result = subprocess.run(
-            ['git', '-C', str(root), 'rm', '--cached', '--quiet', '--ignore-unmatch', '--', *sorted(added)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
+            ['git', '-C', str(root), 'update-index', '--force-remove', '-z', '--stdin'],
+            input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            check=False, text=True, encoding='utf-8')
         require(result.returncode == 0, 'Unable to unstage rolled-back resources: ' + ', '.join(sorted(added)))
     for path, mode in sorted(worktree.items()):
         target = Path(root) / path

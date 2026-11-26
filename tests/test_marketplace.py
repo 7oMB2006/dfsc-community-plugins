@@ -876,6 +876,38 @@ class MarketplaceTests(unittest.TestCase):
             m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
         self.assertIsNone(self.index_mode(path), '失败后不得留下这次新暂存的文件')
 
+    def test_rollback_unstages_even_when_staged_bytes_differ_from_the_file(self):
+        """回滚删暂存条目时不能被「暂存内容与工作区不同」挡住。
+
+        `git rm --cached` 在这种状态下会拒绝并提示用 -f；Linux 上
+        `core.fileMode=true` 时，索引还原成 644 而工作区是 755，也算一种差异。
+        回滚本来就要把文件还原，所以这里只该动索引。
+        """
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/scripts/run'
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('#!/bin/sh\necho staged\n', encoding='utf-8')
+        self.assertIsNone(self.index_mode(path), '起始应为未跟踪')
+
+        original = m.index_entries
+        calls = {'n': 0}
+
+        def flaky(root, names):
+            calls['n'] += 1
+            if calls['n'] == 2:
+                # git add 已经发生：让工作区内容与暂存内容分叉，
+                # 复刻 `git rm --cached` 会拒绝的那种状态。
+                target.write_text('#!/bin/sh\necho worked-on-later\n', encoding='utf-8')
+                raise m.MarketError('Unable to read Git index modes')
+            return original(root, names)
+
+        with patch.object(m, 'index_entries', flaky), \
+                self.assertRaisesRegex(m.MarketError, 'index modes'):
+            m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertIsNone(self.index_mode(path), '回滚必须把这次新暂存的条目删掉')
+        self.assertTrue(target.exists(), '只动索引，工作区文件要留着')
+
     @unittest.skipIf(os.name == 'nt', 'Windows 表达不了执行位；这条在 Linux CI 上跑')
     def test_plain_git_add_keeps_the_executable_bit(self):
         """同步之后普通 git add 不能把执行位丢掉。
