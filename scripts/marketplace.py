@@ -739,14 +739,28 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
                 # Roll the index back first: the files below are about to be
                 # restored from their backups, so the index must not keep
                 # claiming modes for a package that no longer exists.
-                restore_index_modes(root, index_before)
-                for active, backup, had_previous in reversed(changed):
-                    if active.is_dir():
-                        shutil.rmtree(active)
-                    elif active.exists():
-                        active.unlink()
-                    if had_previous:
-                        backup.replace(active)
+                #
+                # A failing index restore must not skip the file restore: that
+                # would leave half-swapped packages behind while reporting only
+                # the index error. Both failures are surfaced, index first.
+                index_error = None
+                try:
+                    restore_index_modes(root, index_before)
+                except Exception as error:  # noqa: BLE001 - surfaced below
+                    index_error = error
+                finally:
+                    for active, backup, had_previous in reversed(changed):
+                        if active.is_dir():
+                            shutil.rmtree(active)
+                        elif active.exists():
+                            active.unlink()
+                        if had_previous:
+                            backup.replace(active)
+                if index_error is not None:
+                    raise MarketError(
+                        'Synchronization failed and the Git index could not be restored '
+                        f'({index_error}); the files themselves were restored from backup.'
+                    ) from index_error
                 raise
     finally:
         guard.unlink()

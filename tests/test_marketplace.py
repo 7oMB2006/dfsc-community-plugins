@@ -833,6 +833,44 @@ class MarketplaceTests(unittest.TestCase):
         self.assertIsNone(self.index_mode('plugins/alpha-plugin/scripts/run'),
                           '同步失败回滚后，索引不应留下新包的可执行位')
 
+    def test_sync_restores_files_when_the_index_rollback_itself_fails(self):
+        """索引回滚失败不能让文件回滚被跳过，否则会留下半换过的包。"""
+        self.make_git_repo()
+        before = self.active()
+        data = dict(self.raw['alpha-plugin'])
+        data['commands/help.md'] = b'Replacement command that must not survive\n'
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        original_api = self.api
+
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+
+        def failing_validate(root):
+            raise m.MarketError('synthetic post-index validation failure')
+
+        def failing_restore(root, restore):
+            raise m.MarketError('synthetic index rollback failure')
+
+        with patch.object(m, 'validate', failing_validate), \
+                patch.object(m, 'restore_index_modes', failing_restore), \
+                self.assertRaisesRegex(m.MarketError, 'index could not be restored') as caught:
+            m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        self.assertIn(
+            'the files themselves were restored from backup', str(caught.exception),
+            '错误信息应说明文件已回滚，避免让人以为仓库处于半换状态')
+        self.assertEqual(
+            self.active(), before,
+            '索引回滚失败时仍必须恢复文件，不能留下半换过的包')
+
     def test_chinese_paths_survive_mode_round_trip(self):
         """中文路径在索引读写里必须按原样往返，不能被转义或截断。"""
         self.make_git_repo()
