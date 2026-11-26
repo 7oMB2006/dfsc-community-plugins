@@ -180,6 +180,9 @@ export class JsonStore {
    * 文件不存在时回调收到 null（而不是空的解析结果），让调用方区分「没有库」和「库是空的」。
    */
   async inspect(fn) {
+    // 锁文件建在库文件旁边：库还没写过时目录可能不存在，先建出来，
+    // 否则空库上的 purge 会以 ENOENT 失败（它只读不写，别处不会替它建目录）。
+    await fs.promises.mkdir(path.dirname(this.file), { recursive: true });
     await this._acquire();
     try {
       let raw = null;

@@ -93,9 +93,10 @@ export const TOOLS = [
     'history_digest',
     '取出本项目最近若干会话的正文摘录，作为记忆巩固的素材。'
       + '用法：用户说「把这次学到的东西记下来」或执行 /memory consolidate 时，先取素材，再据此调用 retain。'
+      + '默认只取 1 个（最近的那个，也就是当前对话）；要跨多次会话归纳时再显式传 sessions。'
       + '它会跳过子代理会话与工具输出，并严格限制总字符数；truncated 为 true 表示还有更多内容没取。',
     {
-      sessions: { type: 'integer', minimum: 1, maximum: 10, description: '取最近几个会话，默认 3。' },
+      sessions: { type: 'integer', minimum: 1, maximum: 10, description: '取最近几个会话，默认 1（只取当前对话）。跨会话归纳时才调大。' },
       maxChars: { type: 'integer', minimum: 1000, maximum: 60000, description: '总字符预算，默认 12000。' },
       project: PROJECT,
     },

@@ -376,6 +376,19 @@ test('purge moves the bank to a trash file instead of deleting it', async () => 
   });
 });
 
+test('purge on a bank that was never written is a clean no-op', async () => {
+  // 库还没写过时目录不存在：锁文件建不出来，早期实现会以 ENOENT 失败。
+  await withBank(async (bank, home) => {
+    const result = await bank.purge({ scope: 'project', confirm: 'DELETE', project: PROJECT });
+    assert.equal(result.ok, true);
+    assert.equal(result.removed, 0);
+    assert.deepEqual(result.moved, []);
+    assert.equal(result.movedTo, null);
+    const stats = await bank.stats({ project: PROJECT });
+    assert.equal(stats.banks.project.total, 0, '空库清理后仍是空库');
+  });
+});
+
 test('a corrupt bank file is reported, not silently emptied', async () => {
   await withBank(async (bank, home) => {
     const dir = join(home, '--D--AgentPrograms-demo--');

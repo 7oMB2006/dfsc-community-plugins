@@ -98,8 +98,8 @@ async function readSession(file, budget) {
   return { lines, truncated };
 }
 
-export async function digestSessions({ sessionsRoot, slug, count = 3, maxChars = 12_000 } = {}) {
-  const wanted = Math.min(10, Math.max(1, Math.floor(Number(count) || 3)));
+export async function digestSessions({ sessionsRoot, slug, count = 1, maxChars = 12_000 } = {}) {
+  const wanted = Math.min(10, Math.max(1, Math.floor(Number(count) || 1)));
   const budget = Math.min(60_000, Math.max(1000, Math.floor(Number(maxChars) || 12_000)));
   const files = listSessions(sessionsRoot, slug).slice(0, wanted);
   if (!files.length) return { ok: true, sessions: [], text: '', truncated: false, chars: 0 };

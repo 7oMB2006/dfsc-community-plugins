@@ -72,6 +72,21 @@ test('digest honours the session count', async () => {
   }
 });
 
+test('digest defaults to the single most recent session', async () => {
+  // 日常收尾只该看当前对话：默认不把历史会话一起拉进来。
+  const { root, dir } = await fixture();
+  try {
+    for (let i = 0; i < 4; i++) {
+      await writeFile(join(dir, `2026-11-2${i}T00-00-00-000Z_s.jsonl`), line('user', `会话 ${i}`) + '\n');
+    }
+    const result = await digestSessions({ sessionsRoot: root, slug: SLUG });
+    assert.equal(result.sessions.length, 1, '默认只取最近一个会话');
+    assert.ok(result.text.length > 0, '默认仍应返回正文摘录');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('digest redacts credentials and clips to the character budget', async () => {
   const { root, dir } = await fixture();
   try {

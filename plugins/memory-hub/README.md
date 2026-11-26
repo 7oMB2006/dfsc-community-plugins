@@ -13,7 +13,7 @@
   - `reflect` —— 按类型组装证据包，并列出被推翻的旧结论
   - `memory_edit` —— 改 / 失效 / 恢复 / 归档 / 删除
   - `stats` —— 库概况、容量、热门标签、项目归属来源
-  - `history_digest` —— 有界读取最近会话，作为巩固素材
+  - `history_digest` —— 有界读取会话摘录，作为巩固素材（默认只取当前对话）
   - `memory_maintain` —— 手动跑一次衰减与淘汰
   - `memory_purge` —— 移到回收站（不是直接删除）
 - **两个技能**：`memory-recall`（何时取回、怎么用结果）、`memory-curate`（怎么收敛地整理）
@@ -95,7 +95,7 @@ MCP 进程的工作目录被宿主锚定到插件目录，拿不到用户项目�
 
 - MCP server 以当前用户权限运行，只通过 stdio 与宿主通信，**不发起任何网络请求**。
 - 只读写 `MEMORY_HUB_HOME` 与 `MEMORY_HUB_SESSIONS` 指向的目录；不读项目文件、不读凭据。
-- `history_digest` 会读会话 `.jsonl` 的正文摘录（跳过子代理会话与工具输出，严格限长）。
+- `history_digest` 会读会话 `.jsonl` 的正文摘录（跳过子代理会话与工具输出，严格限长）。**默认只取最近 1 个会话**（当前对话）；要跨会话归纳时才显式传 `sessions`（最多 10）。
 - 记忆按项目分库是**数据分区，不是访问控制**：能调用本插件的任何会话都能读同一个库。
 - `memory_purge` 把文件改名为 `.trash-<时间戳>`，宿主卸载插件**不会**替你删这些文件。
 
@@ -133,14 +133,9 @@ MCP 进程的工作目录被宿主锚定到插件目录，拿不到用户项目�
   `scripts/verify-native.mjs` 已备好，指向真正的 DFSC 构建即可运行。
 - 同样未验证：其他 Node 版本与平台、长时间运行、多机（数据只在本机）。
 
-验证命令（在上游仓库根目录执行；市场分发副本只含 `plugins/memory-hub`，
-不含 `tests/` 与 `scripts/`）：
+验证命令：
 
 ```bash
 node --test tests/*.test.mjs
 node scripts/smoke.mjs
-node scripts/eval.mjs
 ```
-
-市场侧另有独立验证脚本，按市场约定放在社区仓库的
-`tests/plugins/memory-hub/`，以 `test:memory-hub` 为入口。

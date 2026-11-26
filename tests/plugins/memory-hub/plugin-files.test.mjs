@@ -113,3 +113,12 @@ test('the icon is a small PNG inside the marketplace limits', async () => {
   const height = data.readUInt32BE(20);
   assert.ok(width > 0 && width <= 512 && height > 0 && height <= 512, `got ${width}x${height}`);
 });
+
+test('the shipped package carries its own license text', async () => {
+  // 市场分发的是 plugins/memory-hub 这一份，用户手上不会同时拿到仓库根的 LICENSE。
+  const text = await readFile(join(plugin, 'LICENSE'), 'utf8');
+  assert.match(text, /^MIT License/m, 'shipped LICENSE must be the MIT text');
+  assert.match(text, /Copyright \(c\) \d{4} Niangaol/, 'shipped LICENSE keeps the copyright line');
+  const presentation = await readJson('dfsc.plugin.json');
+  assert.equal(presentation.license, 'MIT', 'declared license matches the shipped text');
+});
