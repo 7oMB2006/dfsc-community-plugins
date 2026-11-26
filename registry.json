@@ -34,6 +34,17 @@
       },
       "license": "项目作者授权的 DFSC 主题分发；美术与品牌不按宿主代码 MIT 重新许可，详见收录说明",
       "readme": "docs/plugins/stellar-cruise.md"
+    },
+    {
+      "id": "dfsc-stepaudio",
+      "description": "阶跃 StepAudio 语音合成 MCP 服务：文本转语音、音色列表、音色复刻；模型与工具可分别选择 Broker 或独立 API 来源。",
+      "source": {
+        "repository": "7oMB2006/dfsc-stepaudio",
+        "commit": "4f27d4464f5e58b2bf0a332dd3607712a90f7542",
+        "path": "plugins/dfsc-stepaudio"
+      },
+      "license": "MIT",
+      "readme": "docs/plugins/dfsc-stepaudio.md"
     }
   ]
 }
