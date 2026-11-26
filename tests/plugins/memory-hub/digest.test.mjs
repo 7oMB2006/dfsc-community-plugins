@@ -73,7 +73,7 @@ test('digest honours the session count', async () => {
 });
 
 test('digest defaults to the single most recent session', async () => {
-  // 日常收尾只该看当前对话：默认不把历史会话一起拉进来。
+  // 没给 session 时退回「最近一个」，但这是兜底语义，不是「当前对话」的保证。
   const { root, dir } = await fixture();
   try {
     for (let i = 0; i < 4; i++) {
@@ -82,6 +82,36 @@ test('digest defaults to the single most recent session', async () => {
     const result = await digestSessions({ sessionsRoot: root, slug: SLUG });
     assert.equal(result.sessions.length, 1, '默认只取最近一个会话');
     assert.ok(result.text.length > 0, '默认仍应返回正文摘录');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('digest reads exactly the session it is told to, not the newest one', async () => {
+  // 「最近修改」不等于「当前对话」：另一个会话可能刚写过。指定 id 就必须读那个。
+  const { root, dir } = await fixture();
+  try {
+    await writeFile(join(dir, '2026-11-20T00-00-00-000Z_aaa.jsonl'), line('user', '旧的这次对话') + '\n');
+    // 更晚写入的文件 mtime 更新，但它不是我们要的那次对话
+    await writeFile(join(dir, '2026-11-26T00-00-00-000Z_bbb.jsonl'), line('user', '别人的对话') + '\n');
+    const result = await digestSessions({ sessionsRoot: root, slug: SLUG, session: 'aaa' });
+    assert.equal(result.sessions.length, 1);
+    assert.match(result.sessions[0].file, /aaa/u, '必须读指定会话');
+    assert.ok(result.text.includes('旧的这次对话'), '正文应来自指定会话');
+    assert.ok(!result.text.includes('别人的对话'), '不得混入最近修改的其它会话');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('digest refuses an unknown session instead of guessing', async () => {
+  const { root, dir } = await fixture();
+  try {
+    await writeFile(join(dir, '2026-11-20T00-00-00-000Z_aaa.jsonl'), line('user', '某次对话') + '\n');
+    const result = await digestSessions({ sessionsRoot: root, slug: SLUG, session: 'no-such-id' });
+    assert.equal(result.ok, false, '找不到就报错，不退回猜最近一个');
+    assert.match(result.error, /找不到会话/u);
+    assert.equal(result.sessions.length, 0);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -102,8 +132,31 @@ test('digest redacts credentials and clips to the character budget', async () =>
   }
 });
 
-test('digest returns an empty result when nothing exists', async () => {
-  const { root } = await fixture();
+test('digest respects the budget with pure Chinese input', async () => {
+  // 中文一字三字节：按字节算预算会严重超发，按字符算才对。这里也从侧面确认
+  // 单行裁剪不会把多字节字符切成半个。
+  const { root, dir } = await fixture();
+  try {
+    const file = join(dir, '2026-11-23T00-00-00-000Z_zh.jsonl');
+    await writeFile(file, line('user', '用中文写的结论') + '\n');
+    for (let i = 0; i < 60; i++) {
+      await appendFile(file, line('assistant', `第${i}段很长的中文回复，用来把预算吃满：` + '这是一段足够长的中文填充内容。'.repeat(12)) + '\n');
+    }
+    for (const maxChars of [1000, 3000]) {
+      const result = await digestSessions({ sessionsRoot: root, slug: SLUG, maxChars });
+      assert.ok(result.text.length <= maxChars, `预算 ${maxChars}，实际 ${result.text.length} 字符`);
+      assert.ok(!/\uFFFD/u.test(result.text), '不得出现被截断的半个字符');
+      assert.equal(result.truncated, true, '内容超预算时 truncated 必须为 true');
+    }
+    // 单行超长时也不能出现替换字符
+    const line_clipped = await digestSessions({ sessionsRoot: root, slug: SLUG, maxChars: 60_000 });
+    assert.ok(!/\uFFFD/u.test(line_clipped.text), '长行裁剪不得产生半个字符');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('digest returns an empty result when nothing exists', async () => {  const { root } = await fixture();
   try {
     const result = await digestSessions({ sessionsRoot: root, slug: '--missing--', count: 3, maxChars: 1000 });
     assert.deepEqual(result.sessions, []);

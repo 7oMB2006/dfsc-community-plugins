@@ -40,7 +40,7 @@
       "description": "按项目分库的本地长期记忆：retain / recall / reflect / memory_edit 等 MCP 工具，写入自动合并、召回自动强化、长期未用自动归档；纯本地明文 JSON，不联网、不调用模型。",
       "source": {
         "repository": "Niangaol/dfsc-memory-hub",
-        "commit": "6d3a5378bbec50b3cc7ac7184a6dc9373706d6dd",
+        "commit": "6aa7a4bb3611b13fb89afc08f63133cc04db9579",
         "path": "plugins/memory-hub"
       },
       "license": "MIT",

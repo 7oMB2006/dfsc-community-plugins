@@ -247,7 +247,7 @@
       "id": "memory-hub",
       "source": {
         "repository": "Niangaol/dfsc-memory-hub",
-        "commit": "6d3a5378bbec50b3cc7ac7184a6dc9373706d6dd",
+        "commit": "6aa7a4bb3611b13fb89afc08f63133cc04db9579",
         "path": "plugins/memory-hub"
       },
       "files": [
@@ -265,9 +265,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "e6dd629a9fd53f7db5cf5f7c947a1a6591143bc5",
-          "sha256": "a23982cb01aad61fc06a2effefcdd86ead28e107d94f1c701c78969a58f5804e",
-          "size": 8583
+          "gitBlobSha": "307b15dcc40d6e3b8f8f3be4a71072914d08a512",
+          "sha256": "59f60f2922090fac78d07fca65e237eff88e4379d1795a91e4a4dad7f446485c",
+          "size": 9244
         },
         {
           "path": "commands/memory.md",
@@ -295,21 +295,21 @@
         },
         {
           "path": "server/digest.mjs",
-          "gitBlobSha": "271c5e719a09176eb35a13551cd6c6d26f67e18f",
-          "sha256": "ff6bc9a058b73459d668fccf7c9bf884f61183462a000f02cd672777afdd6e6b",
-          "size": 5754
+          "gitBlobSha": "453f85cf3568be7b0d872c1768f320f8c32cb64a",
+          "sha256": "591189daa1ee333b4262a9c0d60ad86b137a5ef4b6ec742323df385e58eac871",
+          "size": 6495
         },
         {
           "path": "server/evolve.mjs",
-          "gitBlobSha": "ca7dd01659ef5cb3f1b4042cf9a2366097cb3bb8",
-          "sha256": "d993f9e239a175c81db2c578a3fbd8f665751ba24eb08b6bb4060eb3416a4e40",
-          "size": 9475
+          "gitBlobSha": "f649cf85823d0cb91805f271d059415aff71dcd6",
+          "sha256": "afe50e76bface8127c8a787e97129e5bec76ef3f1b2fb1ece8f058f4c52b7f1c",
+          "size": 10224
         },
         {
           "path": "server/json-store.mjs",
-          "gitBlobSha": "78425390f07c4fc8db4e53520678f3d74c421d38",
-          "sha256": "09518cd142f3581dd05a7319e464859e703ba9c6e2c21871ca4a9bee4edcb530",
-          "size": 7968
+          "gitBlobSha": "36a87ff8b69a7e77d94b0338b2009b7c2ccb7f46",
+          "sha256": "cf1cc07eb0efa7df1873553fdaa8c1ef7bcdce94b3d2e0b1c11f455bcea9a4c0",
+          "size": 8201
         },
         {
           "path": "server/memory-hub.mjs",
@@ -331,21 +331,21 @@
         },
         {
           "path": "server/text.mjs",
-          "gitBlobSha": "fb89ab95f9a7767d08ea8a364f68a51f9781ec85",
-          "sha256": "6c69b44d3c2cfcc72469e6ac23e42cf7d5e54360d6fc882aedc4669283ad64d2",
-          "size": 6729
+          "gitBlobSha": "dbc86d9f7a63bb9653a6bc2649892de8c434e149",
+          "sha256": "c18fcfab740bf88e8f9c0052c2dbe6626d3239e98660cdb1bd60acc145c0348b",
+          "size": 7356
         },
         {
           "path": "server/tools.mjs",
-          "gitBlobSha": "d287f0f14bf253920dd9c00376983c5edc45fa85",
-          "sha256": "1867d154a0c9f2b4d5380ec7cc32201da38db54e7dedcc6105ce1d1fa1722fac",
-          "size": 9293
+          "gitBlobSha": "1671dd27078046681300766ff46fb248c6e959f9",
+          "sha256": "7ff447cdb01eae6a0b176c09f2cf942c07b84767b0949f248232f3dffaaaeff7",
+          "size": 9599
         },
         {
           "path": "skills/memory-curate/SKILL.md",
-          "gitBlobSha": "2e4847f09e83c5c28d8057c583f4088d915373e0",
-          "sha256": "0dac03749a3ee10d7829a9c9f72eb97093fb4cf5b41b9a33d3a96dedc3189122",
-          "size": 4985
+          "gitBlobSha": "3a19d7b9e5b901a24001bfdc57212c2a923e3d13",
+          "sha256": "94f4c8ed5c60ac1f0112b0cf3b231211e8e4b060d4da6678f37712a066c0afe3",
+          "size": 5287
         },
         {
           "path": "skills/memory-recall/SKILL.md",

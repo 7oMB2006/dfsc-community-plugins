@@ -61,8 +61,7 @@ export function tidy(value) {
   return String(value ?? '').normalize('NFKC').replace(/\s+/gu, ' ').trim();
 }
 
-export function tokens(value) {
-  const text = String(value ?? '').normalize('NFKC');
+export function tokens(value) {  const text = String(value ?? '').normalize('NFKC');
   const out = [];
   // 先把汉字整段取走，再做拉丁词扫描：\p{L} 也覆盖汉字，
   // 不排除的话「构建用」会被当成一个拉丁整词，中文查询就永远匹配不上。
@@ -118,6 +117,20 @@ export function cosine(left, right) {
   // 相同文本必须精确为 1，不能因为浮点误差变成 0.9999999999999998：
   // 调用方会用 >= 阈值判断「是否同一条记忆」。
   return value > 1 - 1e-12 ? 1 : value;
+}
+
+/**
+ * 正文里的数值（整数与小数），用于挡住「只差一个数字」的误合并。
+ *
+ * 相似度对数字不敏感：`监听端口 3000` 与 `监听端口 3001` 的二字组几乎全同，
+ * 余弦能到 0.95，超过合并阈值。但端口、版本号、超时秒数这类数字恰恰是结论
+ * 本身——合并等于把「后来改成了别的值」抹掉。所以数值不同就不合并。
+ */
+export function numbers(value) {
+  const text = String(value ?? '').normalize('NFKC');
+  const out = [];
+  for (const match of text.matchAll(/[0-9]+(?:\.[0-9]+)?/gu)) out.push(match[0]);
+  return out;
 }
 
 const RULES = [

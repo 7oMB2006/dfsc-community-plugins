@@ -91,12 +91,14 @@ export const TOOLS = [
   ),
   tool(
     'history_digest',
-    '取出本项目最近若干会话的正文摘录，作为记忆巩固的素材。'
+    '取出本项目指定会话的正文摘录，作为记忆巩固的素材。'
       + '用法：用户说「把这次学到的东西记下来」或执行 /memory consolidate 时，先取素材，再据此调用 retain。'
-      + '默认只取 1 个（最近的那个，也就是当前对话）；要跨多次会话归纳时再显式传 sessions。'
+      + '日常收尾只读当前这一次对话：传 session（会话文件名里的 id），不要靠「最近修改」猜。'
+      + '要跨多次会话归纳时，显式传 sessions 取最近若干个。'
       + '它会跳过子代理会话与工具输出，并严格限制总字符数；truncated 为 true 表示还有更多内容没取。',
     {
-      sessions: { type: 'integer', minimum: 1, maximum: 10, description: '取最近几个会话，默认 1（只取当前对话）。跨会话归纳时才调大。' },
+      session: { type: 'string', description: '会话 id（会话文件名里的 UUID）。传了就只读这一个；找不到会如实报错，不会退回猜最近一个。' },
+      sessions: { type: 'integer', minimum: 1, maximum: 10, description: '取最近几个会话，默认 1。跨会话归纳时才调大；与 session 同时传时 session 优先。' },
       maxChars: { type: 'integer', minimum: 1000, maximum: 60000, description: '总字符预算，默认 12000。' },
       project: PROJECT,
     },
@@ -140,6 +142,7 @@ export function createToolContext({ log = () => {}, env = process.env } = {}) {
         slug: resolved.slug,
         count: args.sessions,
         maxChars: args.maxChars,
+        session: args.session,
       });
     },
   };

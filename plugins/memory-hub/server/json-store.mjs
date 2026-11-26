@@ -189,12 +189,14 @@ export class JsonStore {
       try {
         const info = await fs.promises.stat(this.file);
         if (info.size <= this.maxBytes) raw = await fs.promises.readFile(this.file, 'utf8');
-        else return fn({ data: null, corrupt: true });
+        else return await fn({ data: null, corrupt: true });
       } catch (error) {
         if (error?.code !== 'ENOENT') throw error;
-        return fn(null);
+        return await fn(null);
       }
-      return fn(this._parse(raw));
+      // 必须 await：回调里可能做异步改名（purge 就是），不 await 的话 Promise 会
+      // 逃出 finally，锁在改名完成前就被释放，另一个会话能挤进来写同一个文件。
+      return await fn(this._parse(raw));
     } finally {
       await this._release();
     }

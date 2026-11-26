@@ -162,3 +162,40 @@ test('inspect sees the file while holding the lock', async () => {
     assert.equal(missing, null);
   });
 });
+
+test('inspect holds the lock until an async callback settles', async () => {
+  // purge 在回调里做异步改名。如果 inspect 不 await 回调，锁会在改名完成前释放，
+  // 另一个进程就能挤进来对同一个文件动手。
+  await withDir(async (dir) => {
+    const file = join(dir, 'memory.json');
+    const store = new JsonStore(file, { lockTimeoutMs: 400 });
+    await store.mutate(() => ({ result: null, next: { n: 1 } }));
+
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    let callbackEntered = false;
+    const slow = store.inspect(async () => {
+      callbackEntered = true;
+      await gate;
+      return 'done';
+    });
+
+    // 等回调真正进入
+    for (let i = 0; i < 200 && !callbackEntered; i += 1) await new Promise((r) => setTimeout(r, 5));
+    assert.ok(callbackEntered, '回调应已进入');
+
+    // 此时锁必须仍被持有：另一个 store 抢锁应当超时，而不是立刻成功
+    const rival = new JsonStore(file, { lockTimeoutMs: 250 });
+    await assert.rejects(
+      () => rival.mutate(() => ({ result: null, next: { n: 2 } })),
+      /lock timeout/u,
+      '回调未结束时，锁不应被释放',
+    );
+
+    release();
+    assert.equal(await slow, 'done');
+    // 回调结束后锁必须已释放，后续写入才能成功
+    const after = await rival.mutate(() => ({ result: null, next: { n: 3 } }));
+    assert.equal(after, null);
+  });
+});

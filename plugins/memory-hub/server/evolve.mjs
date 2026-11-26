@@ -9,7 +9,7 @@
  *
  * 常数集中在此，改行为只改这里。
  */
-import { cosine, isStopword, normalize, queryTokens, tokens } from './text.mjs';
+import { cosine, isStopword, normalize, numbers, queryTokens, tokens } from './text.mjs';
 
 // 0.92 而不是更低：中文二元组让「构建用 pnpm」和「构建用 npm」相似度就到 0.83，
 // 阈值一松就会把互相矛盾的结论并入同一条，等于丢掉「后来改主意了」这件事。
@@ -160,14 +160,30 @@ export function findMergeCandidate(memories, candidate, threshold = MERGE_THRESH
   const text = normalize(candidate?.text);
   if (!text) return null;
   const candidateTokens = tokens(text);
+  const candidateNumbers = numbers(text);
   const sameType = candidate?.type === undefined;
   for (const memory of memories ?? []) {
     if (memory?.status !== 'active') continue;
     if (!sameType && memory.type !== candidate.type) continue;
     if (normalize(memory.text) === text) return memory;
-    if (cosine(candidateTokens, tokens(memory.text)) >= threshold) return memory;
+    // 数值不同就不是同一条结论：端口 3000 → 3001、超时 5s → 30s、v1 → v2
+    // 都是「改主意了」，合并会把新值抹掉。这只在相似度够高时才需要判断，
+    // 所以放在 cosine 之后、比较之前。
+    if (cosine(candidateTokens, tokens(memory.text)) < threshold) continue;
+    if (!sameNumbers(candidateNumbers, numbers(memory.text))) continue;
+    return memory;
   }
   return null;
+}
+
+/** 两组数值是否相容：任一方的数字都在另一方出现过。 */
+function sameNumbers(left, right) {
+  if (!left.length && !right.length) return true;
+  const a = new Set(left);
+  const b = new Set(right);
+  for (const value of a) if (!b.has(value)) return false;
+  for (const value of b) if (!a.has(value)) return false;
+  return true;
 }
 
 /** 过期归档：active + 从未命中 + 超过窗口。返回被归档的 id。 */
