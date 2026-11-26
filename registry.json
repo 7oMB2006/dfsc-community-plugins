@@ -34,6 +34,17 @@
       },
       "license": "项目作者授权的 DFSC 主题分发；美术与品牌不按宿主代码 MIT 重新许可，详见收录说明",
       "readme": "docs/plugins/stellar-cruise.md"
+    },
+    {
+      "id": "agent-team",
+      "description": "十二角色智能体团队（agents/skills/commands）+ team-gate A2A 协作门禁（六个 MCP 工具，按团队分组与多进程安全的状态持久化）；需 Node.js 18+ 运行 stdio MCP server。",
+      "source": {
+        "repository": "Niangaol/agent-team",
+        "commit": "714ba86ffa9c92109cd5af950293fffb49704888",
+        "path": "plugins/agent-team"
+      },
+      "license": "MIT",
+      "readme": "docs/plugins/agent-team.md"
     }
   ]
 }

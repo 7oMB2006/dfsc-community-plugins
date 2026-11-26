@@ -2,6 +2,160 @@
   "schemaVersion": 1,
   "plugins": [
     {
+      "id": "agent-team",
+      "source": {
+        "repository": "Niangaol/agent-team",
+        "commit": "714ba86ffa9c92109cd5af950293fffb49704888",
+        "path": "plugins/agent-team"
+      },
+      "files": [
+        {
+          "path": "LICENSE",
+          "gitBlobSha": "7ea83cfe0e57ce69b6837e06344082b1a7d4017f",
+          "sha256": "68be18cb24711ae956c4bb417a25a5895cb48495fa6339d782981cc03ad598fc",
+          "size": 1065
+        },
+        {
+          "path": "README.md",
+          "gitBlobSha": "065bdebdece2ec151150b058218ebde5bf34c00a",
+          "sha256": "e5aa837d5d687ab69155bc8fbe08156c213dd89c40d2eddab0b175dd222b60e9",
+          "size": 8201
+        },
+        {
+          "path": "agents/analyst.md",
+          "gitBlobSha": "0fe990a7b2832d686744e387335f79fe975c8990",
+          "sha256": "3155a1ef534fc47585eb297220f4673e9c17af7d3c2c00ab49b5a2a066804e18",
+          "size": 2551
+        },
+        {
+          "path": "agents/architect.md",
+          "gitBlobSha": "996462948c4a48d48c6b58b4af03e5dcf9fa8fd4",
+          "sha256": "c1fd36a997cfdbb17ab26c393cef7a7e3aedc24dd706775e6f86e96ae3faa747",
+          "size": 2525
+        },
+        {
+          "path": "agents/builder.md",
+          "gitBlobSha": "0d072f1241b80ac70906578236a5a026c1e0cb57",
+          "sha256": "8a92506b975e4f4533872306d983d6b21e3ea7ba99cdd23fa379525427b86645",
+          "size": 2685
+        },
+        {
+          "path": "agents/debugger.md",
+          "gitBlobSha": "e922191aa3b56dd09556c75334eb417ca2a956dc",
+          "sha256": "2e04c57a4d604670e64019fa022aba8c5bfca32f25083db4cef5ac749c361a6c",
+          "size": 2661
+        },
+        {
+          "path": "agents/docs-writer.md",
+          "gitBlobSha": "008f005c959c23f30760255e164cdcefbef765f1",
+          "sha256": "09d583d214f5518e0554ca8e44672965b1355d8bf88126edb9efbaf38a0036b1",
+          "size": 2390
+        },
+        {
+          "path": "agents/perf-engineer.md",
+          "gitBlobSha": "a9f869627f88a6878ab2e9cf044c0b94a301760a",
+          "sha256": "6e8d6f53649d9bda84b2b45656f93ea0c8fcb7a554f8f8801efa8349604ea6a9",
+          "size": 2618
+        },
+        {
+          "path": "agents/release-engineer.md",
+          "gitBlobSha": "797bcc73bb826a9081ada0a09e9de81af145c3af",
+          "sha256": "a3e3f72ea227269ae0a544be98dc19c42f110858bf96afd7858f75b2e41aa4d5",
+          "size": 2610
+        },
+        {
+          "path": "agents/reviewer.md",
+          "gitBlobSha": "e6c704284df98b3833ada8b285a717b2c32d1db6",
+          "sha256": "08531363a4502ebab0bbeb7280193cc339649dc9050f93bf780d4ff61b9c2ba3",
+          "size": 2566
+        },
+        {
+          "path": "agents/scout.md",
+          "gitBlobSha": "2e6171720d084e6fba895898e66d61889cbd9829",
+          "sha256": "7c9d942af146b9b765326ab40b24d7e12e34df795bdc0fe2055ca61d353931f3",
+          "size": 2388
+        },
+        {
+          "path": "agents/security-auditor.md",
+          "gitBlobSha": "4b945c1201b975f651ef74a8d6f17d4599e82d1d",
+          "sha256": "ef2482f652120105e8932ffdec38190804ae3aaf9789c9a2da4316072d4cbe7a",
+          "size": 2785
+        },
+        {
+          "path": "agents/tester.md",
+          "gitBlobSha": "673347f5dcddb2d86e98bb71647c06cff84cf7e2",
+          "sha256": "8ea860533be484ab2fcea740487b29e53530276ae237a89b59738ce0d748b727",
+          "size": 2577
+        },
+        {
+          "path": "agents/ux-reviewer.md",
+          "gitBlobSha": "b79d32f0cff55ec220148b90664df605e3dafede",
+          "sha256": "d65e8470a4cfec1ee566b9a4794db3b19e4f6bb191bbfc4adcb73c10edfcb3b1",
+          "size": 2900
+        },
+        {
+          "path": "commands/team-debug.md",
+          "gitBlobSha": "eafe601cf17be62a396c29fd38bcf5cecf7b4438",
+          "sha256": "a97586aee0072e118fb8b60a238fdca576b2cf8e5ccb9a5fbd6f0cbf1bf75509",
+          "size": 1307
+        },
+        {
+          "path": "commands/team-implement.md",
+          "gitBlobSha": "ab83d97ff937a5736777335a434c4bfec7c75c54",
+          "sha256": "8ef5b6fe0289fe8eca5f3902d9e9054b626ec9d5c04bda43f4496f3a9ef19eb8",
+          "size": 1861
+        },
+        {
+          "path": "commands/team-review.md",
+          "gitBlobSha": "d5bb67da07ee9a232d0686f747be87dd3df9339d",
+          "sha256": "b4e226bd54f483c873a8a463854db81a29389026a6f104d0bf2a5d977024863b",
+          "size": 1659
+        },
+        {
+          "path": "commands/team-ship.md",
+          "gitBlobSha": "fb5f341b807d3e6989a9178ddbe0bcfe430f4fbf",
+          "sha256": "5bf77f7d8ed57d8e7f9bfb800e7fc3a1bbed7da2334e054aafc306424f5c4eac",
+          "size": 1528
+        },
+        {
+          "path": "dfsc.plugin.json",
+          "gitBlobSha": "d1e214d46204cc8e3a2af1241d577a1ff5304e5e",
+          "sha256": "8a6e4bc27ff23a5ccc11dd9b09b3a408f0dd62de77049b09df7e3a3d7b1736c4",
+          "size": 605
+        },
+        {
+          "path": "server/state.mjs",
+          "gitBlobSha": "cab14cf0df48afaaf8195bd9f547fbd6c88a5236",
+          "sha256": "8541a1bbed024d7918e0bb3f6d39f7f04eecaea13bc4317ce1a67c22feb5fb56",
+          "size": 15391
+        },
+        {
+          "path": "server/team-gate.mjs",
+          "gitBlobSha": "71ab0bfdf63e891b8ad570bc24c9d4d59ff5d671",
+          "sha256": "2868d6f8085f3aa981af597ba6a386c4ee6b86366e9525e603d6ec52677e3eef",
+          "size": 3413
+        },
+        {
+          "path": "server/tools.mjs",
+          "gitBlobSha": "33ea785df35e2b27c0df9c1012b84d177ea5e8d5",
+          "sha256": "07c370139b9b91ff5509c13f9fa5fb49c4136b63691da6ad56c4eaf33a9709f9",
+          "size": 19287
+        },
+        {
+          "path": "skills/team-playbook/SKILL.md",
+          "gitBlobSha": "33ea00ecbfffe3e23e62571bfed4d1197c59ac61",
+          "sha256": "b2635e56c66f2d4969f9fedcc69e2a9aebb4637756ff62f0c19c9248603adde7",
+          "size": 8749
+        },
+        {
+          "path": "step.plugin.json",
+          "gitBlobSha": "64f6fefadf8b1b6670b5b9c87bf9e436fe051b54",
+          "sha256": "2164fce1d532f5dd24a07863c7191f49704d80a7f5e8db7208d3654bf13b814c",
+          "size": 710
+        }
+      ]
+    },
+    {
       "id": "bilibili-video-research",
       "source": {
         "repository": "7oMB2006/Bilibili-Video-Research",
