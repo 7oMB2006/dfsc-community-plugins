@@ -34,6 +34,17 @@
       },
       "license": "项目作者授权的 DFSC 主题分发；美术与品牌不按宿主代码 MIT 重新许可，详见收录说明",
       "readme": "docs/plugins/stellar-cruise.md"
+    },
+    {
+      "id": "memory-hub",
+      "description": "按项目分库的本地长期记忆：retain / recall / reflect / memory_edit 等 MCP 工具，写入自动合并、召回自动强化、长期未用自动归档；纯本地明文 JSON，不联网、不调用模型。",
+      "source": {
+        "repository": "Niangaol/dfsc-memory-hub",
+        "commit": "6aa7a4bb3611b13fb89afc08f63133cc04db9579",
+        "path": "plugins/memory-hub"
+      },
+      "license": "MIT",
+      "readme": "docs/plugins/memory-hub.md"
     }
   ]
 }

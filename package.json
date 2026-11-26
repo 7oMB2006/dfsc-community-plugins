@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test tests/plugin-metadata.test.mjs tests/theme-pack.test.mjs tests/run-plugin-tests.test.mjs",
     "test:plugins": "node scripts/run-plugin-tests.mjs",
+    "test:memory-hub": "node --test tests/plugins/memory-hub/digest.test.mjs tests/plugins/memory-hub/evolve.test.mjs tests/plugins/memory-hub/json-store.test.mjs tests/plugins/memory-hub/plugin-files.test.mjs tests/plugins/memory-hub/project.test.mjs tests/plugins/memory-hub/protocol-robustness.test.mjs tests/plugins/memory-hub/protocol.test.mjs tests/plugins/memory-hub/store.test.mjs tests/plugins/memory-hub/text.test.mjs tests/plugins/memory-hub/tools.test.mjs",
     "check:metadata": "node scripts/check-plugin-metadata.mjs",
     "check:themes": "node scripts/check-theme-pack.mjs"
   },

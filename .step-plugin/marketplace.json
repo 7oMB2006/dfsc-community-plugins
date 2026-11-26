@@ -12,6 +12,11 @@
       "description": "Hermes x DFSC 状态面板、四步连接引导与入门指南；通用本机派工需支持 dfsc-external-v1 的构建及独立 companion。"
     },
     {
+      "name": "memory-hub",
+      "source": "./plugins/memory-hub",
+      "description": "按项目分库的本地长期记忆：retain / recall / reflect / memory_edit 等 MCP 工具，写入自动合并、召回自动强化、长期未用自动归档；纯本地明文 JSON，不联网、不调用模型。"
+    },
+    {
       "name": "stellar-cruise",
       "source": "./plugins/stellar-cruise",
       "description": "星辰巡航动态主题：双龙星海与石墨阅读面板；适用于 DFSC 1.x，安装后在「设置 → 外观」手动启用。"
