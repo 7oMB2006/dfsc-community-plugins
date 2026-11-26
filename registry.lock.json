@@ -159,7 +159,7 @@
       "id": "dfsc-stepaudio",
       "source": {
         "repository": "7oMB2006/dfsc-stepaudio",
-        "commit": "682f46a8c0a1937ce32b0e4939dc87df3dc80563",
+        "commit": "4f27d4464f5e58b2bf0a332dd3607712a90f7542",
         "path": "plugins/dfsc-stepaudio"
       },
       "files": [
@@ -177,9 +177,9 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "f80ae55afc24a3126e6a8018e437462cf1d956e9",
-          "sha256": "1e7b1f84c6cede8187dc8cfa7500caa48485466238b22a41b5f1d9f9aa462c7d",
-          "size": 9209
+          "gitBlobSha": "a923073b7198db9f9a1e79964ee6ffac217ce912",
+          "sha256": "014743fca9f20859a0497c23b4c1aa86948206e97d74dd5528db373ae7ce07d1",
+          "size": 10048
         },
         {
           "path": "UPSTREAM.md",
@@ -285,39 +285,39 @@
         },
         {
           "path": "src/lib/host-client/LICENSE",
-          "gitBlobSha": "5d791c830f566da9e7d6992cacfa32793634e333",
-          "sha256": "d3594a038b481805a356958179e35b52559d4272b6c346eb70a1e74733b33717",
-          "size": 1112
+          "gitBlobSha": "50dc421a3ca09945a7c658fc52c65d9307ce0d69",
+          "sha256": "5a5cf1065749eba250f2c35bf8f4efe32b2e2a2ac1da667692c49bdd221bc53d",
+          "size": 1091
         },
         {
           "path": "src/lib/host-client/README.md",
-          "gitBlobSha": "aa900af51037619b28da81c1008a3c8836153c37",
-          "sha256": "d64fbdd377df9c58bcf8325331cfb8f401c8225ed266b1c039b22a831a8a86cc",
-          "size": 4616
+          "gitBlobSha": "de22e85f70914c386bddb8132149b67e63ed884c",
+          "sha256": "b7a2de0c90e00a343ec1323f6e23be19011d3afee6aae5b6ca94084decf2f3c6",
+          "size": 4533
         },
         {
           "path": "src/lib/host-client/client.d.mts",
-          "gitBlobSha": "267f4bebc4fe52ef179343ba23b549b328ac58aa",
-          "sha256": "7f5f392b3e51a83d8940ab53af15741f852764e0ab213055ccf06aae7a83c79c",
-          "size": 789
+          "gitBlobSha": "f603111843abc7ac1a2dcce1f0596a7cd50220c7",
+          "sha256": "ee30f586203e0d03c9b95f72a8942c3389d3ae92ea690c7f0e652639527c3981",
+          "size": 774
         },
         {
           "path": "src/lib/host-client/client.mjs",
-          "gitBlobSha": "0b48181462ce6d5e592bdb39250c5075fec8eeae",
-          "sha256": "eb6fbe233de2499e3336902042aca25f47bfbf5fa449c7c8c1abfd9c4b685bae",
-          "size": 4871
+          "gitBlobSha": "c257edc361e2aa6078633eb276b2a985e5401e63",
+          "sha256": "11e8d01fd04b387f80d7e528cd60cfc1f4773d298f21e13cd715058ccab5826f",
+          "size": 4767
         },
         {
           "path": "src/lib/host-client/protocol.d.mts",
-          "gitBlobSha": "22e5ff36a4ff9b38e5da04a50fe93ddb8ab359dc",
-          "sha256": "f8534164c73eb36d07e201e573d4010b59cc5a85c940c98ef8d15fdc2055e4e8",
-          "size": 4284
+          "gitBlobSha": "3d8bd051295cdeb101e52a99085382f7f9148ab2",
+          "sha256": "e898b88dd6752d9437d46c963d5bd118d211c32c273d6c5011932586f4e57438",
+          "size": 4216
         },
         {
           "path": "src/lib/host-client/protocol.mjs",
-          "gitBlobSha": "bb5a26509df6d2dfb5b4728c55b2a5196977cc6a",
-          "sha256": "0eaf75a77db9625e54daccf747baa54de83b970063874a439cf3d5894caa120c",
-          "size": 13139
+          "gitBlobSha": "edae5a1e703581f430917def10ddb84e4affbdef",
+          "sha256": "e8f8e5b5427bea21d2eeaede7834525c401721708ea332f046cbb589c553b95a",
+          "size": 12930
         },
         {
           "path": "step.plugin.json",
