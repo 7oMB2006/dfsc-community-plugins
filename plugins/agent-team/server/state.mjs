@@ -379,7 +379,7 @@ export class TeamStore {
 
   // ---------- 在线状态 ----------
 
-  upsertPresence(id, { label, role, task, status }) {
+  upsertPresence(id, { label, role, task, status, round }) {
     return this._mutate((state) => {
       const team = this._teamFor(state, id);
       const prev = team.presence[label];
@@ -389,6 +389,9 @@ export class TeamStore {
         role: role ?? prev?.role ?? 'agent',
         task: task ?? prev?.task ?? '',
         status,
+        // 派发时的本轮标识要留在在线状态里：主代理翻 roster 就能核对谁属于哪一轮，
+        // 不用只靠 recall recentSignals。
+        round: round === undefined ? prev?.round ?? null : round,
         joinedAt: prev?.joinedAt ?? now,
         updatedAt: now,
       };

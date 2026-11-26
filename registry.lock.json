@@ -5,7 +5,7 @@
       "id": "agent-team",
       "source": {
         "repository": "Niangaol/agent-team",
-        "commit": "403acd3c784f957f67eb9cc497da4e8e8c692b7c",
+        "commit": "714ba86ffa9c92109cd5af950293fffb49704888",
         "path": "plugins/agent-team"
       },
       "files": [
@@ -95,27 +95,27 @@
         },
         {
           "path": "commands/team-debug.md",
-          "gitBlobSha": "7de6b7e82517bc635688f68a303201802a8a000e",
-          "sha256": "f2f24f29a6e52e55bb5706be30d8f0a13cc74865786051694cc5be318cb24150",
-          "size": 1202
+          "gitBlobSha": "eafe601cf17be62a396c29fd38bcf5cecf7b4438",
+          "sha256": "a97586aee0072e118fb8b60a238fdca576b2cf8e5ccb9a5fbd6f0cbf1bf75509",
+          "size": 1307
         },
         {
           "path": "commands/team-implement.md",
-          "gitBlobSha": "6c9cfbe3631245f2994c862a53e07e679f5e6369",
-          "sha256": "01a0990af8fc761baca6fc8fab0fa78ed63e17ae422eaa7261fa1a0d8a18804f",
-          "size": 1717
+          "gitBlobSha": "ab83d97ff937a5736777335a434c4bfec7c75c54",
+          "sha256": "8ef5b6fe0289fe8eca5f3902d9e9054b626ec9d5c04bda43f4496f3a9ef19eb8",
+          "size": 1861
         },
         {
           "path": "commands/team-review.md",
-          "gitBlobSha": "2a55c1b8aac5f1a009a999d37bb1c59d4a108a33",
-          "sha256": "47ff906e03601d943f926d8523f6edd603e371be984dee9ccff0317d9bc4bd72",
-          "size": 1501
+          "gitBlobSha": "d5bb67da07ee9a232d0686f747be87dd3df9339d",
+          "sha256": "b4e226bd54f483c873a8a463854db81a29389026a6f104d0bf2a5d977024863b",
+          "size": 1659
         },
         {
           "path": "commands/team-ship.md",
-          "gitBlobSha": "387e239ccfe5161b0070200b0a534fdafb81d3e5",
-          "sha256": "e2962ef1acfafbc159ca03a06551c99ad41b2988289e9c6b0cf03575750ac08d",
-          "size": 1387
+          "gitBlobSha": "fb5f341b807d3e6989a9178ddbe0bcfe430f4fbf",
+          "sha256": "5bf77f7d8ed57d8e7f9bfb800e7fc3a1bbed7da2334e054aafc306424f5c4eac",
+          "size": 1528
         },
         {
           "path": "dfsc.plugin.json",
@@ -125,9 +125,9 @@
         },
         {
           "path": "server/state.mjs",
-          "gitBlobSha": "ce32ae62fc829756c5e768a10cec91638b470b6a",
-          "sha256": "ba5dde415f4e3f2d76bb2be6754100a704790ac8ec64894fcc6e89ccf87c8a7e",
-          "size": 15154
+          "gitBlobSha": "cab14cf0df48afaaf8195bd9f547fbd6c88a5236",
+          "sha256": "8541a1bbed024d7918e0bb3f6d39f7f04eecaea13bc4317ce1a67c22feb5fb56",
+          "size": 15391
         },
         {
           "path": "server/team-gate.mjs",
@@ -137,15 +137,15 @@
         },
         {
           "path": "server/tools.mjs",
-          "gitBlobSha": "4a4bc47ece1a3354d49b397392f6e0364518dab7",
-          "sha256": "3a6ece08608a7cd5a44c285596435f0e2cc963e1a40b2e2e62c1f4ad892986cd",
-          "size": 19045
+          "gitBlobSha": "33ea785df35e2b27c0df9c1012b84d177ea5e8d5",
+          "sha256": "07c370139b9b91ff5509c13f9fa5fb49c4136b63691da6ad56c4eaf33a9709f9",
+          "size": 19287
         },
         {
           "path": "skills/team-playbook/SKILL.md",
-          "gitBlobSha": "40fe6a584dd34c2ca91b766be8a3f1179d0fb4c1",
-          "sha256": "5b22882067f38fb4b16ff904be3c027ac9f2bf8a5b9f2ab83ea9c61f6dc48709",
-          "size": 8099
+          "gitBlobSha": "33ea00ecbfffe3e23e62571bfed4d1197c59ac61",
+          "sha256": "b2635e56c66f2d4969f9fedcc69e2a9aebb4637756ff62f0c19c9248603adde7",
+          "size": 8749
         },
         {
           "path": "step.plugin.json",

@@ -50,9 +50,11 @@ description: 智能体团队的编排手册。当任务涉及多角色分工（�
 
 信号是**必要任务完成的里程碑**，不是子智能体终止：
 
-- 子代理完成分配的必要任务后**立即**调用 `agent-team__team-gate__agent_done`（label / status / summary / artifacts），**然后继续执行**后续工作（自检、补验证、收尾），不停止。
-- 主代理调用 `agent-team__team-gate__team_wait` 主动暂停：`expect: [标签...]` 等全部指定标签，`mode: "any"` 等任意一个；超时会返回 pending 清单，可再次调用继续等。
-- 同一子代理可分多个里程碑多次发信号（用不同 label），主代理用 `mode=any` 做渐进式汇总。
+- **派发时先定一个 `round`**（如 `ship-1-r3`），写进派发任务文本，并要求子代理回报时带上同一个值。这是「先回报、后等待」和「超时后继续等」不丢信号的前提——`round` 只由派发侧决定，回报与等待认同一个值。
+- 子代理完成分配的必要任务后**立即**调用 `agent-team__team-gate__agent_done`（label / status / summary / artifacts / **round**），**然后继续执行**后续工作（自检、补验证、收尾），不停止。
+- 主代理调用 `agent-team__team-gate__team_wait` 主动暂停：`expect: [标签...]`、`round` 与派发时一致，`mode: "any"` 等任意一个；超时会返回 pending 清单，可再次调用继续等（**同一个 `round`**，不要换新的）。
+- 同一子代理可分多个里程碑多次发信号（用不同 label），主代理用 `mode=any` 做渐进式汇总；跨轮次时换新的 `round`，否则上一轮的结果会被算进这一轮。
+- 省略 `round` 时退回序号游标语义：只认「本次等待开始后」到达的信号，挡得住上一轮的旧结果，但**认不出本轮先回报的那条**。要覆盖那个顺序就必须传 `round`。
 - 收到信号≠子代理已停止：汇总时只认 signal 里的 status/summary，需要最终产物时确认子代理已收尾。
 
 ## 团队分组与状态恢复（team 参数，v2.0 起）

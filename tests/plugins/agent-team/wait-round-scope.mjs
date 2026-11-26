@@ -95,6 +95,41 @@ try {
   assert.match(badRound.error, /round 参数非法/);
   report.cases.push({ case: '非法 round 被拒绝', ok: true });
 
+  // F. 部分完成后超时，继续等剩余标签：已完成的不能重复计，未完成的要能补上。
+  const teamF = 'partial';
+  await call('agent_report', { team: teamF, label: 'part-a', role: 'builder', task: 'a', round: 'p1', staleAfterMs: 60000 });
+  await call('agent_report', { team: teamF, label: 'part-b', role: 'builder', task: 'b', round: 'p1', staleAfterMs: 60000 });
+  await call('agent_done', { team: teamF, label: 'part-a', status: 'success', summary: 'a 完成', round: 'p1' });
+  const partial = await call('team_wait', { team: teamF, expect: ['part-a', 'part-b'], mode: 'all', round: 'p1', timeoutMs: 1000, staleAfterMs: 60000 });
+  assert.equal(partial.status, 'timeout', '只完成一部分时应超时');
+  assert.deepEqual(partial.pending, ['part-b'], 'pending 只应剩未完成的标签，已完成的不得重复列出');
+  assert.deepEqual(partial.newSignals.map((s) => s.label), ['part-a'], 'newSignals 只含已到达的那条');
+  await call('agent_done', { team: teamF, label: 'part-b', status: 'success', summary: 'b 完成', round: 'p1' });
+  const restDone = await call('team_wait', { team: teamF, expect: ['part-a', 'part-b'], mode: 'all', round: 'p1', timeoutMs: 1500, staleAfterMs: 60000 });
+  assert.equal(restDone.status, 'satisfied', '剩余标签补齐后应满足');
+  assert.deepEqual(restDone.pending, []);
+  assert.deepEqual(restDone.newSignals.map((s) => s.label).sort(), ['part-a', 'part-b'], '继续等待应看到本轮全部信号');
+  report.cases.push({ case: '部分完成后超时，继续等补齐剩余', ok: true, firstPending: partial.pending });
+
+  // G. 非法 round 不得先清空团队状态：参数校验必须在 reset 之前。
+  const teamG = 'reset-guard';
+  await call('agent_done', { team: teamG, label: 'keep', status: 'success', summary: '不该被清掉', round: 'g1' });
+  const rejected = await call('team_wait', { team: teamG, expect: ['keep'], mode: 'all', round: 'bad round!', reset: true, timeoutMs: 1000 });
+  assert.equal(rejected.ok, false, '非法 round 应被拒绝');
+  const afterReject = await call('team_status', { team: teamG });
+  assert.ok(afterReject.recentSignals.length > 0, '非法 round 触发 reset 前就应中止，旧信号必须还在');
+  report.cases.push({ case: '非法 round 不先执行 reset', ok: true, keptSignals: afterReject.recentSignals.length });
+
+  // H. agent_report 的 round 要落库，便于翻 roster 核对谁属于哪一轮。
+  const teamH = 'report-round';
+  const reported = await call('agent_report', { team: teamH, label: 'w-r', role: 'scout', task: 'h', round: 'h1', staleAfterMs: 60000 });
+  assert.equal(reported.presence.round, 'h1', 'agent_report 应把 round 存进在线状态');
+  const statusH = await call('team_status', { team: teamH, label: 'w-r' });
+  assert.equal(statusH.me.round, 'h1', 'team_status 应回显该 round');
+  const badReport = await call('agent_report', { team: teamH, label: 'w-r', round: 'bad round!' });
+  assert.equal(badReport.ok, false, '非法 round 的上报应被拒绝');
+  report.cases.push({ case: 'agent_report 保存 round', ok: true });
+
   report.ok = true;
 } catch (err) {
   failure = err;

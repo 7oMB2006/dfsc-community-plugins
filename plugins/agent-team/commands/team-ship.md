@@ -10,7 +10,7 @@ description: 发布把关流程：功能/安全/性能/UI 四路并行审查 →
 - **perf-engineer**（label: ship-perf）：热路径、复杂度、IO，输出测量数字。
 - **ux-reviewer**（label: ship-ui）：状态覆盖、交互反馈、文案、可访问性；需视觉确认的点列出来。
 
-派发后调用 agent-team__team-gate__team_wait（team: ship-1，expect 为四个 label）主动暂停，收齐信号后合并：按 [阻塞]/[高危] 优先排序，给出「可以发布 / 需修改后发布」结论。
+派发时给本轮分配 round（如 ship-1-r1）并写进任务文本。派发后调用 agent-team__team-gate__team_wait（team: ship-1，round: ship-1-r1，expect 为四个 label）主动暂停，收齐信号后合并：按 [阻塞]/[高危] 优先排序，给出「可以发布 / 需修改后发布」结论。超时未收齐时用同一个 round 继续等。
 
 第二步（仅无阻塞项时继续）：
 - **docs-writer**（label: ship-docs）：按代码事实同步 README/API/CHANGELOG。

@@ -269,8 +269,8 @@ async function teamWait(args, ctx) {
   const { team, error } = teamOrError(args);
   if (error) return error;
   const { store, activeWaits } = ctx;
-  if (args.reset === true) await store.resetTeam(team);
 
+  // 先把所有参数校验完再执行副作用：非法 round 不能先把团队状态清掉。
   const mode = args.mode === 'any' ? 'any' : 'all';
   const expect = Array.isArray(args.expect)
     ? args.expect.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim())
@@ -282,6 +282,8 @@ async function teamWait(args, ctx) {
   const round = normalizeRound(args.round);
   if (round.error) return textResult({ ok: false, error: round.error });
   const roundId = round.value;
+
+  if (args.reset === true) await store.resetTeam(team);
 
   // 给了 round 就只认「这一轮」的信号：轮次由派发时确定，回报和等待认同一个 id，
   // 因此「先回报、后等待」不会丢，超时后继续等也不会漏。
@@ -384,11 +386,14 @@ async function agentReport(args, ctx) {
   const label = String(args.label ?? '').trim();
   if (!label) return textResult({ ok: false, error: 'label 必填' });
   const status = ['running', 'waiting', 'done', 'failed', 'blocked'].includes(args.status) ? args.status : 'running';
+  const round = normalizeRound(args.round);
+  if (round.error) return textResult({ ok: false, error: round.error });
   const presence = await ctx.store.upsertPresence(team, {
     label,
     role: args.role === undefined ? undefined : String(args.role).slice(0, 60),
     task: args.task === undefined ? undefined : String(args.task).slice(0, 2000),
     status,
+    round: round.value,
   });
   return textResult({ ok: true, team, presence, onlineCount: ctx.store.roster(team).length });
 }

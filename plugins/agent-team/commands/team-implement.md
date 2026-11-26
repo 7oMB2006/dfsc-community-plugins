@@ -14,4 +14,4 @@ description: 全流程实现：需求澄清 → 调研 → 方案 → 实现 →
 6. **reviewer**（label: review-1）：独立审查最终 diff，按 [阻塞]/[建议]/[nit] 分级。
 7. 按需叠加：碰用户输入/权限/密钥加 **security-auditor**；碰热路径/查询/渲染加 **perf-engineer**；UI 改动加 **ux-reviewer**；行为变化加 **docs-writer**。
 
-主代理职责：为本次任务分配团队名（如 impl-1），每步自包含描述任务、带 label 与 team；要求子代理所有 team-gate 调用都带该 team；子代理完成必要任务即发 agent_done 信号并继续执行；并行步骤派发后用 team_wait 暂停等待收齐再汇总；汇总时抽查证据；任何「通过」必须附真实命令输出。发现方案有误时停下来向用户报告，不要带病推进。
+主代理职责：为本次任务分配团队名（如 impl-1）与本轮标识 round（如 impl-1-r1），并把 round 写进派发文本；每步自包含描述任务、带 label 与 team；要求子代理所有 team-gate 调用都带该 team，agent_done 带同一个 round；子代理完成必要任务即发 agent_done 信号并继续执行；并行步骤派发后用 team_wait（team 与 round 都与派发一致）暂停等待收齐再汇总；汇总时抽查证据；任何「通过」必须附真实命令输出。发现方案有误时停下来向用户报告，不要带病推进。
