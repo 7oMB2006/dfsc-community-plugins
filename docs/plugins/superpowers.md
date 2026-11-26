@@ -4,10 +4,12 @@
 
 ## 相对上游的改动
 
-技能文档（各 `SKILL.md` 与其 `references/`、`prompts/`、`templates/`）保持上游原文。**唯一的代码改动**是可视化伴侣的脚本 `skills/brainstorming/scripts/server.cjs`：
+技能文档（各 `SKILL.md` 与其 `references/`、`prompts/`、`templates/`）除下述一处外保持上游原文。**代码改动**是可视化伴侣的脚本 `skills/brainstorming/scripts/server.cjs`：
 
 - 品牌 Logo 改为显式 opt-in（`BRAINSTORM_BRAND_LOGO=1`），默认只渲染文字标志。上游默认会从 `primeradiant.com` 加载一张 Logo 图片（查询串带版本号，用于粗算使用人数，不含项目内容或提示词）。
 - 品牌区块的外链补 `rel="noreferrer noopener"`。
+
+**技能文档改动**仅限 `skills/diagnosing-superpowers/`：`SKILL.md` 的步骤 5 与 `references/github-issues.md` 增加了「联网搜索前先展示脱敏搜索词并获确认」，Hard rules 多一条 `Network needs a yes`，Red Flags 多一行。这是本市场对诊断流程的唯一修改——上游在判定可能相关时会直接搜 GitHub，搜索词可能带上项目名或错误原文。其余 14 个技能文档与所有 `prompts/`、`templates/` 未改动。
 
 除此之外还排除了上游各平台适配层、Claude Code 的 `hooks/`、维护脚本、测试与设计文档（见「依赖与生效方式」）。逐字节对照可用 `git diff` 查看上游 `22f0b463` 与本仓库固定提交之间的差异。
 
