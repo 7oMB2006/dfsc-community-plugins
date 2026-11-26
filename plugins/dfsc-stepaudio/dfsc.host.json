@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "hostApiVersion": 1,
+  "consumer": { "kind": "mcp-stdio", "server": "stepaudio" },
+  "capabilities": ["model.tts"],
+  "independentTools": true
+}

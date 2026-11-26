@@ -1,0 +1,25 @@
+# Copy outside the installed plugin directory, then edit privately.
+# Only non-DFSC clients (and local development) use credentials from this file.
+# A DFSC-managed install reads the plugin-center settings instead and ignores this file.
+# 使用方法：
+#   1. 把本文件复制到插件目录以外的私密位置（自选路径）
+#   2. 填入你的 API Key，并按需选择 base URL 与模型
+#   3. node scripts/configure.mjs --profile <目录> --mode independent --env-file <该文件绝对路径>
+# 切勿把填好 Key 的文件提交进仓库或放入插件目录。
+
+# API Key（必填）
+STEP_API_KEY=REPLACE_WITH_YOUR_KEY
+
+# 二选一：Step Plan 登录态额度 或 开放平台 / 任意 OpenAI 兼容网关
+# STEPAUDIO_MODE=stepplan
+# STEPAUDIO_BASE_URL=https://api.stepfun.com/step_plan/v1
+# STEPAUDIO_BASE_URL=https://api.stepfun.com/v1
+
+# 可选：默认模型与输出目录
+# STEPAUDIO_MODEL=stepaudio-2.5-tts
+# STEPAUDIO_OUTPUT_DIR=
+
+# 可选：合成默认值（与插件中心设置页同名；每次合成按次指定时优先）
+# STEPAUDIO_VOICE=cixingnansheng
+# STEPAUDIO_INSTRUCTION=语气温柔，语速偏慢
+# STEPAUDIO_RESPONSE_FORMAT=mp3

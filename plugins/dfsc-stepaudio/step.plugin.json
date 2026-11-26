@@ -1,0 +1,20 @@
+{
+  "id": "dfsc-stepaudio",
+  "name": "阶跃 StepAudio 语音",
+  "version": "0.3.1",
+  "description": "阶跃 StepAudio TTS 的 MCP 服务：文本转语音、音色列表、音色复刻。默认经独立模式配置使用 Step Plan 额度或任意 OpenAI 兼容网关；自包含单文件分发，仅需 Node.js。",
+  "icon": "icon.png",
+  "skills": [],
+  "commands": [],
+  "mcpServers": {
+    "stepaudio": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "STEPFUN_API_KEY": "DFSC_INDEPENDENT_PLUGIN"
+      },
+      "startup_timeout_sec": 60,
+      "tool_timeout_sec": 300
+    }
+  }
+}
