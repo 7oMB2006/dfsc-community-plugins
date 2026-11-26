@@ -1,0 +1,7 @@
+{
+  "id": "superpowers",
+  "name": "Superpowers",
+  "description": "Superpowers 核心技能库（15 个技能）：测试驱动开发、系统化调试、计划编写与执行、子代理驱动开发、代码审查收发、Git worktree、验证收尾、可视化头脑风暴等工程方法论。上游 obra/superpowers v7.0.2。",
+  "version": "7.0.2",
+  "skills": ["skills"]
+}

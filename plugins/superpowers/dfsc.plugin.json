@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "authors": [{ "name": "Jesse Vincent" }],
+  "maintainers": [{ "name": "Niangaol" }],
+  "license": "MIT",
+  "categories": ["development"],
+  "keywords": ["TDD", "系统化调试", "代码审查", "技能库", "工作流"],
+  "requirements": {
+    "dfsc": ">=0.4.0",
+    "external": [
+      {
+        "name": "Bash",
+        "description": "部分技能的工作区与评审脚本以 POSIX shell 编写，需要系统提供 bash/sh（Windows 下用 Git Bash 实测；WSL 未验证）。",
+        "url": "https://www.gnu.org/software/bash/"
+      },
+      {
+        "name": "Node.js",
+        "description": "仅 brainstorming 的可视化伴侣使用：启动本机 node 进程（server.cjs）并在 127.0.0.1 随机端口监听；不启用可视化伴侣时不需要。",
+        "url": "https://nodejs.org/",
+        "optional": true
+      }
+    ]
+  },
+  "documentation": { "readme": "README.md" }
+}

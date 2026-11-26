@@ -15,6 +15,11 @@
       "name": "stellar-cruise",
       "source": "./plugins/stellar-cruise",
       "description": "星辰巡航动态主题：双龙星海与石墨阅读面板；适用于 DFSC 1.x，安装后在「设置 → 外观」手动启用。"
+    },
+    {
+      "name": "superpowers",
+      "source": "./plugins/superpowers",
+      "description": "Superpowers 核心技能库（15 个技能）：TDD、系统化调试、计划编写与执行、子代理驱动开发、代码审查收发、Git worktree、验证收尾等；部分技能脚本需 bash，可视化伴侣可选依赖 Node.js。"
     }
   ]
 }
