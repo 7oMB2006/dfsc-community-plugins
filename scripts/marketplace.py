@@ -219,6 +219,19 @@ def index_modes(root, names):
     copy file does not change what Git stores. The only reliable signal is the
     index itself, so compare against `git ls-files -s` rather than st_mode.
     """
+    entries = index_entries(root, names)
+    return None if entries is None else {path: entry['mode'] for path, entry in entries.items()}
+
+
+def index_entries(root, names):
+    """Read mode **and blob** Git records for the given paths.
+
+    The blob matters: `git update-index --chmod` refreshes the entry from the
+    working copy, so it silently replaces the staged content. Rollback has to put
+    back both halves, which means knowing the blob each path had before.
+
+    Returns None when `root` is not a Git work tree.
+    """
     probe = subprocess.run(
         ['git', '-C', str(root), 'rev-parse', '--show-toplevel'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
@@ -242,7 +255,7 @@ def index_modes(root, names):
         ['git', '-C', str(root), 'ls-files', '-s', '-z', '--', *sorted(names)],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
     require(result.returncode == 0, 'Unable to read Git index modes')
-    modes = {}
+    entries = {}
     # `-z` keeps paths verbatim: without it Git quotes non-ASCII paths
     # (`"plugins/\350\204\232..."`), and Chinese paths would never match.
     for entry in result.stdout.split('\0'):
@@ -250,77 +263,120 @@ def index_modes(root, names):
             continue
         parts = entry.split(None, 3)
         require(len(parts) == 4, 'Unexpected git ls-files output')
-        modes[parts[3].strip()] = parts[0]
-    return modes
+        entries[parts[3].strip()] = {'mode': parts[0], 'sha': parts[1]}
+    return entries
+
+
+def set_index_entries(root, entries):
+    """Write mode and blob together, without reading the working copy.
+
+    ``git update-index --chmod`` is the obvious call and the wrong one: it
+    refreshes the entry from the working copy, so it also replaces whatever was
+    staged with the file's current bytes. ``--index-info`` writes exactly the
+    mode and object id given here, which is what a rollback needs.
+
+    The payload is NUL terminated (``-z``) because entry paths may contain
+    spaces, commas, Chinese characters or a leading dash. ``--cacheinfo`` is not
+    usable here: it refuses the ``--`` separator, so such paths cannot be passed
+    safely.
+    """
+    require(entries, 'Empty index entry batch')
+    payload = ''.join(
+        f"{entry['mode']} {entry['sha']} 0\t{path}\0"
+        for path, entry in sorted(entries.items())
+    )
+    result = subprocess.run(
+        ['git', '-C', str(root), 'update-index', '-z', '--index-info'],
+        input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        check=False, text=True, encoding='utf-8')
+    require(result.returncode == 0, 'Unable to write Git index entries: ' + ', '.join(sorted(entries)))
 
 
 def apply_index_modes(root, rows):
     """Make Git record the reviewed executable bit for every staged path.
 
-    Returns ``{'previous': {path: mode}, 'added': [path, ...]}``:
+    Returns ``{'previous': {path: {'mode', 'sha'}}, 'added': [path, ...],
+    'worktree': {path: st_mode}}``:
 
-    - ``previous`` maps every path whose mode changed to its old mode, so a
-      caller that fails later can restore the index with
-      :func:`restore_index_modes`;
+    - ``previous`` keeps the mode *and* blob each path had, so a caller that
+      fails later can restore the index with :func:`restore_index_modes`;
     - ``added`` lists paths this call introduced to the index (they had no
-      entry before), so the caller can unstaged them again on rollback.
+      entry before), so the caller can unstage them again on rollback;
+    - ``worktree`` keeps the working-copy permission bits this call changed.
 
-    Returns ``{'previous': {}, 'added': []}`` when nothing changed, or when
-    `root` is not a Git work tree.
+    Returns empty maps when nothing changed, or when `root` is not a Git work
+    tree.
     """
     wanted = {row['path']: source_mode(row.get('mode', '100644')) for row in rows}
     require(wanted, 'Empty resource inventory')
-    present = index_modes(root, wanted)
+    present = index_entries(root, wanted)
     if present is None:
         # Not a Git work tree (offline fixtures, exported tarball): the lock
         # still records the modes, but there is no index to set them in.
-        return {'previous': {}, 'added': []}
+        return {'previous': {}, 'added': [], 'worktree': {}}
     missing = sorted(path for path in wanted if path not in present)
     added = list(missing)
-    if missing:
-        # Untracked files carry no index mode yet; stage them by content only.
-        # `--chmod` below then sets the reviewed bit, so the working copy's
-        # own permission bits never decide what gets published.
-        result = subprocess.run(
-            ['git', '-C', str(root), 'add', '--', *missing],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
-        require(result.returncode == 0, 'Unable to stage vendored resources: ' + ', '.join(missing))
-        present = index_modes(root, wanted)
-    # Remember what we are about to overwrite, before touching the index.
     previous = {}
-    changed = []
-    for path, mode in sorted(wanted.items()):
-        require(path in present, 'Staged resource missing from the Git index: ' + path)
-        if present[path] != mode:
-            previous[path] = present[path]
-            changed.append(path)
-    # Batch by target state so this stays two git calls regardless of file count.
+    worktree = {}
+    # Everything from staging onward is inside the rollback window: a failure
+    # while reading the index back must not leave this call's staged files
+    # behind as a phantom entry.
     try:
-        for mode, flag in (('100755', '+x'), ('100644', '-x')):
-            targets = [path for path in changed if wanted[path] == mode]
-            if not targets:
-                continue
+        if missing:
+            # Untracked files carry no index entry yet; stage them by content
+            # first. The reviewed bit is written below, never derived from the
+            # working copy.
             result = subprocess.run(
-                ['git', '-C', str(root), 'update-index', '--chmod=' + flag, '--', *sorted(targets)],
+                ['git', '-C', str(root), 'add', '--', *missing],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
-            require(result.returncode == 0, 'Unable to set Git index mode for: ' + ', '.join(sorted(targets)))
+            require(result.returncode == 0, 'Unable to stage vendored resources: ' + ', '.join(missing))
+            present = index_entries(root, wanted)
+            require(present is not None, 'Git index became unreadable after staging: ' + ', '.join(missing))
+        changed = []
+        for path, mode in sorted(wanted.items()):
+            require(path in present, 'Staged resource missing from the Git index: ' + path)
+            if present[path]['mode'] != mode:
+                previous[path] = dict(present[path])
+                changed.append(path)
         if changed:
-            verify = index_modes(root, wanted)
-            require(verify == wanted, 'Git index modes still differ from the reviewed lock')
+            set_index_entries(root, {
+                path: {'mode': wanted[path], 'sha': previous[path]['sha']} for path in changed
+            })
+            current = index_entries(root, wanted)
+            require(current is not None and {p: e['mode'] for p, e in current.items()} == wanted,
+                    'Git index modes still differ from the reviewed lock')
+        # Also set the working-copy bit: on Linux/macOS Git derives the mode from
+        # the file system, so a later plain `git add` would silently drop an
+        # executable bit that only ever existed in the index. Windows has no
+        # such bit (core.fileMode=false), so it is left alone there.
+        if os.name != 'nt':
+            for path in sorted(wanted):
+                target = Path(root) / path
+                if not target.exists() or target.is_symlink():
+                    continue
+                current_mode = target.stat().st_mode
+                desired = (current_mode | 0o111) if wanted[path] == '100755' else (current_mode & ~0o111)
+                if desired != current_mode:
+                    worktree[path] = current_mode
+                    os.chmod(target, desired)
     except Exception:
         # A partially applied batch must not be left behind.
-        restore_index_modes(root, {'previous': previous, 'added': added})
+        restore_index_modes(root, {'previous': previous, 'added': added, 'worktree': worktree})
         raise
-    return {'previous': previous, 'added': added}
+    return {'previous': previous, 'added': added, 'worktree': worktree}
 
 
 def restore_index_modes(root, restore):
     """Undo an :func:`apply_index_modes` call.
 
-    ``restore`` is the value that call returned. Both halves matter:
+    Every half matters:
 
     - modes are put back to their previous values, so a half-updated index does
       not keep claiming executable bits for files that were rolled back;
+    - the previous blobs go back with them, because the entry is rewritten as a
+      whole and a half-restored index would otherwise keep the rolled-back
+      content staged;
+    - working-copy permission bits return to what they were;
     - paths this call newly staged are unstaged again, so a failed sync does not
       leave a phantom entry for a file that no longer exists.
 
@@ -329,28 +385,26 @@ def restore_index_modes(root, restore):
     """
     previous = dict(restore.get('previous') or {})
     added = list(restore.get('added') or [])
-    if not previous and not added:
+    worktree = dict(restore.get('worktree') or {})
+    if not previous and not added and not worktree:
         return []
-    require(index_modes(root, previous or {'__probe__': '100644'}) is not None,
+    require(index_entries(root, previous or {'__probe__': '100644'}) is not None,
             'Cannot restore Git index modes outside a Git work tree')
-    for mode, flag in (('100755', '+x'), ('100644', '-x')):
-        targets = sorted(path for path, value in previous.items() if value == mode)
-        if not targets:
-            continue
-        result = subprocess.run(
-            ['git', '-C', str(root), 'update-index', '--chmod=' + flag, '--', *targets],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
-        require(result.returncode == 0, 'Unable to restore Git index mode for: ' + ', '.join(targets))
     if previous:
-        current = index_modes(root, previous)
-        require(current == previous, 'Git index modes were not fully restored')
+        set_index_entries(root, {path: dict(entry) for path, entry in previous.items()})
+        current = index_entries(root, previous)
+        require(current == previous, 'Git index entries were not fully restored')
     if added:
         # `--ignore-unmatch` keeps this safe when the file was already gone.
         result = subprocess.run(
             ['git', '-C', str(root), 'rm', '--cached', '--quiet', '--ignore-unmatch', '--', *sorted(added)],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
         require(result.returncode == 0, 'Unable to unstage rolled-back resources: ' + ', '.join(sorted(added)))
-    return sorted(previous) + sorted(added)
+    for path, mode in sorted(worktree.items()):
+        target = Path(root) / path
+        if target.exists():
+            os.chmod(target, mode)
+    return sorted(previous) + sorted(added) + sorted(worktree)
 
 
 def inventory(directory):

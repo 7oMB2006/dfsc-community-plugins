@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -660,6 +661,16 @@ class MarketplaceTests(unittest.TestCase):
         line = self.git('ls-files', '-s', '--', path).stdout.strip()
         return line.split(None, 1)[0] if line else None
 
+    def staged_bytes(self, path):
+        """索引里当前记录的字节（不是工作区里的）。"""
+        entry = self.git('ls-files', '-s', '--', path).stdout.strip()
+        if not entry:
+            return None
+        sha = entry.split()[1]
+        return subprocess.run(
+            ('git', '-C', str(self.root), 'cat-file', 'blob', sha),
+            check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+
     def test_record_omits_mode_for_plain_files(self):
         row = m.record('commands/help.md', b'Fixture command\n')
         self.assertNotIn('mode', row)
@@ -700,7 +711,40 @@ class MarketplaceTests(unittest.TestCase):
         # paths staged into that outer repository.
         self.assertIsNone(m.index_modes(self.root, ['registry.json']))
         self.assertEqual(m.apply_index_modes(self.root, [{'path': 'registry.json', 'mode': '100755'}]),
-                         {'previous': {}, 'added': []})
+                         {'previous': {}, 'added': [], 'worktree': {}})
+
+    def test_apply_index_modes_does_not_replace_staged_content(self):
+        """改权限位不能把工作区内容写进暂存区。
+
+        `git update-index --chmod` 会顺带刷新条目，等于把工作区当前的字节存进去；
+        调用方要的是「只改权限位」，暂存的内容必须原样保留。
+        """
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        target = self.root / path
+        staged_before = self.staged_bytes(path)
+        # 工作区改成别的内容，但故意不 add：暂存区仍是旧内容
+        target.write_text('uncommitted working copy change\n', encoding='utf-8')
+        self.assertNotEqual(target.read_bytes(), staged_before)
+
+        m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+
+        self.assertEqual(self.index_mode(path), '100755', '执行位应已写入')
+        self.assertEqual(self.staged_bytes(path), staged_before,
+                         '暂存内容必须原样保留，不能被工作区的改动顶掉')
+
+    def test_restore_index_modes_puts_back_both_mode_and_staged_content(self):
+        """回滚要把权限位和暂存内容一起还原。"""
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        target = self.root / path
+        staged_before = self.staged_bytes(path)
+        restore = m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        target.write_text('worked on after sync\n', encoding='utf-8')
+
+        m.restore_index_modes(self.root, restore)
+        self.assertEqual(self.index_mode(path), '100644', '权限位应回到原值')
+        self.assertEqual(self.staged_bytes(path), staged_before, '暂存内容也应回到原值')
 
     def test_sync_records_executable_bit_in_the_git_index(self):
         self.make_git_repo()
@@ -758,20 +802,25 @@ class MarketplaceTests(unittest.TestCase):
         self.make_git_repo()
         path = 'plugins/alpha-plugin/commands/help.md'
         self.assertEqual(self.index_mode(path), '100644')
+        before = m.index_entries(self.root, [path])[path]
         restore = m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
-        self.assertEqual(restore['previous'], {path: '100644'})
+        self.assertEqual(restore['previous'], {path: before})
         self.assertEqual(restore['added'], [])
         self.assertEqual(self.index_mode(path), '100755')
         m.restore_index_modes(self.root, restore)
         self.assertEqual(self.index_mode(path), '100644', '回滚后索引应恢复原模式')
+        self.assertEqual(m.index_entries(self.root, [path])[path], before,
+                         '回滚后索引里的 blob 也要回到原值')
 
     def test_restore_index_modes_is_a_noop_for_an_empty_map(self):
         self.make_git_repo()
-        self.assertEqual(m.restore_index_modes(self.root, {'previous': {}, 'added': []}), [])
+        self.assertEqual(m.restore_index_modes(self.root, {'previous': {}, 'added': [], 'worktree': {}}), [])
 
     def test_restore_index_modes_refuses_outside_a_git_work_tree(self):
         with self.assertRaisesRegex(m.MarketError, 'outside a Git work tree'):
-            m.restore_index_modes(self.root, {'previous': {'registry.json': '100644'}, 'added': []})
+            m.restore_index_modes(
+                self.root,
+                {'previous': {'registry.json': {'mode': '100644', 'sha': '0' * 40}}, 'added': []})
 
     def test_apply_index_modes_rolls_back_a_partially_applied_batch(self):
         """正向应用只成功了一半时，已经改掉的模式必须被撤回。"""
@@ -784,14 +833,13 @@ class MarketplaceTests(unittest.TestCase):
         state = {'calls': 0}
 
         def flaky_run(argv, **kwargs):
-            if 'update-index' in argv and state['calls'] == 0:
+            if '--index-info' in argv and state['calls'] == 0:
                 state['calls'] += 1
-                # 只对第一个文件生效，第二个文件留在 100644：模拟「只应用了一半」
-                return original_run(
-                    ['git', '-C', str(self.root), 'update-index', '--chmod=+x', '--', script],
-                    stdout=m.subprocess.PIPE, stderr=m.subprocess.PIPE, check=False,
-                    text=True, encoding='utf-8')
-            if 'update-index' in argv:
+                # 只把第一个文件写进索引，第二个留在 100644：模拟「只应用了一半」
+                payload = kwargs.get('input', '')
+                first = payload.split('\0')[0] + '\0'
+                return original_run(argv, **{**kwargs, 'input': first})
+            if '--index-info' in argv:
                 state['calls'] += 1
             return original_run(argv, **kwargs)
 
@@ -803,7 +851,50 @@ class MarketplaceTests(unittest.TestCase):
             ])
         self.assertEqual(self.index_mode(script), '100644', '失败后已应用的那一半也必须回滚')
         self.assertEqual(self.index_mode(plain), '100644')
-        self.assertGreater(state['calls'], 1, '回滚本身应当也调用过 update-index')
+        self.assertGreater(state['calls'], 1, '回滚本身应当也写过索引')
+
+    def test_failed_index_read_after_staging_leaves_nothing_new_in_the_index(self):
+        """git add 成功但读回索引失败时，不得把这次新暂存的文件留在索引里。"""
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/scripts/run'
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('#!/bin/sh\necho fixture\n', encoding='utf-8')
+        self.assertIsNone(self.index_mode(path), '夹具里这个文件应为未跟踪状态')
+
+        original = m.index_entries
+        calls = {'n': 0}
+
+        def flaky(root, names):
+            calls['n'] += 1
+            if calls['n'] == 2:  # 第 1 次读现状，第 2 次是 git add 之后的读回
+                raise m.MarketError('Unable to read Git index modes')
+            return original(root, names)
+
+        with patch.object(m, 'index_entries', flaky), \
+                self.assertRaisesRegex(m.MarketError, 'index modes'):
+            m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertIsNone(self.index_mode(path), '失败后不得留下这次新暂存的文件')
+
+    @unittest.skipIf(os.name == 'nt', 'Windows 表达不了执行位；这条在 Linux CI 上跑')
+    def test_plain_git_add_keeps_the_executable_bit(self):
+        """同步之后普通 git add 不能把执行位丢掉。
+
+        Linux/macOS 上 Git 从文件系统推导模式：只写索引、不给工作区加执行位的话，
+        下一次普通 `git add` 会把它改回 100644。
+        """
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        target = self.root / path
+        self.assertFalse(target.stat().st_mode & 0o111, '夹具起始没有执行位')
+
+        m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertEqual(self.index_mode(path), '100755', '索引里的执行位应已写入')
+        self.assertTrue(target.stat().st_mode & 0o111, '工作区也要有执行位')
+
+        self.git('add', '--', path)
+        self.assertEqual(self.index_mode(path), '100755', '普通 git add 不应丢掉执行位')
+
 
     def test_sync_rolls_the_index_back_when_final_validation_fails(self):
         """同步在写完索引后失败时，索引不能留下新包的模式。"""
@@ -883,7 +974,7 @@ class MarketplaceTests(unittest.TestCase):
         self.assertEqual(self.index_mode(chinese), '100644')
 
         restore = m.apply_index_modes(self.root, [{'path': chinese, 'mode': '100755'}])
-        self.assertEqual(restore['previous'], {chinese: '100644'})
+        self.assertEqual(restore['previous'], {chinese: {'mode': '100644', 'sha': m.index_entries(self.root, [chinese])[chinese]['sha']}})
         self.assertEqual(self.index_mode(chinese), '100755', '中文路径的可执行位应写入索引')
         self.assertEqual(m.index_modes(self.root, [chinese]), {chinese: '100755'},
                          '读取时路径应保持中文原样')
@@ -907,7 +998,7 @@ class MarketplaceTests(unittest.TestCase):
         subprocess.run(('git', 'commit', '-qm', '中文根'), cwd=chinese_root, check=True)
 
         restore = m.apply_index_modes(chinese_root, [{'path': '脚本/运行.sh', 'mode': '100755'}])
-        self.assertEqual(restore['previous'], {'脚本/运行.sh': '100644'})
+        self.assertEqual(restore['previous'], {'脚本/运行.sh': {'mode': '100644', 'sha': m.index_entries(chinese_root, ['脚本/运行.sh'])['脚本/运行.sh']['sha']}})
         line = subprocess.run(('git', 'ls-files', '-s', '--', '脚本/运行.sh'), cwd=chinese_root,
                               check=True, stdout=subprocess.PIPE, text=True, encoding='utf-8').stdout
         self.assertTrue(line.startswith('100755'), f'中文根目录下的模式未生效：{line!r}')
