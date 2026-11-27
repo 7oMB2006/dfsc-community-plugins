@@ -1,5 +1,11 @@
 # 更新记录
 
+## 0.3.2
+
+- 修复社区包启动问题：发布入口由 `dist/index.js` 改为 `dist/index.mjs`，避免市场安装目录缺少 `package.json` 时 Node 将 ESM bundle 误判为 CommonJS。
+- 同步构建产物、`step.plugin.json`、bin、测试与验收脚本入口引用；Broker、独立配置与计费路由语义不变。
+- 新增最终交付目录验收：从无 `package.json` 的交付目录以假宿主上下文启动，验证 `initialize` 与 `tools/list`，确认三个工具注册且零真实模型调用。
+
 ## 0.3.1
 
 - 声明 DFSC `>=1.0.0 <1.1.0`：1.0.0 起正式搭载 v018 运行时、凭据隔离与 Broker；1.0.1 的 host-client/Broker 协议经核对无破坏性变化。

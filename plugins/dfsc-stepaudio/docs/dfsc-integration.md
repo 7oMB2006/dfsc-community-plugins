@@ -11,7 +11,7 @@ MCP 能力通过 `mcpServers` 段声明（字段取自 BVR 范例）：
   "mcpServers": {
     "stepaudio": {
       "command": "node",
-      "args": ["dist/index.js"],
+      "args": ["dist/index.mjs"],
       "env": { "STEPFUN_API_KEY": "DFSC_INDEPENDENT_PLUGIN" },
       "startup_timeout_sec": 60,
       "tool_timeout_sec": 300
@@ -20,7 +20,7 @@ MCP 能力通过 `mcpServers` 段声明（字段取自 BVR 范例）：
 }
 ```
 
-- `args` 相对插件目录，指向**自包含打包产物** `dist/index.js`（官方 MCP SDK 已在开发期用 esbuild 打入，市场安装不执行 `npm install`，用户机器无任何 npm 依赖）。
+- `args` 相对插件目录，指向**自包含打包产物** `dist/index.mjs`（官方 MCP SDK 已在开发期用 esbuild 打入，市场安装不执行 `npm install`，用户机器无任何 npm 依赖）。
 - MCP 标识为 `dfsc-stepaudio__stepaudio`（插件 ID + 服务名）。
 - `env` 里的 `DFSC_INDEPENDENT_PLUGIN` 是**官方非密钥哨兵**，必须写在宿主自动注入登录凭据所使用的变量 `STEPFUN_API_KEY` 上（对齐官方 config-starter / sdk-host-starter 范例）——写在其他变量名无法阻止宿主把真实凭据注入 MCP 子进程。取值等于任一已知哨兵（含 0.1.x 的自定义值 `stepaudio-managed-provider-context`）时服务视为"未配置"。
 - 作者路线：官方 MCP SDK 开发 → `npm run build` 打包（含 `dist/THIRD_PARTY_LICENSES.txt` 许可证归集）→ 提交 `dist/` → 市场安装 → 插件中心预置配置 → 预留更新。
@@ -123,7 +123,7 @@ const result = await host.invoke({
 ## 5. 宿主兼容边界
 
 - 需要：支持原生插件、插件相对工作目录、并从 `step.plugin.json` 加载 `mcpServers` 的 DFSC 宿主；PATH 上可用的 Node.js 20+。
-- 已验证：本仓库内 46 个单元测试（含 step.plugin.json / dfsc.plugin.json 契约、配置解析链、协议冒烟；协议测试启动实际打包产物）+ stdio 冒烟 + configure CLI 读写与拒绝路径 + 自包含验证（移走 node_modules 后 dist/index.js 仍能启动并响应 initialize/tools/list）。
+- 已验证：本仓库内 46 个单元测试（含 step.plugin.json / dfsc.plugin.json 契约、配置解析链、协议冒烟；协议测试启动实际打包产物）+ stdio 冒烟 + configure CLI 读写与拒绝路径 + 自包含验证（移走 node_modules 后 dist/index.mjs 仍能启动并响应 initialize/tools/list）。
 - 未验证：真实 DFSC 宿主中的市场发现/安装/加载/卸载；真实 Step Plan key 下的合成、音色查询、复刻计费。这些需要宿主与凭据，按社区要求单独记录。
 
 ## 6. 本地联调
@@ -131,7 +131,7 @@ const result = await host.invoke({
 任意 MCP 客户端可直接以 stdio 连接。优先用分发产物（无需开发依赖）：
 
 ```sh
-STEP_API_KEY=<key> node dist/index.js
+STEP_API_KEY=<key> node dist/index.mjs
 ```
 
 开发期也可以直接跑源码（需先 `npm install` 装上 SDK 与 esbuild）：

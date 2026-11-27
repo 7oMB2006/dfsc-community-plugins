@@ -1,6 +1,6 @@
 # dfsc-stepaudio（阶跃 StepAudio 语音）
 
-版本 0.3.1。把阶跃 StepAudio TTS 能力接入 DFSC 会话的 MCP 插件。
+版本 0.3.2。把阶跃 StepAudio TTS 能力接入 DFSC 会话的 MCP 插件。
 
 ## 功能
 
@@ -25,7 +25,8 @@ broker-v018 起支持 `independentTools`：语音合成模型行与插件自有�
 
 ## 依赖与边界
 
-- 运行时仅需 Node.js 20+；市场安装不执行 npm install（自包含单文件 `dist/index.js`，官方 MCP SDK 已打包）。
+- 运行时仅需 Node.js 20+；市场安装不执行 npm install（自包含单文件 `dist/index.mjs`，官方 MCP SDK 已打包）。
+- 0.3.2 修复社区安装目录缺少 `package.json` 时 ESM 入口被误判为 CommonJS 的启动问题。
 - 使用外部模型服务会上传文本并消耗套餐额度或按量计费；计费按所配置渠道，不随聊天账户切换；市场收录不等于账户或付费授权。
 - 音色复刻按次收费（9.9 元/音色）；参数非法的复刻请求不会产生付费资产。
 - 音色复刻走独立连接。指定 `audio_path` 会读取该本地音频并上传至配置的服务；指定 `file_id` 则使用服务端已有文件，不再次上传本地音频。只提交有权使用并上传的音频。

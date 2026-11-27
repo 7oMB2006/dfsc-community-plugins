@@ -159,15 +159,15 @@
       "id": "dfsc-stepaudio",
       "source": {
         "repository": "7oMB2006/dfsc-stepaudio",
-        "commit": "4f27d4464f5e58b2bf0a332dd3607712a90f7542",
+        "commit": "6efe6b418fe3bcb00525ddc7d678eafd8f4b20a4",
         "path": "plugins/dfsc-stepaudio"
       },
       "files": [
         {
           "path": "CHANGELOG.md",
-          "gitBlobSha": "1a4995b3e8cb0dc6ef1bef5046e8dcbc37f403f7",
-          "sha256": "ab963c97836a9fe698881fcb3786aa26504f6fd060dcf70c764506a1fc617d9c",
-          "size": 5196
+          "gitBlobSha": "21107139a89b47a6debf48ad4c340b275d5ac852",
+          "sha256": "eed2db61c88e24e71daa8a4d60ba088e9905c35c1f161fdad382785871263e89",
+          "size": 5766
         },
         {
           "path": "LICENSE",
@@ -177,15 +177,15 @@
         },
         {
           "path": "README.md",
-          "gitBlobSha": "a923073b7198db9f9a1e79964ee6ffac217ce912",
-          "sha256": "014743fca9f20859a0497c23b4c1aa86948206e97d74dd5528db373ae7ce07d1",
-          "size": 10048
+          "gitBlobSha": "1d25b355f6d17dea74ae18deb07ca1f0f2619645",
+          "sha256": "d6b992b9afe30d04f2aeb79360c6f4d1dacedaa380ab380452867ed565c30a12",
+          "size": 10192
         },
         {
           "path": "UPSTREAM.md",
-          "gitBlobSha": "9ac2cb5cdd7518cff33be7bec78538ebcab71c17",
-          "sha256": "34c57ced9d54211a199b85522028ba046b4c0a65c94f079eb73168ae9399a22c",
-          "size": 2347
+          "gitBlobSha": "e769679cfbecd046aaac4dd73d67a5a96e2e60d1",
+          "sha256": "57f2c648e45bf4827b953f81cf519cec7f1d5d050e3d1c05b0e2628d8a576319",
+          "size": 2383
         },
         {
           "path": "data/system-voices.json",
@@ -218,22 +218,22 @@
           "size": 9289
         },
         {
-          "path": "dist/index.js",
-          "gitBlobSha": "3ae8e3f1177c603d8d18c757f86886f13e64d4bc",
-          "sha256": "80cd7c02baa3ebf47d00f4992ed50257a13c59417e1738fcc27f46d37af2a0ea",
-          "size": 668606
+          "path": "dist/index.mjs",
+          "gitBlobSha": "ff2926d63d99e8a3b419677f13f0785013006d82",
+          "sha256": "006ad14dad98c98e90e014781ac4c9c094e3c21643a5cbda55b01ec0088c1ec8",
+          "size": 687024
         },
         {
           "path": "docs/acceptance-runbook.md",
-          "gitBlobSha": "1dee2000b8c615afb17c6ed8ed5b00e610a2f45a",
-          "sha256": "a399d6f3c85d26ed4cdbd4ed63f10ecd85640b47a432610c829c830563087be8",
-          "size": 7817
+          "gitBlobSha": "947deef0409b255866f2600be620f95dddccdcd1",
+          "sha256": "2cc498b41e89eb6bf26ae17d36e669318177b4611ec3a20766f832dd2ecd4320",
+          "size": 9261
         },
         {
           "path": "docs/dfsc-integration.md",
-          "gitBlobSha": "0c47345a4c7e125d72af37e11b8001754620656c",
-          "sha256": "b9ba425f73e21179d4cb8d546f11cca0b823f163506348c0cb40b200889f2d0e",
-          "size": 10723
+          "gitBlobSha": "d491d3314c7b31d33e5a44ea1ba3a30cc41ee9ed",
+          "sha256": "00628446bdc5a3ae9b8e6e68b8c909b0a2abc2b3b1c0beb1aefedb9268f56d33",
+          "size": 10870
         },
         {
           "path": "docs/recipes.md",
@@ -285,45 +285,45 @@
         },
         {
           "path": "src/lib/host-client/LICENSE",
-          "gitBlobSha": "50dc421a3ca09945a7c658fc52c65d9307ce0d69",
-          "sha256": "5a5cf1065749eba250f2c35bf8f4efe32b2e2a2ac1da667692c49bdd221bc53d",
-          "size": 1091
+          "gitBlobSha": "5d791c830f566da9e7d6992cacfa32793634e333",
+          "sha256": "d3594a038b481805a356958179e35b52559d4272b6c346eb70a1e74733b33717",
+          "size": 1112
         },
         {
           "path": "src/lib/host-client/README.md",
-          "gitBlobSha": "de22e85f70914c386bddb8132149b67e63ed884c",
-          "sha256": "b7a2de0c90e00a343ec1323f6e23be19011d3afee6aae5b6ca94084decf2f3c6",
-          "size": 4533
+          "gitBlobSha": "aa900af51037619b28da81c1008a3c8836153c37",
+          "sha256": "d64fbdd377df9c58bcf8325331cfb8f401c8225ed266b1c039b22a831a8a86cc",
+          "size": 4616
         },
         {
           "path": "src/lib/host-client/client.d.mts",
-          "gitBlobSha": "f603111843abc7ac1a2dcce1f0596a7cd50220c7",
-          "sha256": "ee30f586203e0d03c9b95f72a8942c3389d3ae92ea690c7f0e652639527c3981",
-          "size": 774
+          "gitBlobSha": "267f4bebc4fe52ef179343ba23b549b328ac58aa",
+          "sha256": "7f5f392b3e51a83d8940ab53af15741f852764e0ab213055ccf06aae7a83c79c",
+          "size": 789
         },
         {
           "path": "src/lib/host-client/client.mjs",
-          "gitBlobSha": "c257edc361e2aa6078633eb276b2a985e5401e63",
-          "sha256": "11e8d01fd04b387f80d7e528cd60cfc1f4773d298f21e13cd715058ccab5826f",
-          "size": 4767
+          "gitBlobSha": "0b48181462ce6d5e592bdb39250c5075fec8eeae",
+          "sha256": "eb6fbe233de2499e3336902042aca25f47bfbf5fa449c7c8c1abfd9c4b685bae",
+          "size": 4871
         },
         {
           "path": "src/lib/host-client/protocol.d.mts",
-          "gitBlobSha": "3d8bd051295cdeb101e52a99085382f7f9148ab2",
-          "sha256": "e898b88dd6752d9437d46c963d5bd118d211c32c273d6c5011932586f4e57438",
-          "size": 4216
+          "gitBlobSha": "22e5ff36a4ff9b38e5da04a50fe93ddb8ab359dc",
+          "sha256": "f8534164c73eb36d07e201e573d4010b59cc5a85c940c98ef8d15fdc2055e4e8",
+          "size": 4284
         },
         {
           "path": "src/lib/host-client/protocol.mjs",
-          "gitBlobSha": "edae5a1e703581f430917def10ddb84e4affbdef",
-          "sha256": "e8f8e5b5427bea21d2eeaede7834525c401721708ea332f046cbb589c553b95a",
-          "size": 12930
+          "gitBlobSha": "bb5a26509df6d2dfb5b4728c55b2a5196977cc6a",
+          "sha256": "0eaf75a77db9625e54daccf747baa54de83b970063874a439cf3d5894caa120c",
+          "size": 13139
         },
         {
           "path": "step.plugin.json",
-          "gitBlobSha": "150f40c37efc30adadd56dbc13f19b3cf585b4c2",
-          "sha256": "e9c96b7ea319a09e9e4421a8446ca989a18a7d5a6516ee3db200262ed3c9021c",
-          "size": 623
+          "gitBlobSha": "40f7f0f01a3814f8206aa983293282f33ab95414",
+          "sha256": "cce0ad90f11f72d8903241493140854d23eb639957656578a8d81dc3404520fd",
+          "size": 644
         }
       ]
     },
