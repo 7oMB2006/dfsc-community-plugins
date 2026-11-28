@@ -40,7 +40,7 @@
       "description": "阶跃 StepAudio 语音合成 MCP 服务：文本转语音、音色列表、音色复刻；模型与工具可分别选择 Broker 或独立 API 来源。",
       "source": {
         "repository": "7oMB2006/dfsc-stepaudio",
-        "commit": "4f27d4464f5e58b2bf0a332dd3607712a90f7542",
+        "commit": "6efe6b418fe3bcb00525ddc7d678eafd8f4b20a4",
         "path": "plugins/dfsc-stepaudio"
       },
       "license": "MIT",

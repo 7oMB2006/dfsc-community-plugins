@@ -28,7 +28,7 @@ sha256sum src/lib/dfsc-config.mjs
 
 - 构造器接收 `packageUrl`（插件根目录 URL），要求插件根位于名为 `plugins` 的目录下；`current()` 返回 `{ values, secrets, revision }`。
 - 该文件同时导出 `clearInheritedCredentials()`，**本项目刻意不调用**：其 env 过滤正则（含 `^STEP` 与 `key` 子串）会删除本项目自己的配置通道（`STEP_API_KEY`、`STEPAUDIO_CONFIG_PATH`、`STEPAUDIO_PROFILE_DIR` 等）。防注入改由三层完成：`step.plugin.json` 的 sentinel、占位符识别、托管布局内忽略 env。此为已记录的偏离，评审时需主动说明。
-- 随 esbuild 打包进入 `dist/index.js`，不新增运行时依赖。
+- 随 esbuild 打包进入 `dist/index.mjs`，不新增运行时依赖。
 
 ## dist/THIRD_PARTY_LICENSES.txt
 

@@ -12,6 +12,15 @@
 
 > 残留未验（需真实 Key）：真实阶跃 API 的合成计费。上述链路已证明 Key 与请求体正确到达上游端点（fixture 捕获），真实计费留待用户持 Key 执行一次。
 
+## 执行记录（2026-11-27，0.3.2 社区包 ESM 启动修复，已通过）
+
+- 问题：社区安装目录没有源码仓库根部的 `package.json`，`node dist/index.js` 将 ESM bundle 误判为 CommonJS，实际安装包复现 `Cannot use import statement outside a module`。
+- 修复：发布入口改为 `dist/index.mjs`；同步 esbuild 输出、`step.plugin.json`、bin、测试、smoke 与宿主验收脚本引用。Broker、独立配置与计费路由语义不变。
+- 最终交付目录：`D:\StepFun\dfsc-stepaudio-0.3.2`（仓库外，无 `package.json`）。
+- 交付目录验收：`node scripts/verify-delivery.mjs D:/StepFun/dfsc-stepaudio-0.3.2` 通过——假 `DFSC_LAUNCH_CONTEXT` 启动 `dist/index.mjs`，`initialize` 返回 `dfsc-stepaudio@0.3.2`，`tools/list` 注册 `clone_voice/list_voices/text_to_speech`，broker 请求 0、真实模型请求 0。
+- 宿主官方验收：v1.0.1 源码 + 1.0.0 runtime，`verify-stepaudio-release.mjs` **10/10 通过**（原生安装、托管 fixture、官方 SDK stdio 握手、工具清单、本地音色目录、空文本零二次请求、原生卸载）。上游脚本仍写死 `dist/index.js`，验收时仅在其临时副本将插件入口改为 `dist/index.mjs`；宿主 runtime 自身的 `index.js` 未改。
+- 插件侧：73/73 测试、smoke 通过。
+
 ## 执行记录（2026-11-26，DFSC 1.0.1 兼容，已通过）
 
 - 宿主：DFSC v1.0.1（tag `263a610`）；官方验收使用本地 1.0.0 runtime（v018，Node 24.16.0）。
