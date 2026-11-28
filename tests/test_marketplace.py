@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -26,6 +27,11 @@ def write_json(path, value):
 def hashes(path, data):
     return {'path': path, 'size': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
             'gitBlobSha': hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()}
+
+
+def hashes_fixture(data):
+    """Lock rows for a fixture bundle, in the same order the market stores them."""
+    return [hashes(path, content) for path, content in sorted(data.items())]
 
 
 class MarketplaceTests(unittest.TestCase):
@@ -630,6 +636,404 @@ class MarketplaceTests(unittest.TestCase):
             data['dfsc.plugin.json'] = m.encoded({'schemaVersion': 1, 'desktop': desktop})
             with self.subTest(size=len(text)), self.assertRaises(m.MarketError):
                 m.plugin_manifest(data, 'alpha-plugin')
+
+    # --- executable bits -------------------------------------------------
+    # Windows Git defaults to core.fileMode=false, so copying scripts into the
+    # market used to publish them as 100644 regardless of the source mode.
+    # These tests pin the behaviour that the reviewed mode is recorded in the
+    # Git index instead of relying on working-copy permissions.
+
+    def git(self, *args):
+        import subprocess
+        return subprocess.run(('git', '-C', str(self.root)) + args, check=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    def make_git_repo(self):
+        import subprocess
+        subprocess.run(('git', '-C', str(self.root), 'init', '-q'), check=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.git('config', 'user.email', 'fixture@example.invalid')
+        self.git('config', 'user.name', 'Fixture')
+        self.git('add', '-A')
+        self.git('commit', '-qm', 'fixture baseline')
+
+    def index_mode(self, path):
+        line = self.git('ls-files', '-s', '--', path).stdout.strip()
+        return line.split(None, 1)[0] if line else None
+
+    def staged_bytes(self, path):
+        """索引里当前记录的字节（不是工作区里的）。"""
+        entry = self.git('ls-files', '-s', '--', path).stdout.strip()
+        if not entry:
+            return None
+        sha = entry.split()[1]
+        return subprocess.run(
+            ('git', '-C', str(self.root), 'cat-file', 'blob', sha),
+            check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+
+    def test_record_omits_mode_for_plain_files(self):
+        row = m.record('commands/help.md', b'Fixture command\n')
+        self.assertNotIn('mode', row)
+        self.assertEqual(row['size'], len(b'Fixture command\n'))
+
+    def test_record_marks_executables_and_rejects_other_modes(self):
+        row = m.record('scripts/run', b'#!/bin/sh\n', '100755')
+        self.assertEqual(row['mode'], '100755')
+        for bad in ('100664', '120000', '040000', None, ''):
+            with self.subTest(mode=bad), self.assertRaises(m.MarketError):
+                m.record('scripts/run', b'x', bad)
+
+    def test_lock_accepts_absent_and_executable_modes_only(self):
+        row = m.record('scripts/extra-run', b'#!/bin/sh\n')
+        for mode in ('100644', '100755', None):
+            locked = copy.deepcopy(row)
+            if mode is not None:
+                locked['mode'] = mode
+            self.lock['plugins'][1]['files'] = [copy.deepcopy(existing)
+                                                for existing in hashes_fixture(self.raw['alpha-plugin'])]
+            self.lock['plugins'][1]['files'].append(locked)
+            self.save()
+            m.lockfile(self.root)  # must not raise
+        locked = copy.deepcopy(row)
+        locked['mode'] = '100664'
+        self.lock['plugins'][1]['files'] = [copy.deepcopy(existing)
+                                            for existing in hashes_fixture(self.raw['alpha-plugin'])]
+        self.lock['plugins'][1]['files'].append(locked)
+        self.save()
+        with self.assertRaisesRegex(m.MarketError, 'Invalid resource mode'):
+            m.lockfile(self.root)
+
+    def test_index_modes_returns_none_outside_a_git_work_tree(self):
+        self.assertIsNone(m.index_modes(self.root, ['registry.json']))
+
+    def test_apply_index_modes_never_stages_into_an_enclosing_repository(self):
+        # A fixture directory living inside some other checkout must not have its
+        # paths staged into that outer repository.
+        self.assertIsNone(m.index_modes(self.root, ['registry.json']))
+        self.assertEqual(m.apply_index_modes(self.root, [{'path': 'registry.json', 'mode': '100755'}]),
+                         {'previous': {}, 'added': [], 'worktree': {}})
+
+    def test_apply_index_modes_does_not_replace_staged_content(self):
+        """改权限位不能把工作区内容写进暂存区。
+
+        `git update-index --chmod` 会顺带刷新条目，等于把工作区当前的字节存进去；
+        调用方要的是「只改权限位」，暂存的内容必须原样保留。
+        """
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        target = self.root / path
+        staged_before = self.staged_bytes(path)
+        # 工作区改成别的内容，但故意不 add：暂存区仍是旧内容
+        target.write_text('uncommitted working copy change\n', encoding='utf-8')
+        self.assertNotEqual(target.read_bytes(), staged_before)
+
+        m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+
+        self.assertEqual(self.index_mode(path), '100755', '执行位应已写入')
+        self.assertEqual(self.staged_bytes(path), staged_before,
+                         '暂存内容必须原样保留，不能被工作区的改动顶掉')
+
+    def test_restore_index_modes_puts_back_both_mode_and_staged_content(self):
+        """回滚要把权限位和暂存内容一起还原。"""
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        target = self.root / path
+        staged_before = self.staged_bytes(path)
+        restore = m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        target.write_text('worked on after sync\n', encoding='utf-8')
+
+        m.restore_index_modes(self.root, restore)
+        self.assertEqual(self.index_mode(path), '100644', '权限位应回到原值')
+        self.assertEqual(self.staged_bytes(path), staged_before, '暂存内容也应回到原值')
+
+    def test_sync_records_executable_bit_in_the_git_index(self):
+        self.make_git_repo()
+        data = dict(self.raw['alpha-plugin'])
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        fetch = self.api(data)
+        self.assertNotIn('mode', hashes('scripts/run', data['scripts/run']))
+        # Patch the source tree entry so the script is advertised as executable.
+        original_api = self.api
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+        m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        locked = next(p for p in json.loads((self.root / 'registry.lock.json').read_text('utf-8'))['plugins']
+                      if p['id'] == 'alpha-plugin')
+        row = next(r for r in locked['files'] if r['path'] == 'scripts/run')
+        self.assertEqual(row['mode'], '100755')
+        self.assertEqual(self.index_mode('plugins/alpha-plugin/scripts/run'), '100755')
+        # Plain files stay plain, and validate() accepts the result.
+        self.assertEqual(self.index_mode('plugins/alpha-plugin/commands/help.md'), '100644')
+        m.validate(self.root)
+
+    def test_validate_rejects_a_vendored_mode_that_differs_from_the_lock(self):
+        self.make_git_repo()
+        data = dict(self.raw['alpha-plugin'])
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        original_api = self.api
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+        m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        m.validate(self.root)
+        self.git('update-index', '--chmod=-x', '--', 'plugins/alpha-plugin/scripts/run')
+        with self.assertRaisesRegex(m.MarketError, 'Vendored executable bit differs'):
+            m.validate(self.root)
+
+
+    # --- 索引回滚与中文路径 ---------------------------------------------
+
+    def test_restore_index_modes_puts_the_previous_bits_back(self):
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        self.assertEqual(self.index_mode(path), '100644')
+        before = m.index_entries(self.root, [path])[path]
+        restore = m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertEqual(restore['previous'], {path: before})
+        self.assertEqual(restore['added'], [])
+        self.assertEqual(self.index_mode(path), '100755')
+        m.restore_index_modes(self.root, restore)
+        self.assertEqual(self.index_mode(path), '100644', '回滚后索引应恢复原模式')
+        self.assertEqual(m.index_entries(self.root, [path])[path], before,
+                         '回滚后索引里的 blob 也要回到原值')
+
+    def test_restore_index_modes_is_a_noop_for_an_empty_map(self):
+        self.make_git_repo()
+        self.assertEqual(m.restore_index_modes(self.root, {'previous': {}, 'added': [], 'worktree': {}}), [])
+
+    def test_restore_index_modes_refuses_outside_a_git_work_tree(self):
+        with self.assertRaisesRegex(m.MarketError, 'outside a Git work tree'):
+            m.restore_index_modes(
+                self.root,
+                {'previous': {'registry.json': {'mode': '100644', 'sha': '0' * 40}}, 'added': []})
+
+    def test_apply_index_modes_rolls_back_a_partially_applied_batch(self):
+        """正向应用只成功了一半时，已经改掉的模式必须被撤回。"""
+        self.make_git_repo()
+        script = 'plugins/alpha-plugin/commands/help.md'
+        plain = 'plugins/alpha-plugin/README.md'
+        self.assertEqual(self.index_mode(script), '100644')
+        self.assertEqual(self.index_mode(plain), '100644')
+        original_run = m.subprocess.run
+        state = {'calls': 0}
+
+        def flaky_run(argv, **kwargs):
+            if '--index-info' in argv and state['calls'] == 0:
+                state['calls'] += 1
+                # 只把第一个文件写进索引，第二个留在 100644：模拟「只应用了一半」
+                payload = kwargs.get('input', '')
+                first = payload.split('\0')[0] + '\0'
+                return original_run(argv, **{**kwargs, 'input': first})
+            if '--index-info' in argv:
+                state['calls'] += 1
+            return original_run(argv, **kwargs)
+
+        with patch.object(m.subprocess, 'run', flaky_run), \
+                self.assertRaisesRegex(m.MarketError, 'still differ from the reviewed lock'):
+            m.apply_index_modes(self.root, [
+                {'path': script, 'mode': '100755'},
+                {'path': plain, 'mode': '100755'},
+            ])
+        self.assertEqual(self.index_mode(script), '100644', '失败后已应用的那一半也必须回滚')
+        self.assertEqual(self.index_mode(plain), '100644')
+        self.assertGreater(state['calls'], 1, '回滚本身应当也写过索引')
+
+    def test_failed_index_read_after_staging_leaves_nothing_new_in_the_index(self):
+        """git add 成功但读回索引失败时，不得把这次新暂存的文件留在索引里。"""
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/scripts/run'
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('#!/bin/sh\necho fixture\n', encoding='utf-8')
+        self.assertIsNone(self.index_mode(path), '夹具里这个文件应为未跟踪状态')
+
+        original = m.index_entries
+        calls = {'n': 0}
+
+        def flaky(root, names):
+            calls['n'] += 1
+            if calls['n'] == 2:  # 第 1 次读现状，第 2 次是 git add 之后的读回
+                raise m.MarketError('Unable to read Git index modes')
+            return original(root, names)
+
+        with patch.object(m, 'index_entries', flaky), \
+                self.assertRaisesRegex(m.MarketError, 'index modes'):
+            m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertIsNone(self.index_mode(path), '失败后不得留下这次新暂存的文件')
+
+    def test_rollback_unstages_even_when_staged_bytes_differ_from_the_file(self):
+        """回滚删暂存条目时不能被「暂存内容与工作区不同」挡住。
+
+        `git rm --cached` 在这种状态下会拒绝并提示用 -f；Linux 上
+        `core.fileMode=true` 时，索引还原成 644 而工作区是 755，也算一种差异。
+        回滚本来就要把文件还原，所以这里只该动索引。
+        """
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/scripts/run'
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('#!/bin/sh\necho staged\n', encoding='utf-8')
+        self.assertIsNone(self.index_mode(path), '起始应为未跟踪')
+
+        original = m.index_entries
+        calls = {'n': 0}
+
+        def flaky(root, names):
+            calls['n'] += 1
+            if calls['n'] == 2:
+                # git add 已经发生：让工作区内容与暂存内容分叉，
+                # 复刻 `git rm --cached` 会拒绝的那种状态。
+                target.write_text('#!/bin/sh\necho worked-on-later\n', encoding='utf-8')
+                raise m.MarketError('Unable to read Git index modes')
+            return original(root, names)
+
+        with patch.object(m, 'index_entries', flaky), \
+                self.assertRaisesRegex(m.MarketError, 'index modes'):
+            m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertIsNone(self.index_mode(path), '回滚必须把这次新暂存的条目删掉')
+        self.assertTrue(target.exists(), '只动索引，工作区文件要留着')
+
+    @unittest.skipIf(os.name == 'nt', 'Windows 表达不了执行位；这条在 Linux CI 上跑')
+    def test_plain_git_add_keeps_the_executable_bit(self):
+        """同步之后普通 git add 不能把执行位丢掉。
+
+        Linux/macOS 上 Git 从文件系统推导模式：只写索引、不给工作区加执行位的话，
+        下一次普通 `git add` 会把它改回 100644。
+        """
+        self.make_git_repo()
+        path = 'plugins/alpha-plugin/commands/help.md'
+        target = self.root / path
+        self.assertFalse(target.stat().st_mode & 0o111, '夹具起始没有执行位')
+
+        m.apply_index_modes(self.root, [{'path': path, 'mode': '100755'}])
+        self.assertEqual(self.index_mode(path), '100755', '索引里的执行位应已写入')
+        self.assertTrue(target.stat().st_mode & 0o111, '工作区也要有执行位')
+
+        self.git('add', '--', path)
+        self.assertEqual(self.index_mode(path), '100755', '普通 git add 不应丢掉执行位')
+
+
+    def test_sync_rolls_the_index_back_when_final_validation_fails(self):
+        """同步在写完索引后失败时，索引不能留下新包的模式。"""
+        self.make_git_repo()
+        data = dict(self.raw['alpha-plugin'])
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        original_api = self.api
+
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+
+        def failing_validate(root):
+            raise m.MarketError('synthetic post-index validation failure')
+
+        with patch.object(m, 'validate', failing_validate), \
+                self.assertRaisesRegex(m.MarketError, 'post-index validation failure'):
+            m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        self.assertIsNone(self.index_mode('plugins/alpha-plugin/scripts/run'),
+                          '同步失败回滚后，索引不应留下新包的可执行位')
+
+    def test_sync_restores_files_when_the_index_rollback_itself_fails(self):
+        """索引回滚失败不能让文件回滚被跳过，否则会留下半换过的包。"""
+        self.make_git_repo()
+        before = self.active()
+        data = dict(self.raw['alpha-plugin'])
+        data['commands/help.md'] = b'Replacement command that must not survive\n'
+        data['scripts/run'] = b'#!/bin/sh\necho fixture\n'
+        original_api = self.api
+
+        def api_with_executable(**_kwargs):
+            fetch = original_api(data=data)
+
+            def wrapped(endpoint):
+                value = fetch(endpoint)
+                if '/trees/' in endpoint:
+                    for entry in value['tree']:
+                        if entry['path'] == 'resources/plugin/scripts/run':
+                            entry['mode'] = '100755'
+                return value
+            return wrapped
+
+        def failing_validate(root):
+            raise m.MarketError('synthetic post-index validation failure')
+
+        def failing_restore(root, restore):
+            raise m.MarketError('synthetic index rollback failure')
+
+        with patch.object(m, 'validate', failing_validate), \
+                patch.object(m, 'restore_index_modes', failing_restore), \
+                self.assertRaisesRegex(m.MarketError, 'index could not be restored') as caught:
+            m.sync(self.root, 'alpha-plugin', fetch=api_with_executable())
+        self.assertIn(
+            'the files themselves were restored from backup', str(caught.exception),
+            '错误信息应说明文件已回滚，避免让人以为仓库处于半换状态')
+        self.assertEqual(
+            self.active(), before,
+            '索引回滚失败时仍必须恢复文件，不能留下半换过的包')
+
+    def test_chinese_paths_survive_mode_round_trip(self):
+        """中文路径在索引读写里必须按原样往返，不能被转义或截断。"""
+        self.make_git_repo()
+        chinese = 'plugins/alpha-plugin/脚本/构建.sh'
+        target = self.root / 'plugins/alpha-plugin/脚本/构建.sh'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('#!/bin/sh\necho 中文路径\n', encoding='utf-8')
+        self.git('add', '-A')
+        self.git('commit', '-qm', 'chinese path fixture')
+        self.assertEqual(self.index_mode(chinese), '100644')
+
+        restore = m.apply_index_modes(self.root, [{'path': chinese, 'mode': '100755'}])
+        self.assertEqual(restore['previous'], {chinese: {'mode': '100644', 'sha': m.index_entries(self.root, [chinese])[chinese]['sha']}})
+        self.assertEqual(self.index_mode(chinese), '100755', '中文路径的可执行位应写入索引')
+        self.assertEqual(m.index_modes(self.root, [chinese]), {chinese: '100755'},
+                         '读取时路径应保持中文原样')
+
+        m.restore_index_modes(self.root, restore)
+        self.assertEqual(self.index_mode(chinese), '100644')
+
+    def test_chinese_market_root_directory(self):
+        """仓库根目录含中文时，git -C 与路径比较仍要工作。"""
+        import subprocess
+        chinese_root = self.root / '中文市场'
+        chinese_root.mkdir()
+        for args in (('init', '-q'), ('config', 'user.email', 'fixture@example.invalid'),
+                     ('config', 'user.name', 'Fixture')):
+            subprocess.run(('git',) + args, cwd=chinese_root, check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        target = chinese_root / '脚本' / '运行.sh'
+        target.parent.mkdir(parents=True)
+        target.write_text('#!/bin/sh\n', encoding='utf-8')
+        subprocess.run(('git', 'add', '-A'), cwd=chinese_root, check=True)
+        subprocess.run(('git', 'commit', '-qm', '中文根'), cwd=chinese_root, check=True)
+
+        restore = m.apply_index_modes(chinese_root, [{'path': '脚本/运行.sh', 'mode': '100755'}])
+        self.assertEqual(restore['previous'], {'脚本/运行.sh': {'mode': '100644', 'sha': m.index_entries(chinese_root, ['脚本/运行.sh'])['脚本/运行.sh']['sha']}})
+        line = subprocess.run(('git', 'ls-files', '-s', '--', '脚本/运行.sh'), cwd=chinese_root,
+                              check=True, stdout=subprocess.PIPE, text=True, encoding='utf-8').stdout
+        self.assertTrue(line.startswith('100755'), f'中文根目录下的模式未生效：{line!r}')
 
 
 if __name__ == '__main__':

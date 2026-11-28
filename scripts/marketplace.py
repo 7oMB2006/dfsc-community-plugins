@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import shutil
 import stat
+import subprocess
 import tempfile
 import urllib.error
 import urllib.parse
@@ -165,6 +166,7 @@ def lockfile(root):
             require(isinstance(row.get('gitBlobSha'), str) and HEX40.fullmatch(row['gitBlobSha']), 'Invalid Git blob SHA')
             require(isinstance(row.get('sha256'), str) and HEX64.fullmatch(row['sha256']), 'Invalid SHA256')
             require(type(row.get('size')) is int and 0 <= row['size'] <= MAX_FILE, 'Invalid resource size')
+            require(row.get('mode', '100644') in ('100644', '100755'), 'Invalid resource mode')
             total += row['size']
         require(total <= MAX_TOTAL, 'Plugin exceeds the resource size limit')
         portable_paths([row['path'] for row in rows])
@@ -181,8 +183,238 @@ def git_blob(data):
     return hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
 
 
-def record(name, data):
-    return {'path': name, 'gitBlobSha': git_blob(data), 'sha256': hashlib.sha256(data).hexdigest(), 'size': len(data)}
+def record(name, data, mode='100644'):
+    """Describe one vendored file.
+
+    `mode` is only recorded for executables. Ordinary files keep the historical
+    four-field shape so existing locks stay byte-identical, and an absent mode
+    is treated as 100644 everywhere else.
+    """
+    row = {'path': name, 'gitBlobSha': git_blob(data), 'sha256': hashlib.sha256(data).hexdigest(),
+           'size': len(data)}
+    if source_mode(mode) == '100755':
+        row['mode'] = '100755'
+    return row
+
+
+def source_mode(mode):
+    """Normalize a Git tree mode to the two states we track."""
+    require(mode in ('100644', '100755'), 'Unsupported Git blob mode: ' + repr(mode))
+    return mode
+
+
+def executable_paths(rows):
+    """Paths a lock records as executable."""
+    return {row['path'] for row in rows if row.get('mode') == '100755'}
+
+
+def index_modes(root, names):
+    """Read the executable bit Git currently records for the given paths.
+
+    Returns None when `root` is not a Git work tree (offline fixtures, tests,
+    an exported tarball). Callers treat None as "modes are not verifiable here"
+    instead of failing: the file bytes are still fully hash-verified.
+
+    On Windows Git defaults to core.fileMode=false, where `chmod` on a working
+    copy file does not change what Git stores. The only reliable signal is the
+    index itself, so compare against `git ls-files -s` rather than st_mode.
+    """
+    entries = index_entries(root, names)
+    return None if entries is None else {path: entry['mode'] for path, entry in entries.items()}
+
+
+def index_entries(root, names):
+    """Read mode **and blob** Git records for the given paths.
+
+    The blob matters: `git update-index --chmod` refreshes the entry from the
+    working copy, so it silently replaces the staged content. Rollback has to put
+    back both halves, which means knowing the blob each path had before.
+
+    Returns None when `root` is not a Git work tree.
+    """
+    probe = subprocess.run(
+        ['git', '-C', str(root), 'rev-parse', '--show-toplevel'],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
+    if probe.returncode != 0:
+        return None
+    # `git -C <dir>` walks upward, so a plain directory nested inside some other
+    # repository would resolve to that outer repo. Only accept the directory that
+    # is itself the repository root: staging paths of a temp fixture into an
+    # unrelated repository is never what a caller wants.
+    try:
+        toplevel = Path(probe.stdout.strip()).resolve()
+    except OSError:
+        return None
+    if toplevel != Path(root).resolve():
+        return None
+    # A work tree needs `.git` of its own; a submodule-like nesting resolves
+    # differently and is not a market checkout either.
+    require((Path(root) / '.git').exists() or (Path(root) / '.git').is_file(),
+            'Git root reported without a .git entry')
+    result = subprocess.run(
+        ['git', '-C', str(root), 'ls-files', '-s', '-z', '--', *sorted(names)],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
+    require(result.returncode == 0, 'Unable to read Git index modes')
+    entries = {}
+    # `-z` keeps paths verbatim: without it Git quotes non-ASCII paths
+    # (`"plugins/\350\204\232..."`), and Chinese paths would never match.
+    for entry in result.stdout.split('\0'):
+        if not entry:
+            continue
+        parts = entry.split(None, 3)
+        require(len(parts) == 4, 'Unexpected git ls-files output')
+        entries[parts[3].strip()] = {'mode': parts[0], 'sha': parts[1]}
+    return entries
+
+
+def set_index_entries(root, entries):
+    """Write mode and blob together, without reading the working copy.
+
+    ``git update-index --chmod`` is the obvious call and the wrong one: it
+    refreshes the entry from the working copy, so it also replaces whatever was
+    staged with the file's current bytes. ``--index-info`` writes exactly the
+    mode and object id given here, which is what a rollback needs.
+
+    The payload is NUL terminated (``-z``) because entry paths may contain
+    spaces, commas, Chinese characters or a leading dash. ``--cacheinfo`` is not
+    usable here: it refuses the ``--`` separator, so such paths cannot be passed
+    safely.
+    """
+    require(entries, 'Empty index entry batch')
+    payload = ''.join(
+        f"{entry['mode']} {entry['sha']} 0\t{path}\0"
+        for path, entry in sorted(entries.items())
+    )
+    result = subprocess.run(
+        ['git', '-C', str(root), 'update-index', '-z', '--index-info'],
+        input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        check=False, text=True, encoding='utf-8')
+    require(result.returncode == 0, 'Unable to write Git index entries: ' + ', '.join(sorted(entries)))
+
+
+def apply_index_modes(root, rows):
+    """Make Git record the reviewed executable bit for every staged path.
+
+    Returns ``{'previous': {path: {'mode', 'sha'}}, 'added': [path, ...],
+    'worktree': {path: st_mode}}``:
+
+    - ``previous`` keeps the mode *and* blob each path had, so a caller that
+      fails later can restore the index with :func:`restore_index_modes`;
+    - ``added`` lists paths this call introduced to the index (they had no
+      entry before), so the caller can unstage them again on rollback;
+    - ``worktree`` keeps the working-copy permission bits this call changed.
+
+    Returns empty maps when nothing changed, or when `root` is not a Git work
+    tree.
+    """
+    wanted = {row['path']: source_mode(row.get('mode', '100644')) for row in rows}
+    require(wanted, 'Empty resource inventory')
+    present = index_entries(root, wanted)
+    if present is None:
+        # Not a Git work tree (offline fixtures, exported tarball): the lock
+        # still records the modes, but there is no index to set them in.
+        return {'previous': {}, 'added': [], 'worktree': {}}
+    missing = sorted(path for path in wanted if path not in present)
+    added = list(missing)
+    previous = {}
+    worktree = {}
+    # Everything from staging onward is inside the rollback window: a failure
+    # while reading the index back must not leave this call's staged files
+    # behind as a phantom entry.
+    try:
+        if missing:
+            # Untracked files carry no index entry yet; stage them by content
+            # first. The reviewed bit is written below, never derived from the
+            # working copy.
+            result = subprocess.run(
+                ['git', '-C', str(root), 'add', '--', *missing],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, text=True, encoding='utf-8')
+            require(result.returncode == 0, 'Unable to stage vendored resources: ' + ', '.join(missing))
+            present = index_entries(root, wanted)
+            require(present is not None, 'Git index became unreadable after staging: ' + ', '.join(missing))
+        changed = []
+        for path, mode in sorted(wanted.items()):
+            require(path in present, 'Staged resource missing from the Git index: ' + path)
+            if present[path]['mode'] != mode:
+                previous[path] = dict(present[path])
+                changed.append(path)
+        if changed:
+            set_index_entries(root, {
+                path: {'mode': wanted[path], 'sha': previous[path]['sha']} for path in changed
+            })
+            current = index_entries(root, wanted)
+            require(current is not None and {p: e['mode'] for p, e in current.items()} == wanted,
+                    'Git index modes still differ from the reviewed lock')
+        # Also set the working-copy bit: on Linux/macOS Git derives the mode from
+        # the file system, so a later plain `git add` would silently drop an
+        # executable bit that only ever existed in the index. Windows has no
+        # such bit (core.fileMode=false), so it is left alone there.
+        if os.name != 'nt':
+            for path in sorted(wanted):
+                target = Path(root) / path
+                if not target.exists() or target.is_symlink():
+                    continue
+                current_mode = target.stat().st_mode
+                desired = (current_mode | 0o111) if wanted[path] == '100755' else (current_mode & ~0o111)
+                if desired != current_mode:
+                    worktree[path] = current_mode
+                    os.chmod(target, desired)
+    except Exception:
+        # A partially applied batch must not be left behind.
+        restore_index_modes(root, {'previous': previous, 'added': added, 'worktree': worktree})
+        raise
+    return {'previous': previous, 'added': added, 'worktree': worktree}
+
+
+def restore_index_modes(root, restore):
+    """Undo an :func:`apply_index_modes` call.
+
+    Every half matters:
+
+    - modes are put back to their previous values, so a half-updated index does
+      not keep claiming executable bits for files that were rolled back;
+    - the previous blobs go back with them, because the entry is rewritten as a
+      whole and a half-restored index would otherwise keep the rolled-back
+      content staged;
+    - working-copy permission bits return to what they were;
+    - paths this call newly staged are unstaged again, so a failed sync does not
+      leave a phantom entry for a file that no longer exists.
+
+    Errors are raised rather than swallowed: a half-restored index must be
+    visible, not silent.
+    """
+    previous = dict(restore.get('previous') or {})
+    added = list(restore.get('added') or [])
+    worktree = dict(restore.get('worktree') or {})
+    if not previous and not added and not worktree:
+        return []
+    require(index_entries(root, previous or {'__probe__': '100644'}) is not None,
+            'Cannot restore Git index modes outside a Git work tree')
+    if previous:
+        set_index_entries(root, {path: dict(entry) for path, entry in previous.items()})
+        current = index_entries(root, previous)
+        require(current == previous, 'Git index entries were not fully restored')
+    if added:
+        # Drop only the index entry; the working copy is untouched (rollback
+        # restores the files themselves from their backups).
+        #
+        # `git rm --cached` refuses this and says so: "staged content different
+        # from both the file and the HEAD". That is exactly the state after a
+        # failed sync — the entry points at the staged bytes, while the working
+        # copy (and HEAD) hold something else. On Linux core.fileMode=true adds a
+        # second trigger: the restored 644 entry differs from a 755 file. Neither
+        # is an error for a rollback, so use the index-only primitive.
+        payload = ''.join(f'{path}\0' for path in sorted(added))
+        result = subprocess.run(
+            ['git', '-C', str(root), 'update-index', '--force-remove', '-z', '--stdin'],
+            input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            check=False, text=True, encoding='utf-8')
+        require(result.returncode == 0, 'Unable to unstage rolled-back resources: ' + ', '.join(sorted(added)))
+    for path, mode in sorted(worktree.items()):
+        target = Path(root) / path
+        if target.exists():
+            os.chmod(target, mode)
+    return sorted(previous) + sorted(added) + sorted(worktree)
 
 
 def inventory(directory):
@@ -208,7 +440,8 @@ def inventory(directory):
 def verify_locked(files, rows):
     require(set(files) == {r['path'] for r in rows}, 'Resource inventory differs from the reviewed lock')
     for row in rows:
-        require(record(row['path'], files[row['path']]) == row, 'Resource hash mismatch: ' + row['path'])
+        require(record(row['path'], files[row['path']], row.get('mode', '100644')) == row,
+                'Resource hash mismatch: ' + row['path'])
 
 
 def plugin_classification(files):
@@ -379,8 +612,22 @@ def validate(root):
         require(set(files) == expected, 'Unexpected or missing vendored resource: ' + ident)
         for row in locked_item['files']:
             if row['path'] != 'README.md':
-                require(record(row['path'], files[row['path']]) == row, 'Vendored resource drift: ' + row['path'])
+                require(record(row['path'], files[row['path']], row.get('mode', '100644')) == row,
+                        'Vendored resource drift: ' + row['path'])
         plugin_manifest(files, ident)
+    # The executable bit is part of the reviewed package: a vendored plugin must
+    # carry exactly the modes its lock records, not whatever the copy defaulted to.
+    for ident in declarations:
+        rows = [row for row in locks[ident]['files'] if row['path'] != 'README.md']
+        if not rows:
+            continue
+        wanted = {'plugins/' + ident + '/' + row['path']: row.get('mode', '100644') for row in rows}
+        modes = index_modes(root, wanted)
+        if modes is None:
+            continue  # not a Git work tree: executable bits are not verifiable here
+        for path, mode in sorted(wanted.items()):
+            require(modes.get(path) == mode,
+                    'Vendored executable bit differs from the reviewed lock: ' + path)
     require(read_json(root, '.step-plugin/marketplace.json') == native_manifest(config), 'Native marketplace manifest is out of date')
     return {'valid': True, 'marketplace': config['marketplaceName'], 'plugins': sorted(declarations)}
 
@@ -430,6 +677,7 @@ def fetch_source(item, fetch=github_json):
     require(isinstance(tree, dict) and tree.get('sha') == tree_sha and tree.get('truncated') is False
             and isinstance(tree.get('tree'), list), 'Incomplete GitHub source tree')
     files = {}
+    modes = {}
     base = src['path'] + '/'
     for entry in tree['tree']:
         require(isinstance(entry, dict), 'Invalid GitHub tree entry')
@@ -441,7 +689,8 @@ def fetch_source(item, fetch=github_json):
             relative(path[len(base):])
             continue
         name = relative(path[len(base):])
-        require(entry.get('type') == 'blob' and entry.get('mode') in ('100644', '100755'), 'Source contains a link or unsupported Git object')
+        mode = source_mode(entry.get('mode'))
+        require(entry.get('type') == 'blob', 'Source contains a link or unsupported Git object')
         require(name.casefold() not in {p.casefold() for p in files}, 'Duplicate or case-colliding source file')
         sha = entry.get('sha')
         require(isinstance(sha, str) and HEX40.fullmatch(sha), 'Invalid source blob SHA')
@@ -456,10 +705,11 @@ def fetch_source(item, fetch=github_json):
             raise MarketError('Invalid base64 source blob') from None
         require(len(data) == entry['size'] and git_blob(data) == sha, 'Source Git blob hash mismatch')
         files[name] = data
+        modes[name] = mode
         require(len(files) <= MAX_FILES and sum(map(len, files.values())) <= MAX_TOTAL, 'Source exceeds the plugin size limit')
     portable_paths(files)
     plugin_manifest(files, item['id'])
-    return files
+    return files, modes
 
 
 def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
@@ -489,13 +739,16 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
             require(locked and locked['source'] == item['source'], 'Offline sync requires a matching reviewed source lock')
             files = inventory(Path(source_dir))
             verify_locked(files, locked['files'])
+            modes = {row['path']: row.get('mode', '100644') for row in locked['files']}
         else:
-            files = fetch_source(item, fetch)
+            files, modes = fetch_source(item, fetch)
         locks[name] = {'id': name, 'source': copy.deepcopy(item['source']),
-                       'files': [record(path, data) for path, data in sorted(files.items())]}
+                       'files': [record(path, data, modes.get(path, '100644'))
+                                 for path, data in sorted(files.items())]}
         files['README.md'] = plain(root, item['readme']).read_bytes()
+        modes['README.md'] = '100644'
         plugin_manifest(files, name)
-        prepared[name] = files
+        prepared[name] = (files, modes)
     require(set(locks) == {p['id'] for p in config['plugins']}, 'Sync every newly added plugin together before publishing')
     result_lock = {'schemaVersion': 1, 'plugins': [locks[key] for key in sorted(locks)]}
     guard = root / '.community-sync.lock'
@@ -508,7 +761,7 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
         with tempfile.TemporaryDirectory(prefix='.community-stage-', dir=root) as temporary:
             stage = Path(temporary)
             updates = []
-            for name, files in prepared.items():
+            for name, (files, modes) in prepared.items():
                 candidate = stage / 'new' / name
                 candidate.mkdir(parents=True)
                 for path, data in files.items():
@@ -526,6 +779,7 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
                 pending.write_bytes(data)
                 updates.append((plain(root, name), pending))
             changed = []
+            index_before = {'previous': {}, 'added': []}
             try:
                 for index, (active, pending) in enumerate(updates):
                     active.parent.mkdir(parents=True, exist_ok=True)
@@ -536,15 +790,41 @@ def sync(root, ident=None, source_dir=None, fetch=github_json, retire=None):
                     changed.append((active, backup, had_previous))
                     if pending is not None:
                         pending.replace(active)
+                # Files are in place: record the reviewed executable bits in the
+                # index before validating, so a Windows checkout (where chmod
+                # cannot express the bit) still publishes the same package.
+                rows = [{'path': 'plugins/' + name + '/' + path, 'mode': mode}
+                        for name, (_, file_modes) in prepared.items()
+                        for path, mode in file_modes.items()]
+                if rows:
+                    index_before = apply_index_modes(root, rows)
                 outcome = validate(root)
             except Exception:
-                for active, backup, had_previous in reversed(changed):
-                    if active.is_dir():
-                        shutil.rmtree(active)
-                    elif active.exists():
-                        active.unlink()
-                    if had_previous:
-                        backup.replace(active)
+                # Roll the index back first: the files below are about to be
+                # restored from their backups, so the index must not keep
+                # claiming modes for a package that no longer exists.
+                #
+                # A failing index restore must not skip the file restore: that
+                # would leave half-swapped packages behind while reporting only
+                # the index error. Both failures are surfaced, index first.
+                index_error = None
+                try:
+                    restore_index_modes(root, index_before)
+                except Exception as error:  # noqa: BLE001 - surfaced below
+                    index_error = error
+                finally:
+                    for active, backup, had_previous in reversed(changed):
+                        if active.is_dir():
+                            shutil.rmtree(active)
+                        elif active.exists():
+                            active.unlink()
+                        if had_previous:
+                            backup.replace(active)
+                if index_error is not None:
+                    raise MarketError(
+                        'Synchronization failed and the Git index could not be restored '
+                        f'({index_error}); the files themselves were restored from backup.'
+                    ) from index_error
                 raise
     finally:
         guard.unlink()
